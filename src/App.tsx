@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { useSalesNotifications } from "@/hooks/useSalesNotifications";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -13,6 +14,12 @@ import Reports from "./pages/Reports";
 import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
+
+// Component to initialize notifications
+const NotificationsProvider = ({ children }: { children: React.ReactNode }) => {
+  useSalesNotifications();
+  return <>{children}</>;
+};
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -84,9 +91,11 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AuthProvider>
+        <AuthProvider>
+          <NotificationsProvider>
             <AppRoutes />
-          </AuthProvider>
+          </NotificationsProvider>
+        </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

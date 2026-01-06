@@ -38,6 +38,44 @@ export type Database = {
         }
         Relationships: []
       }
+      sale_comments: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          sale_id: string
+          user_id: string
+          user_name: string
+          user_role: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          sale_id: string
+          user_id: string
+          user_name: string
+          user_role: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          sale_id?: string
+          user_id?: string
+          user_name?: string
+          user_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_comments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales: {
         Row: {
           cnpj_cliente: string

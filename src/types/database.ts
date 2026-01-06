@@ -36,6 +36,16 @@ export interface Sale {
   seller?: Profile;
 }
 
+export interface SaleComment {
+  id: string;
+  sale_id: string;
+  user_id: string;
+  user_name: string;
+  user_role: string;
+  message: string;
+  created_at: string;
+}
+
 export interface UserWithRole extends Profile {
   role?: AppRole;
 }

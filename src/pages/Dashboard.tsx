@@ -1,19 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/layout/Layout';
 import { StatCard } from '@/components/ui/stat-card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile, ROLE_LABELS } from '@/types/database';
+import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
 import { 
   ShoppingCart, 
   DollarSign, 
   Clock, 
-  CheckCircle,
   TrendingUp,
   Users,
   BarChart3,
-  Target
+  Target,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  Calendar
 } from 'lucide-react';
 import {
   Card,
@@ -31,6 +34,20 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   PieChart,
   Pie,
@@ -43,6 +60,15 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import { 
+  exportToExcel, 
+  exportToPDF, 
+  filterByPeriod, 
+  getPeriodLabel,
+  PeriodFilter,
+  PERIOD_OPTIONS 
+} from '@/lib/export-utils';
+import { toast } from 'sonner';
 
 interface SellerStats {
   id: string;
@@ -65,9 +91,11 @@ const STATUS_COLORS: Record<SaleStatus, string> = {
 
 const Dashboard = () => {
   const { user, profile, role, isSeller, isCEO, isBackoffice } = useAuth();
-  const [sales, setSales] = useState<Sale[]>([]);
+  const [allSales, setAllSales] = useState<Sale[]>([]);
   const [sellers, setSellers] = useState<Profile[]>([]);
+  const [sellersMap, setSellersMap] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
+  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('30d');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -82,7 +110,7 @@ const Dashboard = () => {
       if (salesError) {
         console.error('Error fetching sales:', salesError);
       } else {
-        setSales((salesData || []) as Sale[]);
+        setAllSales((salesData || []) as Sale[]);
       }
 
       // Fetch sellers for CEO/Backoffice
@@ -91,7 +119,12 @@ const Dashboard = () => {
           .from('profiles')
           .select('*');
         
-        setSellers((profilesData || []) as Profile[]);
+        const profilesList = (profilesData || []) as Profile[];
+        setSellers(profilesList);
+        
+        const map: Record<string, Profile> = {};
+        profilesList.forEach(p => { map[p.id] = p; });
+        setSellersMap(map);
       }
 
       setLoading(false);
@@ -100,53 +133,76 @@ const Dashboard = () => {
     fetchData();
   }, [user, isSeller, isCEO, isBackoffice]);
 
+  // Filter sales by period
+  const sales = useMemo(() => {
+    return filterByPeriod(allSales, periodFilter);
+  }, [allSales, periodFilter]);
+
   // Calculate general stats
-  const stats = {
+  const stats = useMemo(() => ({
     total: sales.length,
     valorTotal: sales.reduce((acc, sale) => acc + Number(sale.valor_mensal), 0),
     pendentes: sales.filter(s => s.status === 'NOVA' || s.status === 'EM_ANALISE' || s.status === 'PENDENCIA').length,
     aprovadas: sales.filter(s => s.status === 'APROVADA' || s.status === 'INSTALADA').length,
     canceladas: sales.filter(s => s.status === 'CANCELADA').length,
-  };
+  }), [sales]);
 
   // Calculate status distribution for pie chart
-  const statusCount = sales.reduce((acc, sale) => {
-    acc[sale.status] = (acc[sale.status] || 0) + 1;
-    return acc;
-  }, {} as Record<SaleStatus, number>);
+  const { pieData, statusCount } = useMemo(() => {
+    const count = sales.reduce((acc, sale) => {
+      acc[sale.status] = (acc[sale.status] || 0) + 1;
+      return acc;
+    }, {} as Record<SaleStatus, number>);
 
-  const pieData = Object.entries(statusCount).map(([status, count]) => ({
-    name: SALE_STATUS_LABELS[status as SaleStatus],
-    value: count,
-    color: STATUS_COLORS[status as SaleStatus],
-  }));
+    const data = Object.entries(count).map(([status, cnt]) => ({
+      name: SALE_STATUS_LABELS[status as SaleStatus],
+      value: cnt,
+      color: STATUS_COLORS[status as SaleStatus],
+    }));
+
+    return { pieData: data, statusCount: count };
+  }, [sales]);
 
   // Calculate seller stats
-  const sellerStats: SellerStats[] = sellers.map(seller => {
-    const sellerSales = sales.filter(s => s.seller_id === seller.id);
-    const aprovadas = sellerSales.filter(s => s.status === 'APROVADA' || s.status === 'INSTALADA').length;
-    const pendentes = sellerSales.filter(s => s.status === 'NOVA' || s.status === 'EM_ANALISE' || s.status === 'PENDENCIA').length;
-    
-    return {
-      id: seller.id,
-      nome: seller.nome,
-      totalVendas: sellerSales.length,
-      valorTotal: sellerSales.reduce((acc, s) => acc + Number(s.valor_mensal), 0),
-      aprovadas,
-      pendentes,
-      taxaAprovacao: sellerSales.length > 0 ? (aprovadas / sellerSales.length) * 100 : 0,
-    };
-  }).filter(s => s.totalVendas > 0).sort((a, b) => b.valorTotal - a.valorTotal);
+  const sellerStats: SellerStats[] = useMemo(() => {
+    return sellers.map(seller => {
+      const sellerSales = sales.filter(s => s.seller_id === seller.id);
+      const aprovadas = sellerSales.filter(s => s.status === 'APROVADA' || s.status === 'INSTALADA').length;
+      const pendentes = sellerSales.filter(s => s.status === 'NOVA' || s.status === 'EM_ANALISE' || s.status === 'PENDENCIA').length;
+      
+      return {
+        id: seller.id,
+        nome: seller.nome,
+        totalVendas: sellerSales.length,
+        valorTotal: sellerSales.reduce((acc, s) => acc + Number(s.valor_mensal), 0),
+        aprovadas,
+        pendentes,
+        taxaAprovacao: sellerSales.length > 0 ? (aprovadas / sellerSales.length) * 100 : 0,
+      };
+    }).filter(s => s.totalVendas > 0).sort((a, b) => b.valorTotal - a.valorTotal);
+  }, [sellers, sales]);
 
   // Bar chart data for top sellers
-  const barData = sellerStats.slice(0, 5).map(s => ({
-    nome: s.nome.split(' ')[0],
-    Aprovadas: s.aprovadas,
-    Pendentes: s.pendentes,
-    Valor: s.valorTotal,
-  }));
+  const barData = useMemo(() => {
+    return sellerStats.slice(0, 5).map(s => ({
+      nome: s.nome.split(' ')[0],
+      Aprovadas: s.aprovadas,
+      Pendentes: s.pendentes,
+      Valor: s.valorTotal,
+    }));
+  }, [sellerStats]);
 
   const recentSales = sales.slice(0, 5);
+
+  const handleExportExcel = () => {
+    exportToExcel(sales, sellersMap, `vendas-${periodFilter}`);
+    toast.success('Relatório Excel exportado!');
+  };
+
+  const handleExportPDF = () => {
+    exportToPDF(sales, sellersMap, getPeriodLabel(periodFilter), `vendas-${periodFilter}`);
+    toast.success('Relatório PDF exportado!');
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -163,13 +219,52 @@ const Dashboard = () => {
     <Layout>
       <div className="space-y-8 animate-fade-in">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Bem-vindo, {profile?.nome || 'Usuário'}! 
-            {isSeller && ' Aqui estão suas vendas.'}
-            {(isCEO || isBackoffice) && ' Visão geral do sistema.'}
-          </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground">
+              Bem-vindo, {profile?.nome || 'Usuário'}! 
+              {isSeller && ' Aqui estão suas vendas.'}
+              {(isCEO || isBackoffice) && ' Visão geral do sistema.'}
+            </p>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Period Filter */}
+            <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
+              <SelectTrigger className="w-[180px]">
+                <Calendar className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                {PERIOD_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Export Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Exportar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportExcel} className="gap-2 cursor-pointer">
+                  <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                  Exportar Excel (.xlsx)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF} className="gap-2 cursor-pointer">
+                  <FileText className="h-4 w-4 text-red-600" />
+                  Exportar PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Stats Grid */}

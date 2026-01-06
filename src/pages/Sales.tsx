@@ -4,9 +4,11 @@ import Layout from '@/components/layout/Layout';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
-import { Plus, Search, Filter, Eye, Edit2 } from 'lucide-react';
+import { Plus, Search, Filter, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { SaleComments } from '@/components/sales/SaleComments';
+import { SaleStatusActions } from '@/components/sales/SaleStatusActions';
 import {
   Select,
   SelectContent,
@@ -52,7 +54,7 @@ interface SaleWithSeller extends Sale {
 }
 
 const Sales = () => {
-  const { user, isSeller, canManageSaleStatus } = useAuth();
+  const { user, isSeller } = useAuth();
   const [sales, setSales] = useState<SaleWithSeller[]>([]);
   const [sellers, setSellers] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
@@ -72,12 +74,6 @@ const Sales = () => {
     produtos: '',
     valor_mensal: '',
     observacoes_vendedor: '',
-  });
-
-  // Form state for status update
-  const [statusUpdate, setStatusUpdate] = useState({
-    status: '' as SaleStatus,
-    motivo_pendencia: '',
   });
 
   const fetchSales = async () => {
@@ -163,32 +159,6 @@ const Sales = () => {
     }
   };
 
-  const handleStatusUpdate = async () => {
-    if (!selectedSale || !statusUpdate.status) return;
-
-    const updateData: Partial<Sale> = {
-      status: statusUpdate.status,
-    };
-
-    if (statusUpdate.status === 'PENDENCIA' && statusUpdate.motivo_pendencia) {
-      updateData.motivo_pendencia = statusUpdate.motivo_pendencia;
-    }
-
-    const { error } = await supabase
-      .from('sales')
-      .update(updateData)
-      .eq('id', selectedSale.id);
-
-    if (error) {
-      toast.error('Erro ao atualizar status');
-      console.error(error);
-    } else {
-      toast.success('Status atualizado com sucesso!');
-      setIsDetailOpen(false);
-      setSelectedSale(null);
-      fetchSales();
-    }
-  };
 
   const filteredSales = sales.filter((sale) => {
     const matchesSearch =
@@ -420,7 +390,6 @@ const Sales = () => {
                             size="sm"
                             onClick={() => {
                               setSelectedSale(sale);
-                              setStatusUpdate({ status: sale.status, motivo_pendencia: sale.motivo_pendencia || '' });
                               setIsDetailOpen(true);
                             }}
                           >
@@ -492,55 +461,15 @@ const Sales = () => {
                   </div>
                 )}
 
-                {/* Status Update (only for CEO/Backoffice) */}
-                {canManageSaleStatus && (
-                  <div className="border-t pt-6">
-                    <h3 className="font-semibold mb-4 flex items-center gap-2">
-                      <Edit2 className="h-4 w-4" />
-                      Atualizar Status
-                    </h3>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Novo Status</Label>
-                        <Select
-                          value={statusUpdate.status}
-                          onValueChange={(v) => setStatusUpdate({ ...statusUpdate, status: v as SaleStatus })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {(Object.entries(SALE_STATUS_LABELS) as [SaleStatus, string][]).map(([status, label]) => (
-                              <SelectItem key={status} value={status}>
-                                {label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                {/* Chat/Comments Section */}
+                <SaleComments saleId={selectedSale.id} />
 
-                      {statusUpdate.status === 'PENDENCIA' && (
-                        <div className="space-y-2">
-                          <Label>Motivo da Pendência</Label>
-                          <Textarea
-                            placeholder="Descreva o motivo da pendência..."
-                            value={statusUpdate.motivo_pendencia}
-                            onChange={(e) => setStatusUpdate({ ...statusUpdate, motivo_pendencia: e.target.value })}
-                          />
-                        </div>
-                      )}
-
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setIsDetailOpen(false)}>
-                          Cancelar
-                        </Button>
-                        <Button onClick={handleStatusUpdate}>
-                          Salvar Alterações
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                {/* Status Actions */}
+                <SaleStatusActions
+                  sale={selectedSale}
+                  onStatusUpdated={fetchSales}
+                  onClose={() => setIsDetailOpen(false)}
+                />
               </div>
             )}
           </DialogContent>

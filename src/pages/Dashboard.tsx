@@ -4,13 +4,16 @@ import Layout from '@/components/layout/Layout';
 import { StatCard } from '@/components/ui/stat-card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Sale, SaleStatus, SALE_STATUS_LABELS } from '@/types/database';
+import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile, ROLE_LABELS } from '@/types/database';
 import { 
   ShoppingCart, 
   DollarSign, 
   Clock, 
   CheckCircle,
-  TrendingUp
+  TrendingUp,
+  Users,
+  BarChart3,
+  Target
 } from 'lucide-react';
 import {
   Card,
@@ -27,52 +30,123 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Progress } from '@/components/ui/progress';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+} from 'recharts';
+
+interface SellerStats {
+  id: string;
+  nome: string;
+  totalVendas: number;
+  valorTotal: number;
+  aprovadas: number;
+  pendentes: number;
+  taxaAprovacao: number;
+}
+
+const STATUS_COLORS: Record<SaleStatus, string> = {
+  NOVA: '#3b82f6',
+  EM_ANALISE: '#f59e0b',
+  PENDENCIA: '#ef4444',
+  APROVADA: '#22c55e',
+  INSTALADA: '#8b5cf6',
+  CANCELADA: '#6b7280',
+};
 
 const Dashboard = () => {
-  const { user, profile, role, isSeller } = useAuth();
+  const { user, profile, role, isSeller, isCEO, isBackoffice } = useAuth();
   const [sales, setSales] = useState<Sale[]>([]);
+  const [sellers, setSellers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSales = async () => {
+    const fetchData = async () => {
       if (!user) return;
 
-      let query = supabase
+      // Fetch sales
+      const { data: salesData, error: salesError } = await supabase
         .from('sales')
         .select('*')
         .order('created_at', { ascending: false });
 
-      // Vendedores só veem suas próprias vendas (RLS já faz isso, mas mantemos por clareza)
-      if (isSeller) {
-        query = query.eq('seller_id', user.id);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching sales:', error);
+      if (salesError) {
+        console.error('Error fetching sales:', salesError);
       } else {
-        setSales((data || []) as Sale[]);
+        setSales((salesData || []) as Sale[]);
       }
+
+      // Fetch sellers for CEO/Backoffice
+      if (isCEO || isBackoffice) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('*');
+        
+        setSellers((profilesData || []) as Profile[]);
+      }
+
       setLoading(false);
     };
 
-    fetchSales();
-  }, [user, isSeller]);
+    fetchData();
+  }, [user, isSeller, isCEO, isBackoffice]);
 
+  // Calculate general stats
   const stats = {
     total: sales.length,
     valorTotal: sales.reduce((acc, sale) => acc + Number(sale.valor_mensal), 0),
     pendentes: sales.filter(s => s.status === 'NOVA' || s.status === 'EM_ANALISE' || s.status === 'PENDENCIA').length,
     aprovadas: sales.filter(s => s.status === 'APROVADA' || s.status === 'INSTALADA').length,
+    canceladas: sales.filter(s => s.status === 'CANCELADA').length,
   };
 
-  const recentSales = sales.slice(0, 5);
-
+  // Calculate status distribution for pie chart
   const statusCount = sales.reduce((acc, sale) => {
     acc[sale.status] = (acc[sale.status] || 0) + 1;
     return acc;
   }, {} as Record<SaleStatus, number>);
+
+  const pieData = Object.entries(statusCount).map(([status, count]) => ({
+    name: SALE_STATUS_LABELS[status as SaleStatus],
+    value: count,
+    color: STATUS_COLORS[status as SaleStatus],
+  }));
+
+  // Calculate seller stats
+  const sellerStats: SellerStats[] = sellers.map(seller => {
+    const sellerSales = sales.filter(s => s.seller_id === seller.id);
+    const aprovadas = sellerSales.filter(s => s.status === 'APROVADA' || s.status === 'INSTALADA').length;
+    const pendentes = sellerSales.filter(s => s.status === 'NOVA' || s.status === 'EM_ANALISE' || s.status === 'PENDENCIA').length;
+    
+    return {
+      id: seller.id,
+      nome: seller.nome,
+      totalVendas: sellerSales.length,
+      valorTotal: sellerSales.reduce((acc, s) => acc + Number(s.valor_mensal), 0),
+      aprovadas,
+      pendentes,
+      taxaAprovacao: sellerSales.length > 0 ? (aprovadas / sellerSales.length) * 100 : 0,
+    };
+  }).filter(s => s.totalVendas > 0).sort((a, b) => b.valorTotal - a.valorTotal);
+
+  // Bar chart data for top sellers
+  const barData = sellerStats.slice(0, 5).map(s => ({
+    nome: s.nome.split(' ')[0],
+    Aprovadas: s.aprovadas,
+    Pendentes: s.pendentes,
+    Valor: s.valorTotal,
+  }));
+
+  const recentSales = sales.slice(0, 5);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -80,6 +154,10 @@ const Dashboard = () => {
       currency: 'BRL',
     }).format(value);
   };
+
+  const taxaAprovacaoGeral = stats.total > 0 
+    ? ((stats.aprovadas / stats.total) * 100).toFixed(1) 
+    : '0';
 
   return (
     <Layout>
@@ -90,6 +168,7 @@ const Dashboard = () => {
           <p className="text-muted-foreground">
             Bem-vindo, {profile?.nome || 'Usuário'}! 
             {isSeller && ' Aqui estão suas vendas.'}
+            {(isCEO || isBackoffice) && ' Visão geral do sistema.'}
           </p>
         </div>
 
@@ -114,108 +193,255 @@ const Dashboard = () => {
             description="Aguardando processamento"
           />
           <StatCard
-            title="Aprovadas"
-            value={stats.aprovadas}
-            icon={CheckCircle}
-            description="Vendas concluídas"
+            title="Taxa de Aprovação"
+            value={`${taxaAprovacaoGeral}%`}
+            icon={Target}
+            description={`${stats.aprovadas} aprovadas de ${stats.total}`}
           />
         </div>
 
-        {/* Charts and Tables */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Status Distribution */}
+        {/* Charts Row */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Status Pie Chart */}
           <Card className="shadow-card">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                Status das Vendas
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Distribuição por Status
               </CardTitle>
-              <CardDescription>Distribuição por status</CardDescription>
+              <CardDescription>Visão geral das vendas</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {(Object.entries(SALE_STATUS_LABELS) as [SaleStatus, string][]).map(([status, label]) => {
-                  const count = statusCount[status] || 0;
-                  const percentage = stats.total > 0 ? (count / stats.total) * 100 : 0;
-                  
-                  return (
-                    <div key={status} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <StatusBadge status={status} />
-                        <span className="text-sm text-muted-foreground">
-                          ({count})
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-24 overflow-hidden rounded-full bg-muted">
-                          <div
-                            className="h-full bg-primary transition-all duration-500"
-                            style={{ width: `${percentage}%` }}
+              {pieData.length > 0 ? (
+                <div className="flex items-center gap-4">
+                  <div className="h-[200px] w-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    {pieData.map((item) => (
+                      <div key={item.name} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="h-3 w-3 rounded-full" 
+                            style={{ backgroundColor: item.color }}
                           />
+                          <span>{item.name}</span>
                         </div>
-                        <span className="text-xs text-muted-foreground w-10 text-right">
-                          {percentage.toFixed(0)}%
-                        </span>
+                        <span className="font-medium">{item.value}</span>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Recent Sales */}
-          <Card className="lg:col-span-2 shadow-card">
-            <CardHeader>
-              <CardTitle>Vendas Recentes</CardTitle>
-              <CardDescription>Últimas 5 vendas registradas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                </div>
-              ) : recentSales.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <ShoppingCart className="h-12 w-12 text-muted-foreground/50 mb-2" />
-                  <p className="text-muted-foreground">Nenhuma venda registrada</p>
+                    ))}
+                  </div>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Produtos</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recentSales.map((sale) => (
-                      <TableRow key={sale.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{sale.nome_fantasia || sale.razao_social}</p>
-                            <p className="text-xs text-muted-foreground">{sale.cnpj_cliente}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
-                          {sale.produtos || '-'}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {formatCurrency(Number(sale.valor_mensal))}
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge status={sale.status} />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+                  Nenhum dado disponível
+                </div>
               )}
             </CardContent>
           </Card>
+
+          {/* Top Sellers Bar Chart - Only for CEO/Backoffice */}
+          {(isCEO || isBackoffice) && (
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  Top Vendedores
+                </CardTitle>
+                <CardDescription>Desempenho por vendedor</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {barData.length > 0 ? (
+                  <div className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={barData} layout="vertical">
+                        <XAxis type="number" hide />
+                        <YAxis type="category" dataKey="nome" width={80} fontSize={12} />
+                        <Tooltip 
+                          formatter={(value, name) => [
+                            name === 'Valor' ? formatCurrency(Number(value)) : value,
+                            name
+                          ]}
+                        />
+                        <Legend />
+                        <Bar dataKey="Aprovadas" stackId="a" fill="#22c55e" />
+                        <Bar dataKey="Pendentes" stackId="a" fill="#f59e0b" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-[200px] text-muted-foreground">
+                    Nenhum dado disponível
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Seller view - their own stats */}
+          {isSeller && (
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  Sua Performance
+                </CardTitle>
+                <CardDescription>Seu desempenho de vendas</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Taxa de Aprovação</span>
+                    <span className="font-medium">{taxaAprovacaoGeral}%</span>
+                  </div>
+                  <Progress value={Number(taxaAprovacaoGeral)} className="h-2" />
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="text-center p-3 bg-green-50 rounded-lg">
+                    <p className="text-2xl font-bold text-green-600">{stats.aprovadas}</p>
+                    <p className="text-xs text-green-600">Aprovadas</p>
+                  </div>
+                  <div className="text-center p-3 bg-orange-50 rounded-lg">
+                    <p className="text-2xl font-bold text-orange-600">{stats.pendentes}</p>
+                    <p className="text-xs text-orange-600">Em Andamento</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
+
+        {/* Seller Rankings - Only for CEO/Backoffice */}
+        {(isCEO || isBackoffice) && sellerStats.length > 0 && (
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                Ranking de Vendedores
+              </CardTitle>
+              <CardDescription>Performance detalhada por vendedor</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Vendedor</TableHead>
+                    <TableHead className="text-center">Vendas</TableHead>
+                    <TableHead className="text-center">Aprovadas</TableHead>
+                    <TableHead className="text-center">Pendentes</TableHead>
+                    <TableHead className="text-center">Taxa</TableHead>
+                    <TableHead className="text-right">Valor Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sellerStats.map((seller, index) => (
+                    <TableRow key={seller.id}>
+                      <TableCell className="font-medium">
+                        {index === 0 && '🥇'}
+                        {index === 1 && '🥈'}
+                        {index === 2 && '🥉'}
+                        {index > 2 && index + 1}
+                      </TableCell>
+                      <TableCell className="font-medium">{seller.nome}</TableCell>
+                      <TableCell className="text-center">{seller.totalVendas}</TableCell>
+                      <TableCell className="text-center">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-700 text-sm font-medium">
+                          {seller.aprovadas}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-700 text-sm font-medium">
+                          {seller.pendentes}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Progress value={seller.taxaAprovacao} className="w-16 h-2" />
+                          <span className="text-xs text-muted-foreground w-10">
+                            {seller.taxaAprovacao.toFixed(0)}%
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(seller.valorTotal)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Recent Sales */}
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle>Vendas Recentes</CardTitle>
+            <CardDescription>Últimas 5 vendas registradas</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              </div>
+            ) : recentSales.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <ShoppingCart className="h-12 w-12 text-muted-foreground/50 mb-2" />
+                <p className="text-muted-foreground">Nenhuma venda registrada</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Produtos</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentSales.map((sale) => (
+                    <TableRow key={sale.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{sale.nome_fantasia || sale.razao_social}</p>
+                          <p className="text-xs text-muted-foreground">{sale.cnpj_cliente}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-[200px] truncate">
+                        {sale.produtos || '-'}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {formatCurrency(Number(sale.valor_mensal))}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={sale.status} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );

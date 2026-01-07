@@ -1,11 +1,89 @@
-import { useState } from 'react';
-import { MessageCircle, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
 import { ChatPanel } from './ChatPanel';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export const FloatingChatButton = () => {
   const [open, setOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { user, profile } = useAuth();
+
+  // Fetch unread direct messages count
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchUnreadCount = async () => {
+      const { count } = await supabase
+        .from('direct_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', user.id)
+        .is('read_at', null);
+
+      setUnreadCount(count || 0);
+    };
+
+    fetchUnreadCount();
+
+    // Subscribe to new direct messages
+    const channel = supabase
+      .channel('unread-dm-count')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'direct_messages',
+          filter: `receiver_id=eq.${user.id}`,
+        },
+        () => {
+          if (!open) {
+            setUnreadCount((prev) => prev + 1);
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'direct_messages',
+          filter: `receiver_id=eq.${user.id}`,
+        },
+        (payload) => {
+          // If message was marked as read, decrease count
+          if (payload.new && (payload.new as any).read_at && !(payload.old as any).read_at) {
+            setUnreadCount((prev) => Math.max(0, prev - 1));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, open]);
+
+  // Reset unread count when chat is opened
+  useEffect(() => {
+    if (open && user) {
+      // Refetch to get accurate count after viewing
+      const timer = setTimeout(async () => {
+        const { count } = await supabase
+          .from('direct_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('receiver_id', user.id)
+          .is('read_at', null);
+
+        setUnreadCount(count || 0);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [open, user]);
 
   return (
     <>
@@ -16,6 +94,13 @@ export const FloatingChatButton = () => {
         size="icon"
       >
         <MessageCircle className="h-6 w-6" />
+        {unreadCount > 0 && (
+          <Badge 
+            className="absolute -top-1 -right-1 h-5 min-w-5 px-1.5 bg-destructive text-destructive-foreground text-xs font-semibold animate-in zoom-in-50"
+          >
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </Badge>
+        )}
       </Button>
 
       {/* Chat Sheet */}

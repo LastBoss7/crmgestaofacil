@@ -13,6 +13,7 @@ import Sales from "./pages/Sales";
 import Reports from "./pages/Reports";
 import Users from "./pages/Users";
 import SaleHistory from "./pages/SaleHistory";
+import TeamInvites from "./pages/TeamInvites";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -83,6 +84,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <SaleHistory />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/equipe/convites"
+        element={
+          <ProtectedRoute>
+            <TeamInvites />
           </ProtectedRoute>
         }
       />

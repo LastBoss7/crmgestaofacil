@@ -109,83 +109,81 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
       .substring(0, 2);
   };
 
-  const getRoleColor = (userRole: string) => {
-    switch (userRole) {
-      case 'CEO':
-        return 'bg-amber-500';
-      case 'BACKOFFICE':
-        return 'bg-blue-500';
-      case 'SELLER':
-        return 'bg-green-500';
-      default:
-        return 'bg-muted';
-    }
+  const getRoleBadge = (userRole: string) => {
+    const styles: Record<string, string> = {
+      CEO: 'bg-amber-500/10 text-amber-500',
+      BACKOFFICE: 'bg-blue-500/10 text-blue-500',
+      SELLER: 'bg-emerald-500/10 text-emerald-500',
+    };
+    return styles[userRole] || 'bg-muted text-muted-foreground';
   };
 
   if (!companyId) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-        <Users className="h-12 w-12 mb-2" />
-        <p>Configure sua empresa para usar o chat</p>
+      <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8">
+        <div className="h-16 w-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+          <Users className="h-8 w-8" />
+        </div>
+        <p className="text-sm font-medium">Configure sua empresa</p>
+        <p className="text-xs text-muted-foreground/70">para usar o chat da equipe</p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 p-3 border-b bg-card/50">
-        <Users className="h-5 w-5 text-primary" />
-        <span className="font-semibold">Chat da Equipe</span>
-        <span className="text-xs text-muted-foreground ml-auto">
-          {messages.length} mensagens
-        </span>
-      </div>
-
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+      <ScrollArea className="flex-1 px-4 py-4" ref={scrollRef}>
         {loading ? (
-          <div className="flex items-center justify-center py-8">
+          <div className="flex items-center justify-center py-12">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-            <p className="text-sm">Nenhuma mensagem ainda</p>
-            <p className="text-xs">Seja o primeiro a enviar!</p>
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+              <Users className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-medium">Nenhuma mensagem</p>
+            <p className="text-xs text-muted-foreground/70">Seja o primeiro a enviar!</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {messages.map((msg) => {
+            {messages.map((msg, index) => {
               const isOwn = msg.user_id === user?.id;
+              const showAvatar = index === 0 || messages[index - 1].user_id !== msg.user_id;
+              
               return (
                 <div
                   key={msg.id}
-                  className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}
+                  className={`flex gap-2.5 ${isOwn ? 'flex-row-reverse' : ''}`}
                 >
-                  <Avatar className="h-8 w-8 shrink-0">
-                    <AvatarFallback className={getRoleColor(msg.user_role)}>
-                      {getInitials(msg.user_name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div
-                    className={`flex flex-col max-w-[75%] ${
-                      isOwn ? 'items-end' : 'items-start'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-medium">
-                        {isOwn ? 'Você' : msg.user_name}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {formatTime(msg.created_at)}
-                      </span>
-                    </div>
+                  {showAvatar ? (
+                    <Avatar className="h-8 w-8 shrink-0 mt-0.5">
+                      <AvatarFallback className={`text-xs font-medium ${getRoleBadge(msg.user_role)}`}>
+                        {getInitials(msg.user_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <div className="w-8 shrink-0" />
+                  )}
+                  <div className={`flex flex-col max-w-[75%] ${isOwn ? 'items-end' : 'items-start'}`}>
+                    {showAvatar && (
+                      <div className="flex items-center gap-2 mb-1 px-1">
+                        <span className="text-xs font-medium text-foreground/80">
+                          {isOwn ? 'Você' : msg.user_name}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatTime(msg.created_at)}
+                        </span>
+                      </div>
+                    )}
                     <div
-                      className={`rounded-2xl px-4 py-2 ${
+                      className={`rounded-2xl px-3.5 py-2 ${
                         isOwn
-                          ? 'bg-primary text-primary-foreground rounded-br-md'
-                          : 'bg-muted rounded-bl-md'
+                          ? 'bg-primary text-primary-foreground rounded-tr-md'
+                          : 'bg-muted/70 text-foreground rounded-tl-md'
                       }`}
                     >
-                      <p className="text-sm whitespace-pre-wrap break-words">
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                         {msg.message}
                       </p>
                     </div>
@@ -197,7 +195,7 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
         )}
       </ScrollArea>
 
-      <div className="p-3 border-t bg-card/50">
+      <div className="p-4 border-t border-border/50">
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -206,12 +204,17 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
           className="flex gap-2"
         >
           <Input
-            placeholder="Digite sua mensagem..."
+            placeholder="Escreva uma mensagem..."
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            className="flex-1"
+            className="flex-1 h-10 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/50 placeholder:text-muted-foreground/50"
           />
-          <Button type="submit" size="icon" disabled={!newMessage.trim()}>
+          <Button 
+            type="submit" 
+            size="icon" 
+            disabled={!newMessage.trim()}
+            className="h-10 w-10 shrink-0"
+          >
             <Send className="h-4 w-4" />
           </Button>
         </form>

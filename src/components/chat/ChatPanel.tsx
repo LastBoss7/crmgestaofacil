@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
 import { TeamChat } from './TeamChat';
 import { DirectMessages } from './DirectMessages';
 import { Users, MessageSquare } from 'lucide-react';
@@ -43,18 +42,26 @@ export const ChatPanel = () => {
   }, [user]);
 
   return (
-    <Card className="h-[500px] overflow-hidden border-sidebar-border bg-sidebar/50 backdrop-blur">
+    <div className="h-full flex flex-col bg-background">
       <Tabs defaultValue="team" className="h-full flex flex-col">
-        <TabsList className="grid w-full grid-cols-2 rounded-none border-b bg-transparent">
-          <TabsTrigger value="team" className="gap-2 data-[state=active]:bg-primary/10">
-            <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Equipe</span>
-          </TabsTrigger>
-          <TabsTrigger value="direct" className="gap-2 data-[state=active]:bg-primary/10">
-            <MessageSquare className="h-4 w-4" />
-            <span className="hidden sm:inline">Privado</span>
-          </TabsTrigger>
-        </TabsList>
+        <div className="px-4 pt-2">
+          <TabsList className="w-full h-10 p-1 bg-muted/50 rounded-lg">
+            <TabsTrigger 
+              value="team" 
+              className="flex-1 h-8 gap-2 rounded-md text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+            >
+              <Users className="h-4 w-4" />
+              Equipe
+            </TabsTrigger>
+            <TabsTrigger 
+              value="direct" 
+              className="flex-1 h-8 gap-2 rounded-md text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+            >
+              <MessageSquare className="h-4 w-4" />
+              Privado
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="team" className="flex-1 m-0 overflow-hidden">
           <TeamChat companyId={companyId} />
@@ -64,6 +71,6 @@ export const ChatPanel = () => {
           <DirectMessages companyId={companyId} />
         </TabsContent>
       </Tabs>
-    </Card>
+    </div>
   );
 };

@@ -76,6 +76,47 @@ export type Database = {
           },
         ]
       }
+      sale_history: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          changed_by_name: string
+          field_changed: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          sale_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          changed_by_name: string
+          field_changed: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          sale_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          changed_by_name?: string
+          field_changed?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          sale_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_history_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales: {
         Row: {
           cnpj_cliente: string

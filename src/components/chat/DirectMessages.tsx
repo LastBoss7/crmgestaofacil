@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Send, MessageSquare, ArrowLeft, Circle } from 'lucide-react';
+import { Send, MessageSquare, ArrowLeft, Check, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface DirectMessage {
@@ -213,9 +213,12 @@ export const DirectMessages = ({ companyId }: DirectMessagesProps) => {
 
   if (!companyId) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-        <MessageSquare className="h-12 w-12 mb-2" />
-        <p>Configure sua empresa para usar mensagens</p>
+      <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8">
+        <div className="h-16 w-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+          <MessageSquare className="h-8 w-8" />
+        </div>
+        <p className="text-sm font-medium">Configure sua empresa</p>
+        <p className="text-xs text-muted-foreground/70">para usar mensagens privadas</p>
       </div>
     );
   }
@@ -224,57 +227,72 @@ export const DirectMessages = ({ companyId }: DirectMessagesProps) => {
   if (selectedMember) {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex items-center gap-3 p-3 border-b bg-card/50">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 shrink-0"
             onClick={() => setSelectedMember(null)}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-primary text-primary-foreground">
+          <Avatar className="h-9 w-9">
+            <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
               {getInitials(selectedMember.nome)}
             </AvatarFallback>
           </Avatar>
-          <span className="font-semibold">{selectedMember.nome}</span>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-sm truncate">{selectedMember.nome}</p>
+            <p className="text-xs text-muted-foreground truncate">{selectedMember.email}</p>
+          </div>
         </div>
 
-        <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+        <ScrollArea className="flex-1 px-4 py-4" ref={scrollRef}>
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-              <p className="text-sm">Nenhuma mensagem ainda</p>
-              <p className="text-xs">Comece uma conversa!</p>
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+                <MessageSquare className="h-6 w-6" />
+              </div>
+              <p className="text-sm font-medium">Nenhuma mensagem</p>
+              <p className="text-xs text-muted-foreground/70">Comece uma conversa!</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {messages.map((msg) => {
+            <div className="space-y-3">
+              {messages.map((msg, index) => {
                 const isOwn = msg.sender_id === user?.id;
+                const showTime = index === 0 || messages[index - 1].sender_id !== msg.sender_id;
+                
                 return (
                   <div
                     key={msg.id}
-                    className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}
+                    className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div
-                      className={`flex flex-col max-w-[75%] ${
-                        isOwn ? 'items-end' : 'items-start'
-                      }`}
-                    >
-                      <span className="text-xs text-muted-foreground mb-1">
-                        {formatTime(msg.created_at)}
-                      </span>
+                    <div className={`flex flex-col max-w-[80%] ${isOwn ? 'items-end' : 'items-start'}`}>
+                      {showTime && (
+                        <span className="text-[10px] text-muted-foreground mb-1 px-1">
+                          {formatTime(msg.created_at)}
+                        </span>
+                      )}
                       <div
-                        className={`rounded-2xl px-4 py-2 ${
+                        className={`rounded-2xl px-3.5 py-2 ${
                           isOwn
-                            ? 'bg-primary text-primary-foreground rounded-br-md'
-                            : 'bg-muted rounded-bl-md'
+                            ? 'bg-primary text-primary-foreground rounded-tr-md'
+                            : 'bg-muted/70 text-foreground rounded-tl-md'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap break-words">
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                           {msg.message}
                         </p>
                       </div>
+                      {isOwn && (
+                        <div className="flex items-center gap-1 mt-0.5 px-1">
+                          {msg.read_at ? (
+                            <CheckCheck className="h-3 w-3 text-primary" />
+                          ) : (
+                            <Check className="h-3 w-3 text-muted-foreground" />
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
@@ -283,7 +301,7 @@ export const DirectMessages = ({ companyId }: DirectMessagesProps) => {
           )}
         </ScrollArea>
 
-        <div className="p-3 border-t bg-card/50">
+        <div className="p-4 border-t border-border/50">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -292,12 +310,17 @@ export const DirectMessages = ({ companyId }: DirectMessagesProps) => {
             className="flex gap-2"
           >
             <Input
-              placeholder="Digite sua mensagem..."
+              placeholder="Escreva uma mensagem..."
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              className="flex-1"
+              className="flex-1 h-10 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/50 placeholder:text-muted-foreground/50"
             />
-            <Button type="submit" size="icon" disabled={!newMessage.trim()}>
+            <Button 
+              type="submit" 
+              size="icon" 
+              disabled={!newMessage.trim()}
+              className="h-10 w-10 shrink-0"
+            >
               <Send className="h-4 w-4" />
             </Button>
           </form>
@@ -309,44 +332,40 @@ export const DirectMessages = ({ companyId }: DirectMessagesProps) => {
   // Members list view
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 p-3 border-b bg-card/50">
-        <MessageSquare className="h-5 w-5 text-primary" />
-        <span className="font-semibold">Mensagens Privadas</span>
-      </div>
-
       <ScrollArea className="flex-1">
         {loading ? (
-          <div className="flex items-center justify-center py-8">
+          <div className="flex items-center justify-center py-12">
             <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         ) : members.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-            <p className="text-sm">Nenhum membro na equipe</p>
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+              <MessageSquare className="h-6 w-6" />
+            </div>
+            <p className="text-sm font-medium">Nenhum membro</p>
+            <p className="text-xs text-muted-foreground/70">na equipe</p>
           </div>
         ) : (
-          <div className="divide-y">
+          <div className="py-2">
             {members.map((member) => (
               <button
                 key={member.id}
                 onClick={() => setSelectedMember(member)}
-                className="w-full flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors text-left"
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left"
               >
-                <div className="relative">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      {getInitials(member.nome)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <Circle className="absolute bottom-0 right-0 h-3 w-3 fill-green-500 text-green-500" />
-                </div>
+                <Avatar className="h-10 w-10 shrink-0">
+                  <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
+                    {getInitials(member.nome)}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{member.nome}</p>
+                  <p className="font-medium text-sm truncate">{member.nome}</p>
                   <p className="text-xs text-muted-foreground truncate">
                     {member.email}
                   </p>
                 </div>
                 {member.unreadCount && member.unreadCount > 0 ? (
-                  <Badge variant="default" className="h-5 min-w-5 px-1.5">
+                  <Badge className="h-5 min-w-5 px-1.5 bg-primary text-primary-foreground text-xs">
                     {member.unreadCount}
                   </Badge>
                 ) : null}

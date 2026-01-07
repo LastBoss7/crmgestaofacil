@@ -8,6 +8,7 @@ export interface Profile {
   email: string;
   active: boolean;
   created_at: string;
+  avatar_url?: string | null;
 }
 
 export interface UserRole {

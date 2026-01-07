@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = async (userId: string, retries = 3) => {
+  const fetchUserData = async (userId: string, retries = 5) => {
     try {
       // Fetch profile
       const { data: profileData } = await supabase
@@ -42,19 +42,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Fetch role with retry logic for new signups
-      const { data: roleData } = await supabase
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
         .maybeSingle();
 
-      if (roleData) {
+      if (roleData?.role) {
         setRole(roleData.role as AppRole);
       } else if (retries > 0) {
         // Role may not be created yet for new signups, retry after delay
+        console.log(`Role not found, retrying... (${retries} attempts left)`);
         setTimeout(() => {
           fetchUserData(userId, retries - 1);
-        }, 500);
+        }, 800);
+      } else {
+        console.warn('Could not fetch user role after retries');
       }
     } catch (error) {
       console.error('Error fetching user data:', error);

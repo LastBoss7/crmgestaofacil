@@ -14,9 +14,40 @@ export type Database = {
   }
   public: {
     Tables: {
+      companies: {
+        Row: {
+          cnpj: string
+          created_at: string
+          id: string
+          nome_fantasia: string | null
+          owner_id: string
+          razao_social: string
+          updated_at: string
+        }
+        Insert: {
+          cnpj: string
+          created_at?: string
+          id?: string
+          nome_fantasia?: string | null
+          owner_id: string
+          razao_social: string
+          updated_at?: string
+        }
+        Update: {
+          cnpj?: string
+          created_at?: string
+          id?: string
+          nome_fantasia?: string | null
+          owner_id?: string
+          razao_social?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active: boolean | null
+          company_id: string | null
           created_at: string | null
           email: string
           id: string
@@ -24,6 +55,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean | null
+          company_id?: string | null
           created_at?: string | null
           email: string
           id: string
@@ -31,12 +63,21 @@ export type Database = {
         }
         Update: {
           active?: boolean | null
+          company_id?: string | null
           created_at?: string | null
           email?: string
           id?: string
           nome?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sale_comments: {
         Row: {
@@ -168,6 +209,53 @@ export type Database = {
         }
         Relationships: []
       }
+      team_invites: {
+        Row: {
+          company_id: string
+          created_at: string
+          email: string | null
+          expires_at: string
+          id: string
+          invite_code: string
+          invited_by: string
+          role: Database["public"]["Enums"]["app_role"]
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          email?: string | null
+          expires_at: string
+          id?: string
+          invite_code: string
+          invited_by: string
+          role?: Database["public"]["Enums"]["app_role"]
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          email?: string | null
+          expires_at?: string
+          id?: string
+          invite_code?: string
+          invited_by?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -194,6 +282,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cnpj_exists: { Args: { check_cnpj: string }; Returns: boolean }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

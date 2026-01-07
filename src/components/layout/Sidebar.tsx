@@ -8,20 +8,22 @@ import {
   LogOut,
   Building2,
   User,
-  BarChart3
+  BarChart3,
+  UserPlus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ROLE_LABELS } from '@/types/database';
 
 const Sidebar = () => {
   const location = useLocation();
-  const { profile, role, signOut, canManageUsers } = useAuth();
+  const { profile, role, signOut, canManageUsers, isCEO } = useAuth();
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Vendas', href: '/vendas', icon: ShoppingCart },
     { name: 'Relatórios', href: '/relatorios', icon: BarChart3 },
     ...(canManageUsers ? [{ name: 'Usuários', href: '/usuarios', icon: Users }] : []),
+    ...(isCEO ? [{ name: 'Convites', href: '/equipe/convites', icon: UserPlus }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;

@@ -139,10 +139,9 @@ const TeamInvites = () => {
     fetchData();
   };
 
-  const handleCopyLink = async (code: string) => {
-    const link = `${window.location.origin}/auth?invite=${code}`;
-    await navigator.clipboard.writeText(link);
-    toast.success('Link copiado para a área de transferência!');
+  const handleCopyCode = async (code: string) => {
+    await navigator.clipboard.writeText(code);
+    toast.success('Código copiado para a área de transferência!');
   };
 
   const handleDeleteInvite = async (id: string) => {
@@ -314,7 +313,7 @@ const TeamInvites = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>E-mail</TableHead>
+                    <TableHead>Código</TableHead>
                     <TableHead>Função</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Expira em</TableHead>
@@ -330,7 +329,9 @@ const TeamInvites = () => {
                     return (
                       <TableRow key={invite.id}>
                         <TableCell>
-                          {invite.email || <span className="text-muted-foreground">Qualquer</span>}
+                          <code className="px-2 py-1 bg-muted rounded text-xs font-mono">
+                            {invite.invite_code}
+                          </code>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">
@@ -350,7 +351,8 @@ const TeamInvites = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleCopyLink(invite.invite_code)}
+                                onClick={() => handleCopyCode(invite.invite_code)}
+                                title="Copiar código"
                               >
                                 <Copy className="h-4 w-4" />
                               </Button>

@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Send, MessageSquare, ArrowLeft, Check, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
@@ -23,6 +23,7 @@ interface TeamMember {
   id: string;
   nome: string;
   email: string;
+  avatar_url?: string | null;
   unreadCount?: number;
 }
 
@@ -54,7 +55,7 @@ export const DirectMessages = ({ companyId }: DirectMessagesProps) => {
       // Get all profiles from company
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, nome, email')
+        .select('id, nome, email, avatar_url')
         .eq('company_id', companyId);
 
       // Include owner if not in profiles
@@ -65,7 +66,7 @@ export const DirectMessages = ({ companyId }: DirectMessagesProps) => {
         if (!ownerExists) {
           const { data: ownerData } = await supabase
             .from('profiles')
-            .select('id, nome, email')
+            .select('id, nome, email, avatar_url')
             .eq('id', companyData.owner_id)
             .single();
           if (ownerData) {
@@ -237,6 +238,7 @@ export const DirectMessages = ({ companyId }: DirectMessagesProps) => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <Avatar className="h-9 w-9">
+            <AvatarImage src={selectedMember.avatar_url || undefined} alt={selectedMember.nome} />
             <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
               {getInitials(selectedMember.nome)}
             </AvatarFallback>
@@ -354,6 +356,7 @@ export const DirectMessages = ({ companyId }: DirectMessagesProps) => {
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors text-left"
               >
                 <Avatar className="h-10 w-10 shrink-0">
+                  <AvatarImage src={member.avatar_url || undefined} alt={member.nome} />
                   <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
                     {getInitials(member.nome)}
                   </AvatarFallback>

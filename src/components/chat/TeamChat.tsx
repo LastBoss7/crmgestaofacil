@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -17,6 +17,11 @@ interface TeamMessage {
   created_at: string;
 }
 
+interface UserAvatar {
+  id: string;
+  avatar_url: string | null;
+}
+
 interface TeamChatProps {
   companyId: string | null;
 }
@@ -26,7 +31,29 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
   const [messages, setMessages] = useState<TeamMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [userAvatars, setUserAvatars] = useState<Record<string, string | null>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Fetch user avatars
+  useEffect(() => {
+    if (!companyId) return;
+
+    const fetchAvatars = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, avatar_url');
+
+      if (data) {
+        const avatarMap: Record<string, string | null> = {};
+        data.forEach((p) => {
+          avatarMap[p.id] = p.avatar_url;
+        });
+        setUserAvatars(avatarMap);
+      }
+    };
+
+    fetchAvatars();
+  }, [companyId]);
 
   useEffect(() => {
     if (!companyId) return;
@@ -158,6 +185,7 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
                 >
                   {showAvatar ? (
                     <Avatar className="h-8 w-8 shrink-0 mt-0.5">
+                      <AvatarImage src={userAvatars[msg.user_id] || undefined} alt={msg.user_name} />
                       <AvatarFallback className={`text-xs font-medium ${getRoleBadge(msg.user_role)}`}>
                         {getInitials(msg.user_name)}
                       </AvatarFallback>

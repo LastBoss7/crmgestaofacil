@@ -30,6 +30,7 @@ const Sidebar = () => {
     { name: 'Relatórios', href: '/relatorios', icon: BarChart3 },
     ...(canManageUsers ? [{ name: 'Usuários', href: '/usuarios', icon: Users }] : []),
     ...(isCEO ? [{ name: 'Convites', href: '/equipe/convites', icon: UserPlus }] : []),
+    ...(isCEO ? [{ name: 'Configurações', href: '/configuracoes', icon: Settings }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;

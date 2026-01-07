@@ -20,9 +20,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ROLE_LABELS } from '@/types/database';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useState } from 'react';
 import NotificationsDropdown from '@/components/notifications/NotificationsDropdown';
+import AvatarUpload from '@/components/profile/AvatarUpload';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -65,13 +65,9 @@ const Sidebar = () => {
     return 'from-violet-500 to-purple-500';
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
+  const getRoleLabel = () => {
+    if (!role) return null;
+    return ROLE_LABELS[role];
   };
 
   const RoleIcon = getRoleIcon();
@@ -218,18 +214,16 @@ const Sidebar = () => {
 
         {/* User Profile */}
         <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.04]">
-          <Avatar className="h-10 w-10 border-2 border-white/10">
-            <AvatarFallback className={cn("bg-gradient-to-br text-white font-semibold text-sm", getRoleColor())}>
-              {profile?.nome ? getInitials(profile.nome) : 'U'}
-            </AvatarFallback>
-          </Avatar>
+          <AvatarUpload size="md" gradientColors={getRoleColor()} />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white truncate">
               {profile?.nome || 'Usuário'}
             </p>
             <p className="text-[10px] text-white/40 flex items-center gap-1">
               <RoleIcon className="h-3 w-3" />
-              {role ? ROLE_LABELS[role] : 'Carregando...'}
+              {getRoleLabel() || (
+                <span className="animate-pulse">Carregando...</span>
+              )}
             </p>
           </div>
           <Button

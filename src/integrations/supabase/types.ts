@@ -44,6 +44,47 @@ export type Database = {
         }
         Relationships: []
       }
+      direct_messages: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          message: string
+          read_at: string | null
+          receiver_id: string
+          sender_id: string
+          sender_name: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          message: string
+          read_at?: string | null
+          receiver_id: string
+          sender_id: string
+          sender_name: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          read_at?: string | null
+          receiver_id?: string
+          sender_id?: string
+          sender_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_messages_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active: boolean | null
@@ -249,6 +290,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "team_invites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_messages: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          message: string
+          user_id: string
+          user_name: string
+          user_role: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          message: string
+          user_id: string
+          user_name: string
+          user_role: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          user_id?: string
+          user_name?: string
+          user_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_messages_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"

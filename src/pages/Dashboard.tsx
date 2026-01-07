@@ -5,6 +5,7 @@ import { StatCard } from '@/components/ui/stat-card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
+import { ChatPanel } from '@/components/chat/ChatPanel';
 import { 
   ShoppingCart, 
   DollarSign, 
@@ -16,7 +17,8 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
-  Calendar
+  Calendar,
+  MessageSquare
 } from 'lucide-react';
 import {
   Card,
@@ -486,57 +488,65 @@ const Dashboard = () => {
           </Card>
         )}
 
-        {/* Recent Sales */}
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle>Vendas Recentes</CardTitle>
-            <CardDescription>Últimas 5 vendas registradas</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              </div>
-            ) : recentSales.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <ShoppingCart className="h-12 w-12 text-muted-foreground/50 mb-2" />
-                <p className="text-muted-foreground">Nenhuma venda registrada</p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Produtos</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentSales.map((sale) => (
-                    <TableRow key={sale.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{sale.nome_fantasia || sale.razao_social}</p>
-                          <p className="text-xs text-muted-foreground">{sale.cnpj_cliente}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {sale.produtos || '-'}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrency(Number(sale.valor_mensal))}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={sale.status} />
-                      </TableCell>
+        {/* Main Content Grid with Chat */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Recent Sales */}
+          <Card className="shadow-card lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Vendas Recentes</CardTitle>
+              <CardDescription>Últimas 5 vendas registradas</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                </div>
+              ) : recentSales.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <ShoppingCart className="h-12 w-12 text-muted-foreground/50 mb-2" />
+                  <p className="text-muted-foreground">Nenhuma venda registrada</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Produtos</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {recentSales.map((sale) => (
+                      <TableRow key={sale.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{sale.nome_fantasia || sale.razao_social}</p>
+                            <p className="text-xs text-muted-foreground">{sale.cnpj_cliente}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">
+                          {sale.produtos || '-'}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {formatCurrency(Number(sale.valor_mensal))}
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={sale.status} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Chat Panel */}
+          <div className="lg:col-span-1">
+            <ChatPanel />
+          </div>
+        </div>
       </div>
     </Layout>
   );

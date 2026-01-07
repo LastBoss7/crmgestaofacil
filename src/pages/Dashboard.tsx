@@ -112,32 +112,10 @@ const Dashboard = () => {
     { name: 'Relatórios', color: 'from-pink-500 to-rose-500', count: 12, users: sellers.slice(0, 4) },
   ];
 
-  // Storage usage (mock data - based on sales)
-  const storageUsed = Math.min(stats.total * 0.5, 50);
-  const storageTotal = 100;
 
   return (
     <Layout>
       <div className="space-y-8 animate-fade-in max-w-6xl">
-        {/* Storage Bar */}
-        <div className="glass rounded-3xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold text-white">Basic Storage</h3>
-              <p className="text-sm text-white/40">{storageUsed.toFixed(0)}GB de {storageTotal}GB usado</p>
-            </div>
-            <button className="px-4 py-2 rounded-full bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors shadow-active">
-              Upgrade
-            </button>
-          </div>
-          <div className="relative h-3 bg-white/10 rounded-full overflow-hidden">
-            <div 
-              className="absolute inset-y-0 left-0 bg-gradient-to-r from-violet-500 to-purple-600 rounded-full transition-all duration-500"
-              style={{ width: `${(storageUsed / storageTotal) * 100}%` }}
-            />
-          </div>
-        </div>
-
         {/* Breadcrumbs */}
         <div className="flex items-center gap-2 text-sm">
           <span className="text-white/40">Dashboard</span>

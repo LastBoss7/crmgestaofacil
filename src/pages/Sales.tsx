@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/layout/Layout';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
-import { Plus, Search, Filter, Eye } from 'lucide-react';
+import { Plus, Search, Filter, Eye, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SaleComments } from '@/components/sales/SaleComments';
@@ -54,6 +55,7 @@ interface SaleWithSeller extends Sale {
 }
 
 const Sales = () => {
+  const navigate = useNavigate();
   const { user, isSeller } = useAuth();
   const [sales, setSales] = useState<SaleWithSeller[]>([]);
   const [sellers, setSellers] = useState<Record<string, Profile>>({});
@@ -460,6 +462,19 @@ const Sales = () => {
                     <p className="text-orange-800">{selectedSale.motivo_pendencia}</p>
                   </div>
                 )}
+
+                {/* History Link */}
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => navigate(`/vendas/${selectedSale.id}/historico`)}
+                  >
+                    <History className="h-4 w-4" />
+                    Ver Histórico de Alterações
+                  </Button>
+                </div>
 
                 {/* Chat/Comments Section */}
                 <SaleComments saleId={selectedSale.id} />

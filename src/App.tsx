@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Sales from "./pages/Sales";
 import Reports from "./pages/Reports";
 import Users from "./pages/Users";
+import SaleHistory from "./pages/SaleHistory";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -74,6 +75,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Reports />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/vendas/:saleId/historico"
+        element={
+          <ProtectedRoute>
+            <SaleHistory />
           </ProtectedRoute>
         }
       />

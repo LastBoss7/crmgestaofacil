@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useSaleHistory } from '@/hooks/useSaleHistory';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -23,6 +24,7 @@ interface SaleStatusActionsProps {
 
 export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatusActionsProps) {
   const { isCEO, isBackoffice, isSeller, user, profile, role } = useAuth();
+  const { recordStatusChange } = useSaleHistory();
   const [statusUpdate, setStatusUpdate] = useState({
     status: sale.status,
     motivo_pendencia: sale.motivo_pendencia || '',
@@ -56,6 +58,7 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
   const handleQuickAction = async (newStatus: SaleStatus, motivo?: string) => {
     setLoading(true);
 
+    const oldStatus = sale.status;
     const updateData: Partial<Sale> = { status: newStatus };
     if (motivo) {
       updateData.motivo_pendencia = motivo;
@@ -70,6 +73,9 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
       console.error('Error updating status:', error);
       toast.error('Erro ao atualizar status');
     } else {
+      // Record history
+      await recordStatusChange(sale.id, oldStatus, newStatus);
+
       // Add comment about the status change
       if (user && profile && role) {
         await supabase.from('sale_comments').insert({

@@ -2,45 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CRM Telecom Premium Design System - Apple-inspired Dark Theme */
+/* Cloud Storage Premium Design System - Glassmorphism Dark Theme */
 
 @layer base {
   :root {
-    /* Premium Dark Mode Base */
-    --background: 240 10% 4%;
+    /* Deep Midnight Purple Background */
+    --background: 252 15% 6%;
     --foreground: 0 0% 98%;
 
-    --card: 240 10% 6%;
+    --card: 252 20% 8%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 240 10% 8%;
+    --popover: 252 20% 10%;
     --popover-foreground: 0 0% 98%;
 
-    /* Primary - Elegant Violet */
-    --primary: 270 80% 60%;
+    /* Primary - Neon Violet */
+    --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary */
-    --secondary: 240 10% 12%;
+    --secondary: 252 15% 12%;
     --secondary-foreground: 0 0% 90%;
 
-    --muted: 240 10% 14%;
-    --muted-foreground: 240 5% 55%;
+    --muted: 252 15% 15%;
+    --muted-foreground: 252 10% 50%;
 
-    /* Accent - Vibrant Purple */
-    --accent: 280 85% 65%;
+    /* Accent - Electric Purple */
+    --accent: 270 90% 60%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 10% 14%;
-    --input: 240 10% 14%;
-    --ring: 270 80% 60%;
+    --border: 252 20% 15%;
+    --input: 252 20% 12%;
+    --ring: 262 83% 58%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Status Colors - Refined */
+    /* Status Colors */
     --status-nova: 220 90% 60%;
     --status-analise: 45 95% 55%;
     --status-pendencia: 25 95% 55%;
@@ -48,34 +48,37 @@
     --status-instalada: 270 70% 60%;
     --status-cancelada: 0 75% 55%;
 
-    /* Sidebar - Deep Purple */
-    --sidebar-background: 260 20% 6%;
+    /* Sidebar - Deep Space */
+    --sidebar-background: 252 20% 5%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 270 80% 60%;
+    --sidebar-primary: 262 83% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 260 15% 12%;
+    --sidebar-accent: 252 20% 10%;
     --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 260 15% 12%;
-    --sidebar-ring: 270 80% 60%;
+    --sidebar-border: 252 20% 12%;
+    --sidebar-ring: 262 83% 58%;
 
     /* Premium Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(270, 80%, 60%) 0%, hsl(290, 70%, 50%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(260, 20%, 6%) 0%, hsl(270, 30%, 12%) 50%, hsl(260, 20%, 6%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(240, 10%, 8%) 0%, hsl(240, 10%, 6%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(270, 80%, 60%, 0.15) 0%, transparent 70%);
-    --gradient-surface: linear-gradient(135deg, hsl(240, 10%, 10%) 0%, hsl(260, 15%, 8%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(262, 83%, 58%) 0%, hsl(280, 75%, 50%) 100%);
+    --gradient-hero: radial-gradient(ellipse at top, hsl(262, 40%, 15%) 0%, hsl(252, 15%, 6%) 60%);
+    --gradient-card: linear-gradient(180deg, hsl(252, 20%, 10%) 0%, hsl(252, 20%, 8%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(262, 83%, 58%, 0.2) 0%, transparent 70%);
+    --gradient-surface: linear-gradient(135deg, hsl(252, 20%, 10%) 0%, hsl(262, 25%, 8%) 100%);
+    --gradient-folder-purple: linear-gradient(135deg, hsl(262, 80%, 55%) 0%, hsl(280, 70%, 45%) 100%);
+    --gradient-folder-orange: linear-gradient(135deg, hsl(30, 95%, 55%) 0%, hsl(15, 90%, 50%) 100%);
+    --gradient-folder-pink: linear-gradient(135deg, hsl(330, 85%, 55%) 0%, hsl(350, 80%, 50%) 100%);
     
-    /* Shadows - Subtle & Premium */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-    --shadow-md: 0 4px 12px -1px rgb(0 0 0 / 0.4), 0 2px 6px -2px rgb(0 0 0 / 0.3);
-    --shadow-lg: 0 10px 25px -3px rgb(0 0 0 / 0.5), 0 4px 10px -4px rgb(0 0 0 / 0.4);
-    --shadow-glow: 0 0 40px -10px hsl(270 80% 60% / 0.3);
-    --shadow-card: 0 4px 24px -4px hsl(270 80% 50% / 0.15), 0 0 0 1px hsl(270 80% 60% / 0.05);
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+    --shadow-md: 0 4px 12px -1px rgb(0 0 0 / 0.5), 0 2px 6px -2px rgb(0 0 0 / 0.4);
+    --shadow-lg: 0 10px 25px -3px rgb(0 0 0 / 0.6), 0 4px 10px -4px rgb(0 0 0 / 0.5);
+    --shadow-glow: 0 0 50px -15px hsl(262 83% 58% / 0.4);
+    --shadow-card: 0 8px 32px -8px hsl(262 80% 50% / 0.2), 0 0 0 1px hsl(262 80% 60% / 0.08);
+    --shadow-active: 0 0 30px -5px hsl(262 83% 58% / 0.6);
   }
 
-  /* Light mode override - still dark themed but lighter */
   .light {
-    --background: 240 10% 4%;
+    --background: 252 15% 6%;
     --foreground: 0 0% 98%;
   }
 }

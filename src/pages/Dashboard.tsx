@@ -1,76 +1,22 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/layout/Layout';
-import { StatCard } from '@/components/ui/stat-card';
-import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
-import { ChatPanel } from '@/components/chat/ChatPanel';
 import { 
   ShoppingCart, 
-  DollarSign, 
-  Clock, 
   TrendingUp,
   Users,
-  BarChart3,
-  Target,
-  Download,
-  FileSpreadsheet,
   FileText,
-  Calendar,
-  MessageSquare
+  Clock,
+  ChevronRight,
+  Star,
+  MoreHorizontal,
+  Folder
 } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-} from 'recharts';
-import { 
-  exportToExcel, 
-  exportToPDF, 
-  filterByPeriod, 
-  getPeriodLabel,
-  PeriodFilter,
-  PERIOD_OPTIONS 
-} from '@/lib/export-utils';
-import { toast } from 'sonner';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
 interface SellerStats {
   id: string;
@@ -78,55 +24,42 @@ interface SellerStats {
   totalVendas: number;
   valorTotal: number;
   aprovadas: number;
-  pendentes: number;
-  taxaAprovacao: number;
 }
 
 const STATUS_COLORS: Record<SaleStatus, string> = {
-  NOVA: '#3b82f6',
-  EM_ANALISE: '#f59e0b',
-  PENDENCIA: '#ef4444',
-  APROVADA: '#22c55e',
-  INSTALADA: '#8b5cf6',
-  CANCELADA: '#6b7280',
+  NOVA: 'bg-blue-500',
+  EM_ANALISE: 'bg-amber-500',
+  PENDENCIA: 'bg-orange-500',
+  APROVADA: 'bg-emerald-500',
+  INSTALADA: 'bg-violet-500',
+  CANCELADA: 'bg-gray-500',
 };
 
 const Dashboard = () => {
-  const { user, profile, role, isSeller, isCEO, isBackoffice } = useAuth();
+  const { user, profile, isSeller, isCEO, isBackoffice } = useAuth();
   const [allSales, setAllSales] = useState<Sale[]>([]);
   const [sellers, setSellers] = useState<Profile[]>([]);
-  const [sellersMap, setSellersMap] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
-  const [periodFilter, setPeriodFilter] = useState<PeriodFilter>('30d');
 
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
 
-      // Fetch sales
-      const { data: salesData, error: salesError } = await supabase
+      const { data: salesData } = await supabase
         .from('sales')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (salesError) {
-        console.error('Error fetching sales:', salesError);
-      } else {
-        setAllSales((salesData || []) as Sale[]);
+      if (salesData) {
+        setAllSales(salesData as Sale[]);
       }
 
-      // Fetch sellers for CEO/Backoffice
       if (isCEO || isBackoffice) {
         const { data: profilesData } = await supabase
           .from('profiles')
           .select('*');
         
-        const profilesList = (profilesData || []) as Profile[];
-        setSellers(profilesList);
-        
-        const map: Record<string, Profile> = {};
-        profilesList.forEach(p => { map[p.id] = p; });
-        setSellersMap(map);
+        setSellers((profilesData || []) as Profile[]);
       }
 
       setLoading(false);
@@ -135,76 +68,16 @@ const Dashboard = () => {
     fetchData();
   }, [user, isSeller, isCEO, isBackoffice]);
 
-  // Filter sales by period
-  const sales = useMemo(() => {
-    return filterByPeriod(allSales, periodFilter);
-  }, [allSales, periodFilter]);
+  const sales = allSales;
 
-  // Calculate general stats
   const stats = useMemo(() => ({
     total: sales.length,
     valorTotal: sales.reduce((acc, sale) => acc + Number(sale.valor_mensal), 0),
     pendentes: sales.filter(s => s.status === 'NOVA' || s.status === 'EM_ANALISE' || s.status === 'PENDENCIA').length,
     aprovadas: sales.filter(s => s.status === 'APROVADA' || s.status === 'INSTALADA').length,
-    canceladas: sales.filter(s => s.status === 'CANCELADA').length,
   }), [sales]);
 
-  // Calculate status distribution for pie chart
-  const { pieData, statusCount } = useMemo(() => {
-    const count = sales.reduce((acc, sale) => {
-      acc[sale.status] = (acc[sale.status] || 0) + 1;
-      return acc;
-    }, {} as Record<SaleStatus, number>);
-
-    const data = Object.entries(count).map(([status, cnt]) => ({
-      name: SALE_STATUS_LABELS[status as SaleStatus],
-      value: cnt,
-      color: STATUS_COLORS[status as SaleStatus],
-    }));
-
-    return { pieData: data, statusCount: count };
-  }, [sales]);
-
-  // Calculate seller stats
-  const sellerStats: SellerStats[] = useMemo(() => {
-    return sellers.map(seller => {
-      const sellerSales = sales.filter(s => s.seller_id === seller.id);
-      const aprovadas = sellerSales.filter(s => s.status === 'APROVADA' || s.status === 'INSTALADA').length;
-      const pendentes = sellerSales.filter(s => s.status === 'NOVA' || s.status === 'EM_ANALISE' || s.status === 'PENDENCIA').length;
-      
-      return {
-        id: seller.id,
-        nome: seller.nome,
-        totalVendas: sellerSales.length,
-        valorTotal: sellerSales.reduce((acc, s) => acc + Number(s.valor_mensal), 0),
-        aprovadas,
-        pendentes,
-        taxaAprovacao: sellerSales.length > 0 ? (aprovadas / sellerSales.length) * 100 : 0,
-      };
-    }).filter(s => s.totalVendas > 0).sort((a, b) => b.valorTotal - a.valorTotal);
-  }, [sellers, sales]);
-
-  // Bar chart data for top sellers
-  const barData = useMemo(() => {
-    return sellerStats.slice(0, 5).map(s => ({
-      nome: s.nome.split(' ')[0],
-      Aprovadas: s.aprovadas,
-      Pendentes: s.pendentes,
-      Valor: s.valorTotal,
-    }));
-  }, [sellerStats]);
-
-  const recentSales = sales.slice(0, 5);
-
-  const handleExportExcel = () => {
-    exportToExcel(sales, sellersMap, `vendas-${periodFilter}`);
-    toast.success('Relatório Excel exportado!');
-  };
-
-  const handleExportPDF = () => {
-    exportToPDF(sales, sellersMap, getPeriodLabel(periodFilter), `vendas-${periodFilter}`);
-    toast.success('Relatório PDF exportado!');
-  };
+  const recentSales = sales.slice(0, 4);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -213,340 +86,242 @@ const Dashboard = () => {
     }).format(value);
   };
 
-  const taxaAprovacaoGeral = stats.total > 0 
-    ? ((stats.aprovadas / stats.total) * 100).toFixed(1) 
-    : '0';
+  const formatTimeAgo = (date: string) => {
+    const now = new Date();
+    const past = new Date(date);
+    const diff = Math.floor((now.getTime() - past.getTime()) / 1000 / 60);
+    
+    if (diff < 60) return `${diff}m atrás`;
+    if (diff < 1440) return `${Math.floor(diff / 60)}h atrás`;
+    return `${Math.floor(diff / 1440)}d atrás`;
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+  };
+
+  // Shared folders data
+  const sharedFolders = [
+    { name: 'Vendas Aprovadas', color: 'from-violet-500 to-purple-600', count: stats.aprovadas, users: sellers.slice(0, 3) },
+    { name: 'Em Análise', color: 'from-orange-500 to-amber-500', count: stats.pendentes, users: sellers.slice(0, 2) },
+    { name: 'Relatórios', color: 'from-pink-500 to-rose-500', count: 12, users: sellers.slice(0, 4) },
+  ];
+
+  // Storage usage (mock data - based on sales)
+  const storageUsed = Math.min(stats.total * 0.5, 50);
+  const storageTotal = 100;
 
   return (
     <Layout>
-      <div className="space-y-8 animate-fade-in">
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Bem-vindo, {profile?.nome || 'Usuário'}! 
-              {isSeller && ' Aqui estão suas vendas.'}
-              {(isCEO || isBackoffice) && ' Visão geral do sistema.'}
-            </p>
+      <div className="space-y-8 animate-fade-in max-w-6xl">
+        {/* Storage Bar */}
+        <div className="glass rounded-3xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold text-white">Basic Storage</h3>
+              <p className="text-sm text-white/40">{storageUsed.toFixed(0)}GB de {storageTotal}GB usado</p>
+            </div>
+            <button className="px-4 py-2 rounded-full bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors shadow-active">
+              Upgrade
+            </button>
+          </div>
+          <div className="relative h-3 bg-white/10 rounded-full overflow-hidden">
+            <div 
+              className="absolute inset-y-0 left-0 bg-gradient-to-r from-violet-500 to-purple-600 rounded-full transition-all duration-500"
+              style={{ width: `${(storageUsed / storageTotal) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Breadcrumbs */}
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-white/40">Dashboard</span>
+          <ChevronRight className="h-4 w-4 text-white/20" />
+          <span className="text-white/40">Overview</span>
+          <ChevronRight className="h-4 w-4 text-white/20" />
+          <span className="text-white">Atividade Recente</span>
+        </div>
+
+        {/* Recent Edited Section */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-white">Editados Recentemente</h2>
+            <button className="text-sm text-violet-400 hover:text-violet-300 transition-colors">Ver tudo</button>
           </div>
           
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Period Filter */}
-            <Select value={periodFilter} onValueChange={(v) => setPeriodFilter(v as PeriodFilter)}>
-              <SelectTrigger className="w-[180px]">
-                <Calendar className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Período" />
-              </SelectTrigger>
-              <SelectContent>
-                {PERIOD_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Export Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <Download className="h-4 w-4" />
-                  Exportar
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleExportExcel} className="gap-2 cursor-pointer">
-                  <FileSpreadsheet className="h-4 w-4 text-green-600" />
-                  Exportar Excel (.xlsx)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportPDF} className="gap-2 cursor-pointer">
-                  <FileText className="h-4 w-4 text-red-600" />
-                  Exportar PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {recentSales.map((sale) => (
+              <div 
+                key={sale.id}
+                className="glass rounded-2xl p-5 hover:bg-white/[0.04] transition-all duration-200 cursor-pointer group"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/20">
+                    <FileText className="h-6 w-6 text-blue-400" />
+                  </div>
+                  <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-white/10">
+                    <MoreHorizontal className="h-4 w-4 text-white/40" />
+                  </button>
+                </div>
+                <h3 className="text-sm font-medium text-white truncate mb-1">
+                  {sale.nome_fantasia || sale.razao_social}
+                </h3>
+                <div className="flex items-center gap-2 text-xs text-white/40">
+                  <Clock className="h-3 w-3" />
+                  <span>Editado {formatTimeAgo(sale.updated_at || sale.created_at)}</span>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <div className={cn("w-2 h-2 rounded-full", STATUS_COLORS[sale.status])} />
+                  <span className="text-xs text-white/50">{SALE_STATUS_LABELS[sale.status]}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Total de Vendas"
-            value={stats.total}
-            icon={ShoppingCart}
-            description="Vendas registradas"
-          />
-          <StatCard
-            title="Valor Total Mensal"
-            value={formatCurrency(stats.valorTotal)}
-            icon={DollarSign}
-            description="Receita recorrente"
-          />
-          <StatCard
-            title="Em Andamento"
-            value={stats.pendentes}
-            icon={Clock}
-            description="Aguardando processamento"
-          />
-          <StatCard
-            title="Taxa de Aprovação"
-            value={`${taxaAprovacaoGeral}%`}
-            icon={Target}
-            description={`${stats.aprovadas} aprovadas de ${stats.total}`}
-          />
-        </div>
-
-        {/* Charts Row */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Status Pie Chart */}
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
-                Distribuição por Status
-              </CardTitle>
-              <CardDescription>Visão geral das vendas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {pieData.length > 0 ? (
-                <div className="flex items-center gap-4">
-                  <div className="h-[200px] w-[200px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={pieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={50}
-                          outerRadius={80}
-                          paddingAngle={2}
-                          dataKey="value"
-                        >
-                          {pieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
+        {/* Shared Folders Section */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-white">Pastas Compartilhadas</h2>
+            <button className="text-sm text-violet-400 hover:text-violet-300 transition-colors">Ver tudo</button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {sharedFolders.map((folder, index) => (
+              <div 
+                key={index}
+                className="glass rounded-2xl p-5 hover:bg-white/[0.04] transition-all duration-200 cursor-pointer group"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className={cn("p-3 rounded-xl bg-gradient-to-br", folder.color)}>
+                    <Folder className="h-6 w-6 text-white" />
                   </div>
-                  <div className="flex-1 space-y-2">
-                    {pieData.map((item) => (
-                      <div key={item.name} className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="h-3 w-3 rounded-full" 
-                            style={{ backgroundColor: item.color }}
-                          />
-                          <span>{item.name}</span>
-                        </div>
-                        <span className="font-medium">{item.value}</span>
-                      </div>
-                    ))}
-                  </div>
+                  <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-white/10">
+                    <Star className="h-4 w-4 text-white/40" />
+                  </button>
                 </div>
-              ) : (
-                <div className="flex items-center justify-center h-[200px] text-muted-foreground">
-                  Nenhum dado disponível
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Top Sellers Bar Chart - Only for CEO/Backoffice */}
-          {(isCEO || isBackoffice) && (
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  Top Vendedores
-                </CardTitle>
-                <CardDescription>Desempenho por vendedor</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {barData.length > 0 ? (
-                  <div className="h-[200px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={barData} layout="vertical">
-                        <XAxis type="number" hide />
-                        <YAxis type="category" dataKey="nome" width={80} fontSize={12} />
-                        <Tooltip 
-                          formatter={(value, name) => [
-                            name === 'Valor' ? formatCurrency(Number(value)) : value,
-                            name
-                          ]}
-                        />
-                        <Legend />
-                        <Bar dataKey="Aprovadas" stackId="a" fill="#22c55e" />
-                        <Bar dataKey="Pendentes" stackId="a" fill="#f59e0b" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-[200px] text-muted-foreground">
-                    Nenhum dado disponível
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Seller view - their own stats */}
-          {isSeller && (
-            <Card className="shadow-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-primary" />
-                  Sua Performance
-                </CardTitle>
-                <CardDescription>Seu desempenho de vendas</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Taxa de Aprovação</span>
-                    <span className="font-medium">{taxaAprovacaoGeral}%</span>
-                  </div>
-                  <Progress value={Number(taxaAprovacaoGeral)} className="h-2" />
-                </div>
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <p className="text-2xl font-bold text-green-600">{stats.aprovadas}</p>
-                    <p className="text-xs text-green-600">Aprovadas</p>
-                  </div>
-                  <div className="text-center p-3 bg-orange-50 rounded-lg">
-                    <p className="text-2xl font-bold text-orange-600">{stats.pendentes}</p>
-                    <p className="text-xs text-orange-600">Em Andamento</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Seller Rankings - Only for CEO/Backoffice */}
-        {(isCEO || isBackoffice) && sellerStats.length > 0 && (
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                Ranking de Vendedores
-              </CardTitle>
-              <CardDescription>Performance detalhada por vendedor</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">#</TableHead>
-                    <TableHead>Vendedor</TableHead>
-                    <TableHead className="text-center">Vendas</TableHead>
-                    <TableHead className="text-center">Aprovadas</TableHead>
-                    <TableHead className="text-center">Pendentes</TableHead>
-                    <TableHead className="text-center">Taxa</TableHead>
-                    <TableHead className="text-right">Valor Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sellerStats.map((seller, index) => (
-                    <TableRow key={seller.id}>
-                      <TableCell className="font-medium">
-                        {index === 0 && '🥇'}
-                        {index === 1 && '🥈'}
-                        {index === 2 && '🥉'}
-                        {index > 2 && index + 1}
-                      </TableCell>
-                      <TableCell className="font-medium">{seller.nome}</TableCell>
-                      <TableCell className="text-center">{seller.totalVendas}</TableCell>
-                      <TableCell className="text-center">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-700 text-sm font-medium">
-                          {seller.aprovadas}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-100 text-orange-700 text-sm font-medium">
-                          {seller.pendentes}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <Progress value={seller.taxaAprovacao} className="w-16 h-2" />
-                          <span className="text-xs text-muted-foreground w-10">
-                            {seller.taxaAprovacao.toFixed(0)}%
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatCurrency(seller.valorTotal)}
-                      </TableCell>
-                    </TableRow>
+                <h3 className="text-sm font-medium text-white mb-1">{folder.name}</h3>
+                <p className="text-xs text-white/40 mb-3">{folder.count} itens</p>
+                
+                {/* User avatars */}
+                <div className="flex -space-x-2">
+                  {folder.users.slice(0, 3).map((user, idx) => (
+                    <Avatar key={idx} className="h-7 w-7 border-2 border-[hsl(252,20%,8%)]">
+                      <AvatarFallback className="text-[10px] bg-gradient-to-br from-violet-500 to-purple-600 text-white">
+                        {getInitials(user.nome)}
+                      </AvatarFallback>
+                    </Avatar>
                   ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Main Content Grid with Chat */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Recent Sales */}
-          <Card className="shadow-card lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Vendas Recentes</CardTitle>
-              <CardDescription>Últimas 5 vendas registradas</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                  {folder.users.length > 3 && (
+                    <div className="h-7 w-7 rounded-full bg-white/10 border-2 border-[hsl(252,20%,8%)] flex items-center justify-center">
+                      <span className="text-[10px] text-white/60">+{folder.users.length - 3}</span>
+                    </div>
+                  )}
                 </div>
-              ) : recentSales.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <ShoppingCart className="h-12 w-12 text-muted-foreground/50 mb-2" />
-                  <p className="text-muted-foreground">Nenhuma venda registrada</p>
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Produtos</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {recentSales.map((sale) => (
-                      <TableRow key={sale.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{sale.nome_fantasia || sale.razao_social}</p>
-                            <p className="text-xs text-muted-foreground">{sale.cnpj_cliente}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
-                          {sale.produtos || '-'}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {formatCurrency(Number(sale.valor_mensal))}
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge status={sale.status} />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Chat Panel */}
-          <div className="lg:col-span-1">
-            <ChatPanel />
+              </div>
+            ))}
           </div>
         </div>
+
+        {/* Recent Files Table */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-white">Arquivos Recentes</h2>
+            <button className="text-sm text-violet-400 hover:text-violet-300 transition-colors">Ver tudo</button>
+          </div>
+          
+          <div className="glass rounded-2xl overflow-hidden">
+            {/* Table Header */}
+            <div className="grid grid-cols-3 gap-4 px-6 py-4 border-b border-white/[0.06] text-xs font-medium text-white/40 uppercase tracking-wider">
+              <span>Nome do Arquivo</span>
+              <span>Proprietário</span>
+              <span className="text-right">Data de Upload</span>
+            </div>
+            
+            {/* Table Body */}
+            <div className="divide-y divide-white/[0.06]">
+              {sales.slice(0, 6).map((sale) => (
+                <div 
+                  key={sale.id}
+                  className="grid grid-cols-3 gap-4 px-6 py-4 items-center hover:bg-white/[0.02] transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-white/5">
+                      <FileText className="h-4 w-4 text-violet-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white truncate">
+                        {sale.nome_fantasia || sale.razao_social}
+                      </p>
+                      <p className="text-xs text-white/40">{formatCurrency(Number(sale.valor_mensal))}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center">
+                    <div className="flex -space-x-2">
+                      <Avatar className="h-6 w-6 border-2 border-[hsl(252,20%,8%)]">
+                        <AvatarFallback className="text-[9px] bg-gradient-to-br from-violet-500 to-purple-600 text-white">
+                          {profile?.nome ? getInitials(profile.nome) : 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right">
+                    <p className="text-sm text-white/60">
+                      {new Date(sale.created_at).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Cards at Bottom */}
+        {(isCEO || isBackoffice) && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="glass rounded-2xl p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 rounded-xl bg-violet-500/10 border border-violet-500/20">
+                  <ShoppingCart className="h-5 w-5 text-violet-400" />
+                </div>
+                <span className="text-sm text-white/50">Total Vendas</span>
+              </div>
+              <p className="text-2xl font-bold text-white">{stats.total}</p>
+            </div>
+            
+            <div className="glass rounded-2xl p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                  <TrendingUp className="h-5 w-5 text-emerald-400" />
+                </div>
+                <span className="text-sm text-white/50">Aprovadas</span>
+              </div>
+              <p className="text-2xl font-bold text-white">{stats.aprovadas}</p>
+            </div>
+            
+            <div className="glass rounded-2xl p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                  <Clock className="h-5 w-5 text-amber-400" />
+                </div>
+                <span className="text-sm text-white/50">Pendentes</span>
+              </div>
+              <p className="text-2xl font-bold text-white">{stats.pendentes}</p>
+            </div>
+            
+            <div className="glass rounded-2xl p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                  <Users className="h-5 w-5 text-blue-400" />
+                </div>
+                <span className="text-sm text-white/50">Equipe</span>
+              </div>
+              <p className="text-2xl font-bold text-white">{sellers.length}</p>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );

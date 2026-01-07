@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Building2, Users, ArrowRight, Check, Eye, EyeOff, Briefcase, KeyRound } from 'lucide-react';
+import { Loader2, Building2, Users, ArrowRight, Check, Eye, EyeOff, ArrowLeft, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
@@ -56,7 +56,6 @@ const Auth = () => {
   const [cnpjValid, setCnpjValid] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
-  // Invite code validation
   const [checkingCode, setCheckingCode] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [inviteData, setInviteData] = useState<InviteData | null>(null);
@@ -136,7 +135,6 @@ const Auth = () => {
       return;
     }
 
-    // Get company name
     const { data: companyInfo } = await supabase
       .from('companies')
       .select('nome_fantasia, razao_social')
@@ -260,7 +258,6 @@ const Auth = () => {
       return;
     }
 
-    // Check if invite has email restriction
     if (inviteData.email && inviteData.email !== employeeData.email) {
       toast.error('Este convite é exclusivo para outro e-mail');
       return;
@@ -328,199 +325,200 @@ const Auth = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-white/60" />
-          <p className="text-white/40 text-sm">Carregando...</p>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <p className="text-muted-foreground text-sm">Carregando...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-violet-500/10 via-transparent to-transparent rounded-full blur-3xl" />
-        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-blue-500/10 via-transparent to-transparent rounded-full blur-3xl" />
-      </div>
-
-      {/* Noise Texture */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')] opacity-50" />
-
-      <div className="w-full max-w-md relative z-10">
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/10 shadow-2xl mb-6">
-            <Building2 className="h-8 w-8 text-white" />
+    <div className="min-h-screen bg-background flex">
+      {/* Left Panel - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-card border-r border-border flex-col justify-between p-12">
+        <div>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+              <ShoppingCart className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="text-xl font-semibold text-foreground">CRM Telecom</span>
           </div>
-          <h1 className="text-3xl font-semibold text-white tracking-tight">
-            CRM Telecom
-          </h1>
-          <p className="text-white/40 mt-2 text-sm">
-            Gestão inteligente de vendas corporativas
+        </div>
+
+        <div className="space-y-6">
+          <h2 className="text-4xl font-semibold text-foreground leading-tight">
+            Gerencie suas vendas<br />
+            de forma inteligente
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-md">
+            Plataforma completa para gestão de vendas corporativas com acompanhamento em tempo real.
           </p>
         </div>
 
-        {/* Card */}
-        <div className="bg-white/[0.03] backdrop-blur-2xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
-          
-          {/* Mode Switcher */}
-          <div className="flex border-b border-white/5">
-            <button
-              onClick={() => { setMode('login'); resetSignup(); }}
-              className={cn(
-                "flex-1 py-4 text-sm font-medium transition-all duration-200 relative",
-                mode === 'login' ? "text-white" : "text-white/40 hover:text-white/60"
-              )}
-            >
-              Entrar
-              {mode === 'login' && (
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-white rounded-full" />
-              )}
-            </button>
-            <button
-              onClick={() => { setMode('signup'); resetSignup(); }}
-              className={cn(
-                "flex-1 py-4 text-sm font-medium transition-all duration-200 relative",
-                mode === 'signup' ? "text-white" : "text-white/40 hover:text-white/60"
-              )}
-            >
-              Criar Conta
-              {mode === 'signup' && (
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-white rounded-full" />
-              )}
-            </button>
+        <div className="flex items-center gap-8">
+          <div className="text-center">
+            <p className="text-3xl font-semibold text-foreground">500+</p>
+            <p className="text-sm text-muted-foreground">Empresas</p>
+          </div>
+          <div className="w-px h-12 bg-border" />
+          <div className="text-center">
+            <p className="text-3xl font-semibold text-foreground">10k+</p>
+            <p className="text-sm text-muted-foreground">Vendas</p>
+          </div>
+          <div className="w-px h-12 bg-border" />
+          <div className="text-center">
+            <p className="text-3xl font-semibold text-foreground">98%</p>
+            <p className="text-sm text-muted-foreground">Satisfação</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel - Auth Form */}
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+              <ShoppingCart className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="text-xl font-semibold text-foreground">CRM Telecom</span>
           </div>
 
-          {/* Login Form */}
-          {mode === 'login' && (
-            <form onSubmit={handleLogin} className="p-8 space-y-5">
-              <div className="space-y-2">
-                <Label className="text-white/70 text-sm font-medium">E-mail</Label>
-                <Input
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={loginData.email}
-                  onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                  className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-0 rounded-xl"
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label className="text-white/70 text-sm font-medium">Senha</Label>
-                <div className="relative">
+          {/* Card */}
+          <div className="bg-card rounded-xl border border-border p-8">
+            {/* Mode Tabs */}
+            <div className="flex gap-1 p-1 bg-secondary rounded-lg mb-8">
+              <button
+                onClick={() => { setMode('login'); resetSignup(); }}
+                className={cn(
+                  "flex-1 py-2.5 text-sm font-medium rounded-md transition-all duration-150",
+                  mode === 'login' 
+                    ? "bg-background text-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Entrar
+              </button>
+              <button
+                onClick={() => { setMode('signup'); resetSignup(); }}
+                className={cn(
+                  "flex-1 py-2.5 text-sm font-medium rounded-md transition-all duration-150",
+                  mode === 'signup' 
+                    ? "bg-background text-foreground shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Criar Conta
+              </button>
+            </div>
+
+            {/* Login Form */}
+            {mode === 'login' && (
+              <form onSubmit={handleLogin} className="space-y-5 animate-fade-in">
+                <div className="space-y-2">
+                  <Label className="text-foreground text-sm">E-mail</Label>
                   <Input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={loginData.password}
-                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                    className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-0 rounded-xl pr-12"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={loginData.email}
+                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                    className="h-11"
                     required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
                 </div>
-              </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-foreground text-sm">Senha</Label>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={loginData.password}
+                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                      className="h-11 pr-11"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
 
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="w-full h-12 bg-white text-slate-900 hover:bg-white/90 rounded-xl font-semibold text-base transition-all duration-200"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  'Continuar'
+                <Button type="submit" disabled={isLoading} className="w-full h-11">
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Entrar'}
+                </Button>
+              </form>
+            )}
+
+            {/* Signup Flow */}
+            {mode === 'signup' && (
+              <div className="animate-fade-in">
+                {/* Type Selection */}
+                {signupType === null && (
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground text-center mb-6">
+                      Como deseja se cadastrar?
+                    </p>
+
+                    <button
+                      onClick={() => setSignupType('company')}
+                      className="w-full p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-secondary/50 transition-all duration-150 text-left group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                          <Building2 className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">Sou uma Empresa</p>
+                          <p className="text-sm text-muted-foreground">Cadastrar minha empresa</p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => setSignupType('employee')}
+                      className="w-full p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-secondary/50 transition-all duration-150 text-left group"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+                          <Users className="h-5 w-5 text-accent" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">Tenho um Convite</p>
+                          <p className="text-sm text-muted-foreground">Usar código de convite</p>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                      </div>
+                    </button>
+                  </div>
                 )}
-              </Button>
-            </form>
-          )}
 
-          {/* Signup Flow */}
-          {mode === 'signup' && (
-            <div className="p-8">
-              {/* Type Selection */}
-              {signupType === null && (
-                <div className="space-y-4 animate-fade-in">
-                  <div className="text-center mb-6">
-                    <h3 className="text-lg font-semibold text-white">Como deseja se cadastrar?</h3>
-                    <p className="text-white/40 text-sm mt-1">Escolha uma das opções abaixo</p>
-                  </div>
+                {/* Company Signup - Step 1 */}
+                {signupType === 'company' && signupStep === 1 && (
+                  <div className="space-y-5">
+                    <button
+                      onClick={() => setSignupType(null)}
+                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Voltar
+                    </button>
 
-                  <button
-                    onClick={() => setSignupType('company')}
-                    className="w-full p-5 rounded-2xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:border-white/20 transition-all duration-200 text-left group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 border border-violet-500/20">
-                        <Building2 className="h-6 w-6 text-violet-400" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-white font-medium">Sou uma Empresa</p>
-                        <p className="text-white/40 text-sm">Quero cadastrar minha empresa e equipe</p>
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-white/30 group-hover:text-white/60 transition-colors" />
+                    <div>
+                      <h3 className="text-lg font-medium text-foreground">Dados da Empresa</h3>
+                      <p className="text-sm text-muted-foreground">Passo 1 de 2</p>
                     </div>
-                  </button>
 
-                  <button
-                    onClick={() => setSignupType('employee')}
-                    className="w-full p-5 rounded-2xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] hover:border-white/20 transition-all duration-200 text-left group"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/20">
-                        <Briefcase className="h-6 w-6 text-blue-400" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-white font-medium">Sou Funcionário</p>
-                        <p className="text-white/40 text-sm">Tenho um código de convite da empresa</p>
-                      </div>
-                      <ArrowRight className="h-5 w-5 text-white/30 group-hover:text-white/60 transition-colors" />
-                    </div>
-                  </button>
-                </div>
-              )}
-
-              {/* Company Signup */}
-              {signupType === 'company' && (
-                <form onSubmit={handleCompanySignup}>
-                  {/* Step Indicator */}
-                  <div className="flex items-center justify-center gap-3 mb-8">
-                    <div className={cn(
-                      "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all duration-300",
-                      signupStep >= 1 ? "bg-white text-slate-900" : "bg-white/10 text-white/40"
-                    )}>
-                      {signupStep > 1 ? <Check className="h-4 w-4" /> : '1'}
-                    </div>
-                    <div className={cn(
-                      "w-12 h-0.5 rounded-full transition-all duration-300",
-                      signupStep > 1 ? "bg-white" : "bg-white/10"
-                    )} />
-                    <div className={cn(
-                      "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all duration-300",
-                      signupStep >= 2 ? "bg-white text-slate-900" : "bg-white/10 text-white/40"
-                    )}>
-                      2
-                    </div>
-                  </div>
-
-                  {/* Step 1: Company Info */}
-                  {signupStep === 1 && (
-                    <div className="space-y-5 animate-fade-in">
-                      <div className="text-center mb-6">
-                        <h3 className="text-lg font-semibold text-white">Dados da Empresa</h3>
-                        <p className="text-white/40 text-sm mt-1">Informe os dados do seu negócio</p>
-                      </div>
-
+                    <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label className="text-white/70 text-sm font-medium">CNPJ</Label>
+                        <Label className="text-foreground text-sm">CNPJ</Label>
                         <div className="relative">
                           <Input
                             type="text"
@@ -532,337 +530,254 @@ const Auth = () => {
                               checkCnpj(formatted);
                             }}
                             className={cn(
-                              "h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-0 rounded-xl pr-12",
-                              cnpjError && "border-red-500/50",
-                              cnpjValid && "border-green-500/50"
+                              "h-11 pr-10",
+                              cnpjError && "border-destructive",
+                              cnpjValid && "border-emerald-500"
                             )}
-                            required
                           />
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                            {checkingCnpj && <Loader2 className="h-5 w-5 animate-spin text-white/40" />}
-                            {cnpjValid && <Check className="h-5 w-5 text-green-400" />}
-                          </div>
+                          {checkingCnpj && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+                          {cnpjValid && <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />}
                         </div>
-                        {cnpjError && (
-                          <p className="text-red-400 text-xs mt-1">{cnpjError}</p>
-                        )}
+                        {cnpjError && <p className="text-xs text-destructive">{cnpjError}</p>}
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-white/70 text-sm font-medium">Razão Social</Label>
+                        <Label className="text-foreground text-sm">Razão Social</Label>
                         <Input
                           type="text"
                           placeholder="Nome oficial da empresa"
                           value={companyData.razao_social}
                           onChange={(e) => setCompanyData({ ...companyData, razao_social: e.target.value })}
-                          className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-0 rounded-xl"
-                          required
+                          className="h-11"
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-white/70 text-sm font-medium">
-                          Nome Fantasia <span className="text-white/30">(opcional)</span>
-                        </Label>
+                        <Label className="text-foreground text-sm">Nome Fantasia (opcional)</Label>
                         <Input
                           type="text"
-                          placeholder="Como sua empresa é conhecida"
+                          placeholder="Nome comercial"
                           value={companyData.nome_fantasia}
                           onChange={(e) => setCompanyData({ ...companyData, nome_fantasia: e.target.value })}
-                          className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-0 rounded-xl"
+                          className="h-11"
                         />
                       </div>
-
-                      <div className="flex gap-3">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => setSignupType(null)}
-                          className="flex-1 h-12 text-white/60 hover:text-white hover:bg-white/5 rounded-xl font-medium"
-                        >
-                          Voltar
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={() => setSignupStep(2)}
-                          disabled={!canProceedCompanyStep1}
-                          className="flex-1 h-12 bg-white text-slate-900 hover:bg-white/90 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed gap-2"
-                        >
-                          Continuar
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                      </div>
                     </div>
-                  )}
 
-                  {/* Step 2: User Info */}
-                  {signupStep === 2 && (
-                    <div className="space-y-5 animate-fade-in">
-                      <div className="text-center mb-6">
-                        <h3 className="text-lg font-semibold text-white">Seus Dados</h3>
-                        <p className="text-white/40 text-sm mt-1">Você será o administrador (CEO)</p>
-                      </div>
+                    <Button
+                      onClick={() => setSignupStep(2)}
+                      disabled={!canProceedCompanyStep1}
+                      className="w-full h-11"
+                    >
+                      Continuar
+                    </Button>
+                  </div>
+                )}
 
+                {/* Company Signup - Step 2 */}
+                {signupType === 'company' && signupStep === 2 && (
+                  <form onSubmit={handleCompanySignup} className="space-y-5">
+                    <button
+                      type="button"
+                      onClick={() => setSignupStep(1)}
+                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Voltar
+                    </button>
+
+                    <div>
+                      <h3 className="text-lg font-medium text-foreground">Dados do Administrador</h3>
+                      <p className="text-sm text-muted-foreground">Passo 2 de 2</p>
+                    </div>
+
+                    <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label className="text-white/70 text-sm font-medium">Seu nome</Label>
+                        <Label className="text-foreground text-sm">Seu Nome</Label>
                         <Input
                           type="text"
                           placeholder="Nome completo"
                           value={companyData.nome}
                           onChange={(e) => setCompanyData({ ...companyData, nome: e.target.value })}
-                          className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-0 rounded-xl"
+                          className="h-11"
                           required
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-white/70 text-sm font-medium">E-mail</Label>
+                        <Label className="text-foreground text-sm">E-mail</Label>
                         <Input
                           type="email"
                           placeholder="seu@email.com"
                           value={companyData.email}
                           onChange={(e) => setCompanyData({ ...companyData, email: e.target.value })}
-                          className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-0 rounded-xl"
+                          className="h-11"
                           required
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-white/70 text-sm font-medium">Senha</Label>
+                        <Label className="text-foreground text-sm">Senha</Label>
                         <div className="relative">
                           <Input
                             type={showPassword ? 'text' : 'password'}
-                            placeholder="••••••••"
+                            placeholder="Mínimo 6 caracteres"
                             value={companyData.password}
                             onChange={(e) => setCompanyData({ ...companyData, password: e.target.value })}
-                            className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-0 rounded-xl pr-12"
+                            className="h-11 pr-11"
                             required
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                           >
-                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="flex gap-3">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => setSignupStep(1)}
-                          className="flex-1 h-12 text-white/60 hover:text-white hover:bg-white/5 rounded-xl font-medium"
-                        >
-                          Voltar
-                        </Button>
-                        <Button
-                          type="submit"
-                          disabled={isLoading}
-                          className="flex-1 h-12 bg-white text-slate-900 hover:bg-white/90 rounded-xl font-semibold transition-all duration-200"
-                        >
-                          {isLoading ? (
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                          ) : (
-                            'Criar Empresa'
+                    <Button type="submit" disabled={isLoading} className="w-full h-11">
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Criar Conta'}
+                    </Button>
+                  </form>
+                )}
+
+                {/* Employee Signup - Step 1 */}
+                {signupType === 'employee' && signupStep === 1 && (
+                  <div className="space-y-5">
+                    <button
+                      onClick={() => setSignupType(null)}
+                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Voltar
+                    </button>
+
+                    <div>
+                      <h3 className="text-lg font-medium text-foreground">Código de Convite</h3>
+                      <p className="text-sm text-muted-foreground">Passo 1 de 2</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-foreground text-sm">Código</Label>
+                      <div className="relative">
+                        <Input
+                          type="text"
+                          placeholder="Digite o código de 8 dígitos"
+                          value={employeeData.inviteCode}
+                          onChange={(e) => {
+                            const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 8);
+                            setEmployeeData({ ...employeeData, inviteCode: value });
+                            checkInviteCode(value);
+                          }}
+                          className={cn(
+                            "h-11 text-center text-lg tracking-widest font-mono",
+                            codeError && "border-destructive",
+                            inviteData && "border-emerald-500"
                           )}
-                        </Button>
+                        />
+                        {checkingCode && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+                        {inviteData && <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />}
                       </div>
+                      {codeError && <p className="text-xs text-destructive">{codeError}</p>}
                     </div>
-                  )}
-                </form>
-              )}
 
-              {/* Employee Signup */}
-              {signupType === 'employee' && (
-                <form onSubmit={handleEmployeeSignup}>
-                  {/* Step Indicator */}
-                  <div className="flex items-center justify-center gap-3 mb-8">
-                    <div className={cn(
-                      "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all duration-300",
-                      signupStep >= 1 ? "bg-white text-slate-900" : "bg-white/10 text-white/40"
-                    )}>
-                      {signupStep > 1 ? <Check className="h-4 w-4" /> : '1'}
-                    </div>
-                    <div className={cn(
-                      "w-12 h-0.5 rounded-full transition-all duration-300",
-                      signupStep > 1 ? "bg-white" : "bg-white/10"
-                    )} />
-                    <div className={cn(
-                      "flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all duration-300",
-                      signupStep >= 2 ? "bg-white text-slate-900" : "bg-white/10 text-white/40"
-                    )}>
-                      2
-                    </div>
+                    {inviteData && (
+                      <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                        <p className="text-sm text-emerald-400">
+                          Convite válido para <strong>{inviteData.company_name}</strong>
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Cargo: {inviteData.role}
+                        </p>
+                      </div>
+                    )}
+
+                    <Button
+                      onClick={() => setSignupStep(2)}
+                      disabled={!canProceedEmployeeStep1}
+                      className="w-full h-11"
+                    >
+                      Continuar
+                    </Button>
                   </div>
+                )}
 
-                  {/* Step 1: Invite Code */}
-                  {signupStep === 1 && (
-                    <div className="space-y-5 animate-fade-in">
-                      <div className="text-center mb-6">
-                        <h3 className="text-lg font-semibold text-white">Código de Convite</h3>
-                        <p className="text-white/40 text-sm mt-1">Digite o código fornecido pela empresa</p>
-                      </div>
+                {/* Employee Signup - Step 2 */}
+                {signupType === 'employee' && signupStep === 2 && (
+                  <form onSubmit={handleEmployeeSignup} className="space-y-5">
+                    <button
+                      type="button"
+                      onClick={() => setSignupStep(1)}
+                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Voltar
+                    </button>
 
-                      <div className="space-y-2">
-                        <Label className="text-white/70 text-sm font-medium">Código</Label>
-                        <div className="relative">
-                          <Input
-                            type="text"
-                            placeholder="Digite o código de convite"
-                            value={employeeData.inviteCode}
-                            onChange={(e) => {
-                              const code = e.target.value.toUpperCase();
-                              setEmployeeData({ ...employeeData, inviteCode: code });
-                              checkInviteCode(code);
-                            }}
-                            className={cn(
-                              "h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-0 rounded-xl pr-12 font-mono tracking-wider",
-                              codeError && "border-red-500/50",
-                              inviteData && "border-green-500/50"
-                            )}
-                            required
-                          />
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                            {checkingCode && <Loader2 className="h-5 w-5 animate-spin text-white/40" />}
-                            {inviteData && <Check className="h-5 w-5 text-green-400" />}
-                            {!checkingCode && !inviteData && <KeyRound className="h-5 w-5 text-white/30" />}
-                          </div>
-                        </div>
-                        {codeError && (
-                          <p className="text-red-400 text-xs mt-1">{codeError}</p>
-                        )}
-                      </div>
-
-                      {/* Company Preview */}
-                      {inviteData && (
-                        <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 animate-fade-in">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-green-500/20">
-                              <Building2 className="h-5 w-5 text-green-400" />
-                            </div>
-                            <div>
-                              <p className="text-green-400 text-sm font-medium">Convite válido!</p>
-                              <p className="text-white/60 text-sm">
-                                Empresa: <span className="text-white">{inviteData.company_name}</span>
-                              </p>
-                              <p className="text-white/40 text-xs">
-                                Função: {inviteData.role === 'SELLER' ? 'Vendedor' : inviteData.role === 'BACKOFFICE' ? 'Backoffice' : 'CEO'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="flex gap-3">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => setSignupType(null)}
-                          className="flex-1 h-12 text-white/60 hover:text-white hover:bg-white/5 rounded-xl font-medium"
-                        >
-                          Voltar
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={() => setSignupStep(2)}
-                          disabled={!canProceedEmployeeStep1}
-                          className="flex-1 h-12 bg-white text-slate-900 hover:bg-white/90 rounded-xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed gap-2"
-                        >
-                          Continuar
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                      </div>
+                    <div>
+                      <h3 className="text-lg font-medium text-foreground">Seus Dados</h3>
+                      <p className="text-sm text-muted-foreground">Passo 2 de 2</p>
                     </div>
-                  )}
 
-                  {/* Step 2: User Info */}
-                  {signupStep === 2 && (
-                    <div className="space-y-5 animate-fade-in">
-                      <div className="text-center mb-6">
-                        <h3 className="text-lg font-semibold text-white">Seus Dados</h3>
-                        <p className="text-white/40 text-sm mt-1">Complete seu cadastro</p>
-                      </div>
-
+                    <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label className="text-white/70 text-sm font-medium">Seu nome</Label>
+                        <Label className="text-foreground text-sm">Seu Nome</Label>
                         <Input
                           type="text"
                           placeholder="Nome completo"
                           value={employeeData.nome}
                           onChange={(e) => setEmployeeData({ ...employeeData, nome: e.target.value })}
-                          className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-0 rounded-xl"
+                          className="h-11"
                           required
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-white/70 text-sm font-medium">E-mail</Label>
+                        <Label className="text-foreground text-sm">E-mail</Label>
                         <Input
                           type="email"
                           placeholder="seu@email.com"
                           value={employeeData.email}
                           onChange={(e) => setEmployeeData({ ...employeeData, email: e.target.value })}
-                          className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-0 rounded-xl"
+                          className="h-11"
                           required
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-white/70 text-sm font-medium">Senha</Label>
+                        <Label className="text-foreground text-sm">Senha</Label>
                         <div className="relative">
                           <Input
                             type={showPassword ? 'text' : 'password'}
-                            placeholder="••••••••"
+                            placeholder="Mínimo 6 caracteres"
                             value={employeeData.password}
                             onChange={(e) => setEmployeeData({ ...employeeData, password: e.target.value })}
-                            className="h-12 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-white/30 focus:ring-0 rounded-xl pr-12"
+                            className="h-11 pr-11"
                             required
                           />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                           >
-                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
                         </div>
                       </div>
-
-                      <div className="flex gap-3">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => setSignupStep(1)}
-                          className="flex-1 h-12 text-white/60 hover:text-white hover:bg-white/5 rounded-xl font-medium"
-                        >
-                          Voltar
-                        </Button>
-                        <Button
-                          type="submit"
-                          disabled={isLoading}
-                          className="flex-1 h-12 bg-white text-slate-900 hover:bg-white/90 rounded-xl font-semibold transition-all duration-200"
-                        >
-                          {isLoading ? (
-                            <Loader2 className="h-5 w-5 animate-spin" />
-                          ) : (
-                            'Criar Conta'
-                          )}
-                        </Button>
-                      </div>
                     </div>
-                  )}
-                </form>
-              )}
-            </div>
-          )}
-        </div>
 
-        {/* Footer */}
-        <p className="text-center text-white/30 text-xs mt-8">
-          Ao continuar, você concorda com nossos termos de uso e política de privacidade.
-        </p>
+                    <Button type="submit" disabled={isLoading} className="w-full h-11">
+                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Criar Conta'}
+                    </Button>
+                  </form>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

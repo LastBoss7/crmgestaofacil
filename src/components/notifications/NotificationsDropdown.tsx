@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Bell, Check, Trash2, ShoppingCart, UserPlus, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Bell, Check, Trash2, ShoppingCart, UserPlus, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -8,64 +7,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-interface Notification {
-  id: string;
-  type: 'sale' | 'user' | 'alert' | 'success';
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-}
-
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'sale',
-    title: 'Nova venda registrada',
-    message: 'Venda #1234 foi criada com sucesso',
-    time: '2 min atrás',
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'success',
-    title: 'Venda aprovada',
-    message: 'Venda #1230 foi aprovada pelo backoffice',
-    time: '15 min atrás',
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'user',
-    title: 'Novo membro na equipe',
-    message: 'João Silva aceitou o convite',
-    time: '1 hora atrás',
-    read: false,
-  },
-  {
-    id: '4',
-    type: 'alert',
-    title: 'Pendência em venda',
-    message: 'Venda #1225 requer documentação adicional',
-    time: '2 horas atrás',
-    read: true,
-  },
-  {
-    id: '5',
-    type: 'sale',
-    title: 'Venda instalada',
-    message: 'Venda #1220 foi instalada com sucesso',
-    time: '3 horas atrás',
-    read: true,
-  },
-];
+import { useNotifications, Notification } from '@/hooks/useNotifications';
 
 const NotificationsDropdown = () => {
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
-  const [isOpen, setIsOpen] = useState(false);
-
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const { 
+    notifications, 
+    unreadCount, 
+    markAsRead, 
+    markAllAsRead, 
+    deleteNotification, 
+    clearAll 
+  } = useNotifications();
 
   const getIcon = (type: Notification['type']) => {
     switch (type) {
@@ -77,6 +29,9 @@ const NotificationsDropdown = () => {
         return AlertCircle;
       case 'success':
         return CheckCircle2;
+      case 'info':
+      default:
+        return Info;
     }
   };
 
@@ -90,29 +45,25 @@ const NotificationsDropdown = () => {
         return 'text-orange-400 bg-orange-500/20';
       case 'success':
         return 'text-emerald-400 bg-emerald-500/20';
+      case 'info':
+      default:
+        return 'text-cyan-400 bg-cyan-500/20';
     }
   };
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, read: true } : n))
-    );
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
-
-  const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  };
-
-  const clearAll = () => {
-    setNotifications([]);
+  const formatTimeAgo = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diff < 60) return 'agora';
+    if (diff < 3600) return `${Math.floor(diff / 60)} min atrás`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hora${Math.floor(diff / 3600) > 1 ? 's' : ''} atrás`;
+    return `${Math.floor(diff / 86400)} dia${Math.floor(diff / 86400) > 1 ? 's' : ''} atrás`;
   };
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="w-full flex items-center gap-3 rounded-2xl px-4 py-2.5 text-sm text-white/60 hover:bg-white/[0.04] transition-colors">
           <div className="relative">
@@ -209,7 +160,7 @@ const NotificationsDropdown = () => {
                           {notification.message}
                         </p>
                         <p className="text-[10px] text-white/30 mt-1">
-                          {notification.time}
+                          {formatTimeAgo(notification.created_at)}
                         </p>
                       </div>
 

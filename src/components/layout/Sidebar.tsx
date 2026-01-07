@@ -24,10 +24,28 @@ import { useState, useEffect } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 
+interface SalesStats {
+  total: number;
+  novas: number;
+  emAnalise: number;
+  pendencia: number;
+  aprovadas: number;
+  instaladas: number;
+  canceladas: number;
+}
+
 const Sidebar = () => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
-  const [salesCount, setSalesCount] = useState(0);
+  const [salesStats, setSalesStats] = useState<SalesStats>({
+    total: 0,
+    novas: 0,
+    emAnalise: 0,
+    pendencia: 0,
+    aprovadas: 0,
+    instaladas: 0,
+    canceladas: 0,
+  });
   const {
     profile,
     user,
@@ -37,20 +55,46 @@ const Sidebar = () => {
     isCEO,
   } = useAuth();
 
-  // Fetch sales count for badge
+  // Fetch real sales stats from database
   useEffect(() => {
-    const fetchSalesCount = async () => {
-      const { count } = await supabase
+    const fetchSalesStats = async () => {
+      if (!user) return;
+      
+      const { data: sales } = await supabase
         .from('sales')
-        .select('*', { count: 'exact', head: true });
-      setSalesCount(count || 0);
+        .select('status');
+      
+      if (sales) {
+        setSalesStats({
+          total: sales.length,
+          novas: sales.filter(s => s.status === 'NOVA').length,
+          emAnalise: sales.filter(s => s.status === 'EM_ANALISE').length,
+          pendencia: sales.filter(s => s.status === 'PENDENCIA').length,
+          aprovadas: sales.filter(s => s.status === 'APROVADA').length,
+          instaladas: sales.filter(s => s.status === 'INSTALADA').length,
+          canceladas: sales.filter(s => s.status === 'CANCELADA').length,
+        });
+      }
     };
-    fetchSalesCount();
-  }, []);
+    
+    fetchSalesStats();
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('sales-stats')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, () => {
+        fetchSalesStats();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
 
   const mainNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, gradient: 'from-violet-500 to-purple-600' },
-    { name: 'Vendas', href: '/vendas', icon: ShoppingBag, gradient: 'from-emerald-500 to-teal-600', badge: salesCount > 0 ? salesCount : undefined },
+    { name: 'Vendas', href: '/vendas', icon: ShoppingBag, gradient: 'from-emerald-500 to-teal-600', badge: salesStats.total > 0 ? salesStats.total : undefined },
     { name: 'Relatórios', href: '/relatorios', icon: PieChart, gradient: 'from-amber-500 to-orange-600' },
   ];
 
@@ -60,12 +104,12 @@ const Sidebar = () => {
     ...(isCEO ? [{ name: 'Configurações', href: '/configuracoes', icon: Cog, gradient: 'from-slate-400 to-slate-600' }] : []),
   ];
 
-  // Categories with colored dots
+  // Categories with real data from database
   const categories = [
-    { name: 'Novas', color: 'bg-emerald-500', glowColor: 'shadow-emerald-500/50', count: 8 },
-    { name: 'Em Análise', color: 'bg-amber-500', glowColor: 'shadow-amber-500/50', count: 43 },
-    { name: 'Aprovadas', color: 'bg-blue-500', glowColor: 'shadow-blue-500/50', count: 76 },
-    { name: 'Instaladas', color: 'bg-violet-500', glowColor: 'shadow-violet-500/50', count: 253 },
+    { name: 'Novas', color: 'bg-emerald-500', glowColor: 'shadow-emerald-500/50', count: salesStats.novas },
+    { name: 'Em Análise', color: 'bg-amber-500', glowColor: 'shadow-amber-500/50', count: salesStats.emAnalise },
+    { name: 'Aprovadas', color: 'bg-blue-500', glowColor: 'shadow-blue-500/50', count: salesStats.aprovadas },
+    { name: 'Instaladas', color: 'bg-violet-500', glowColor: 'shadow-violet-500/50', count: salesStats.instaladas },
   ];
 
   const isActive = (path: string) => location.pathname === path;

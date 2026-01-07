@@ -1,29 +1,85 @@
 import { cn } from '@/lib/utils';
 import { SaleStatus, SALE_STATUS_LABELS } from '@/types/database';
+import { 
+  Sparkles, 
+  Search, 
+  AlertTriangle, 
+  CheckCircle2, 
+  Zap, 
+  XCircle 
+} from 'lucide-react';
 
 interface StatusBadgeProps {
   status: SaleStatus;
   className?: string;
+  size?: 'sm' | 'md' | 'lg';
+  showIcon?: boolean;
 }
 
-const statusStyles: Record<SaleStatus, string> = {
-  NOVA: 'status-nova',
-  EM_ANALISE: 'status-em_analise',
-  PENDENCIA: 'status-pendencia',
-  APROVADA: 'status-aprovada',
-  INSTALADA: 'status-instalada',
-  CANCELADA: 'status-cancelada',
+const statusConfig: Record<SaleStatus, { 
+  className: string; 
+  icon: typeof Sparkles;
+  gradient: string;
+}> = {
+  NOVA: { 
+    className: 'status-nova',
+    icon: Sparkles,
+    gradient: 'from-blue-500/20 to-blue-600/10'
+  },
+  EM_ANALISE: { 
+    className: 'status-em_analise',
+    icon: Search,
+    gradient: 'from-amber-500/20 to-amber-600/10'
+  },
+  PENDENCIA: { 
+    className: 'status-pendencia',
+    icon: AlertTriangle,
+    gradient: 'from-orange-500/20 to-orange-600/10'
+  },
+  APROVADA: { 
+    className: 'status-aprovada',
+    icon: CheckCircle2,
+    gradient: 'from-emerald-500/20 to-emerald-600/10'
+  },
+  INSTALADA: { 
+    className: 'status-instalada',
+    icon: Zap,
+    gradient: 'from-violet-500/20 to-violet-600/10'
+  },
+  CANCELADA: { 
+    className: 'status-cancelada',
+    icon: XCircle,
+    gradient: 'from-red-500/20 to-red-600/10'
+  },
 };
 
-export function StatusBadge({ status, className }: StatusBadgeProps) {
+const sizeStyles = {
+  sm: 'text-xs px-2.5 py-1 gap-1',
+  md: 'text-xs px-3 py-1.5 gap-1.5',
+  lg: 'text-sm px-4 py-2 gap-2',
+};
+
+const iconSizes = {
+  sm: 'h-3 w-3',
+  md: 'h-3.5 w-3.5',
+  lg: 'h-4 w-4',
+};
+
+export function StatusBadge({ status, className, size = 'md', showIcon = true }: StatusBadgeProps) {
+  const config = statusConfig[status];
+  const Icon = config.icon;
+
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold',
-        statusStyles[status],
+        'inline-flex items-center font-medium rounded-full border backdrop-blur-sm transition-all duration-200',
+        `bg-gradient-to-r ${config.gradient}`,
+        config.className,
+        sizeStyles[size],
         className
       )}
     >
+      {showIcon && <Icon className={cn(iconSizes[size], 'opacity-80')} />}
       {SALE_STATUS_LABELS[status]}
     </span>
   );

@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserData = async (userId: string) => {
+  const fetchUserData = async (userId: string, retries = 3) => {
     try {
       // Fetch profile
       const { data: profileData } = await supabase
@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(profileData as Profile);
       }
 
-      // Fetch role
+      // Fetch role with retry logic for new signups
       const { data: roleData } = await supabase
         .from('user_roles')
         .select('role')
@@ -50,6 +50,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (roleData) {
         setRole(roleData.role as AppRole);
+      } else if (retries > 0) {
+        // Role may not be created yet for new signups, retry after delay
+        setTimeout(() => {
+          fetchUserData(userId, retries - 1);
+        }, 500);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);

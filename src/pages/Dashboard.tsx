@@ -18,6 +18,7 @@ import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
+import { useSalesNotifications } from '@/hooks/useSalesNotifications';
 
 interface SellerStats {
   id: string;
@@ -41,6 +42,9 @@ const Dashboard = () => {
   const [allSales, setAllSales] = useState<Sale[]>([]);
   const [sellers, setSellers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Ativar notificações de vendas
+  useSalesNotifications();
 
   useEffect(() => {
     const fetchData = async () => {

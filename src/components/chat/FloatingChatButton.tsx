@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -6,11 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { ChatPanel } from './ChatPanel';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { useNotificationSound } from '@/hooks/useNotificationSound';
 
 export const FloatingChatButton = () => {
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const { playSound } = useNotificationSound();
 
   // Fetch unread direct messages count
   useEffect(() => {
@@ -42,6 +44,8 @@ export const FloatingChatButton = () => {
         () => {
           if (!open) {
             setUnreadCount((prev) => prev + 1);
+            // Tocar som de notificação
+            playSound('info');
           }
         }
       )

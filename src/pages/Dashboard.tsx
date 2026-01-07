@@ -12,11 +12,13 @@ import {
   ChevronRight,
   Star,
   MoreHorizontal,
-  Folder
+  Folder,
+  MessageCircle
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { ChatPanel } from '@/components/chat/ChatPanel';
 
 interface SellerStats {
   id: string;
@@ -322,6 +324,17 @@ const Dashboard = () => {
             </div>
           </div>
         )}
+
+        {/* Team Chat Section */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-violet-400" />
+              Chat da Equipe
+            </h2>
+          </div>
+          <ChatPanel />
+        </div>
       </div>
     </Layout>
   );

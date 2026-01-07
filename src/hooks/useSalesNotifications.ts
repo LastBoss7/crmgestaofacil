@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
 import { Sale, SALE_STATUS_LABELS, SaleStatus } from '@/types/database';
 
 interface SaleChangePayload {
@@ -27,7 +26,7 @@ export function useSalesNotifications() {
           schema: 'public',
           table: 'sales',
         },
-        (payload) => {
+        async (payload) => {
           const { new: newSale, old: oldSale } = payload as unknown as SaleChangePayload;
           
           // Only notify if status changed
@@ -37,48 +36,62 @@ export function useSalesNotifications() {
           if (isSeller && newSale.seller_id !== user.id) return;
 
           const clientName = newSale.nome_fantasia || newSale.razao_social;
-          const oldStatus = SALE_STATUS_LABELS[oldSale.status as SaleStatus];
           const newStatus = SALE_STATUS_LABELS[newSale.status as SaleStatus];
 
-          // Show different notifications based on status
+          // Determine notification type and message
+          let notificationType: string = 'info';
+          let title = '';
+          let message = '';
+
           switch (newSale.status) {
             case 'APROVADA':
-              toast.success(`🎉 Venda Aprovada!`, {
-                description: `${clientName} foi aprovada`,
-                duration: 5000,
-              });
+              notificationType = 'success';
+              title = '🎉 Venda Aprovada!';
+              message = `${clientName} foi aprovada`;
               break;
             case 'PENDENCIA':
-              toast.warning(`⚠️ Venda com Pendência`, {
-                description: `${clientName}: ${newSale.motivo_pendencia || 'Verifique a venda'}`,
-                duration: 6000,
-              });
+              notificationType = 'alert';
+              title = '⚠️ Venda com Pendência';
+              message = `${clientName}: ${newSale.motivo_pendencia || 'Verifique a venda'}`;
               break;
             case 'CANCELADA':
-              toast.error(`❌ Venda Cancelada`, {
-                description: `${clientName} foi cancelada`,
-                duration: 5000,
-              });
+              notificationType = 'alert';
+              title = '❌ Venda Cancelada';
+              message = `${clientName} foi cancelada`;
               break;
             case 'EM_ANALISE':
               if (isCEO || isBackoffice) {
-                toast.info(`📋 Nova Venda para Análise`, {
-                  description: `${clientName} aguardando aprovação`,
-                  duration: 4000,
-                });
+                notificationType = 'sale';
+                title = '📋 Nova Venda para Análise';
+                message = `${clientName} aguardando aprovação`;
+              } else {
+                return; // Don't notify sellers about EM_ANALISE
               }
               break;
             case 'INSTALADA':
-              toast.success(`✅ Venda Instalada!`, {
-                description: `${clientName} foi instalada com sucesso`,
-                duration: 5000,
-              });
+              notificationType = 'success';
+              title = '✅ Venda Instalada!';
+              message = `${clientName} foi instalada com sucesso`;
               break;
             default:
-              toast.info(`Status Atualizado`, {
-                description: `${clientName}: ${oldStatus} → ${newStatus}`,
-                duration: 4000,
-              });
+              notificationType = 'info';
+              title = 'Status Atualizado';
+              message = `${clientName}: ${newStatus}`;
+          }
+
+          // Create notification in database
+          try {
+            await supabase.from('notifications').insert({
+              user_id: user.id,
+              type: notificationType,
+              title,
+              message,
+              reference_id: newSale.id,
+              reference_type: 'sale',
+              read: false,
+            });
+          } catch (error) {
+            console.error('Error creating notification:', error);
           }
         }
       )

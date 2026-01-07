@@ -3,29 +3,22 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   LayoutDashboard, 
-  ShoppingCart, 
-  Users, 
+  ShoppingBag, 
+  Users2, 
   LogOut, 
-  BarChart3, 
-  UserPlus, 
-  Settings,
+  PieChart, 
+  UserPlus2, 
+  Cog,
   ChevronLeft,
   ChevronRight,
   Bell,
-  MessageSquare,
-  Star,
-  Send,
-  Trash2,
-  AlertCircle,
-  Briefcase,
-  Calculator,
-  FolderOpen,
-  TrendingUp,
-  Plus
+  MessageCircle,
+  Plus,
+  Sparkles,
+  Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ROLE_LABELS } from '@/types/database';
-import NotificationsDropdown from '@/components/notifications/NotificationsDropdown';
 import AvatarUpload from '@/components/profile/AvatarUpload';
 import { useState, useEffect } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -56,23 +49,23 @@ const Sidebar = () => {
   }, []);
 
   const mainNavigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Vendas', href: '/vendas', icon: ShoppingCart, badge: salesCount > 0 ? salesCount : undefined },
-    { name: 'Relatórios', href: '/relatorios', icon: BarChart3 },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, gradient: 'from-violet-500 to-purple-600' },
+    { name: 'Vendas', href: '/vendas', icon: ShoppingBag, gradient: 'from-emerald-500 to-teal-600', badge: salesCount > 0 ? salesCount : undefined },
+    { name: 'Relatórios', href: '/relatorios', icon: PieChart, gradient: 'from-amber-500 to-orange-600' },
   ];
 
   const managementNavigation = [
-    ...(canManageUsers ? [{ name: 'Usuários', href: '/usuarios', icon: Users }] : []),
-    ...(isCEO ? [{ name: 'Convites', href: '/equipe/convites', icon: UserPlus }] : []),
-    ...(isCEO ? [{ name: 'Configurações', href: '/configuracoes', icon: Settings }] : []),
+    ...(canManageUsers ? [{ name: 'Usuários', href: '/usuarios', icon: Users2, gradient: 'from-blue-500 to-cyan-600' }] : []),
+    ...(isCEO ? [{ name: 'Convites', href: '/equipe/convites', icon: UserPlus2, gradient: 'from-pink-500 to-rose-600' }] : []),
+    ...(isCEO ? [{ name: 'Configurações', href: '/configuracoes', icon: Cog, gradient: 'from-slate-400 to-slate-600' }] : []),
   ];
 
   // Categories with colored dots
   const categories = [
-    { name: 'Novas', color: 'bg-emerald-500', count: 8 },
-    { name: 'Em Análise', color: 'bg-orange-500', count: 43 },
-    { name: 'Aprovadas', color: 'bg-blue-500', count: 76 },
-    { name: 'Instaladas', color: 'bg-purple-500', count: 253 },
+    { name: 'Novas', color: 'bg-emerald-500', glowColor: 'shadow-emerald-500/50', count: 8 },
+    { name: 'Em Análise', color: 'bg-amber-500', glowColor: 'shadow-amber-500/50', count: 43 },
+    { name: 'Aprovadas', color: 'bg-blue-500', glowColor: 'shadow-blue-500/50', count: 76 },
+    { name: 'Instaladas', color: 'bg-violet-500', glowColor: 'shadow-violet-500/50', count: 253 },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -82,7 +75,7 @@ const Sidebar = () => {
     return ROLE_LABELS[role];
   };
 
-  type NavItemType = { name: string; href: string; icon: typeof LayoutDashboard; badge?: number };
+  type NavItemType = { name: string; href: string; icon: typeof LayoutDashboard; gradient: string; badge?: number };
   
   const NavItem = ({ item, showBadge = true }: { item: NavItemType; showBadge?: boolean }) => {
     const Icon = item.icon;
@@ -92,18 +85,56 @@ const Sidebar = () => {
       <Link
         to={item.href}
         className={cn(
-          'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200',
+          'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-300 ease-out',
+          'hover:scale-[1.02] hover:shadow-lg',
           active
-            ? 'bg-slate-700/50 text-white'
-            : 'text-slate-400 hover:text-white hover:bg-slate-700/30'
+            ? 'bg-gradient-to-r text-white shadow-lg'
+            : 'text-slate-400 hover:text-white hover:bg-white/5'
         )}
+        style={active ? { backgroundImage: `linear-gradient(to right, var(--tw-gradient-stops))` } : {}}
       >
-        <Icon className={cn('h-5 w-5 flex-shrink-0', active ? 'text-white' : 'text-slate-400')} />
+        {/* Active background gradient */}
+        {active && (
+          <div className={cn('absolute inset-0 rounded-xl bg-gradient-to-r opacity-100', item.gradient)} />
+        )}
+        
+        {/* Hover glow effect */}
+        <div className={cn(
+          'absolute inset-0 rounded-xl bg-gradient-to-r opacity-0 blur-xl transition-opacity duration-300 -z-10',
+          'group-hover:opacity-30',
+          item.gradient
+        )} />
+        
+        {/* Icon with gradient background on hover */}
+        <div className={cn(
+          'relative flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-300',
+          active 
+            ? 'bg-white/20' 
+            : 'bg-slate-800/50 group-hover:bg-gradient-to-br group-hover:shadow-lg',
+          !active && `group-hover:${item.gradient}`
+        )}>
+          <Icon className={cn(
+            'h-4.5 w-4.5 transition-all duration-300 relative z-10',
+            active ? 'text-white' : 'text-slate-400 group-hover:text-white'
+          )} />
+          {!active && (
+            <div className={cn(
+              'absolute inset-0 rounded-lg bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300',
+              item.gradient
+            )} />
+          )}
+        </div>
+        
         {!collapsed && (
           <>
-            <span className="flex-1 font-medium">{item.name}</span>
+            <span className="relative flex-1 font-medium z-10">{item.name}</span>
             {showBadge && item.badge && (
-              <span className="px-2 py-0.5 text-xs font-medium bg-blue-500 text-white rounded-full min-w-[24px] text-center">
+              <span className={cn(
+                'relative z-10 px-2 py-0.5 text-xs font-semibold rounded-full min-w-[24px] text-center transition-all duration-300',
+                active 
+                  ? 'bg-white/20 text-white' 
+                  : 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg shadow-blue-500/30'
+              )}>
                 {item.badge}
               </span>
             )}
@@ -135,12 +166,29 @@ const Sidebar = () => {
 
   const CategoryItem = ({ category }: { category: typeof categories[0] }) => {
     const content = (
-      <div className="flex items-center gap-3 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-700/30 rounded-lg cursor-pointer transition-all duration-200">
-        <div className={cn('h-2.5 w-2.5 rounded-full flex-shrink-0', category.color)} />
+      <div className={cn(
+        'group flex items-center gap-3 px-3 py-2 text-sm rounded-lg cursor-pointer',
+        'transition-all duration-300 ease-out',
+        'text-slate-400 hover:text-white hover:bg-white/5',
+        'hover:translate-x-1'
+      )}>
+        <div className={cn(
+          'h-2.5 w-2.5 rounded-full flex-shrink-0 transition-all duration-300',
+          'group-hover:scale-125 group-hover:shadow-lg',
+          category.color,
+          `group-hover:${category.glowColor}`
+        )} 
+        style={{ boxShadow: 'none' }}
+        />
         {!collapsed && (
           <>
-            <span className="flex-1">{category.name}</span>
-            <span className="text-xs text-slate-500">{category.count}</span>
+            <span className="flex-1 transition-colors duration-300">{category.name}</span>
+            <span className={cn(
+              'text-xs transition-all duration-300',
+              'text-slate-500 group-hover:text-white group-hover:bg-white/10 px-1.5 py-0.5 rounded-md'
+            )}>
+              {category.count}
+            </span>
           </>
         )}
       </div>
@@ -174,27 +222,31 @@ const Sidebar = () => {
       >
         {/* Top bar with icons and toggle */}
         <div className={cn(
-          'flex items-center border-b border-slate-700/50 h-14',
+          'flex items-center border-b border-slate-700/30 h-14',
           collapsed ? 'justify-center px-2' : 'justify-between px-3'
         )}>
           {!collapsed && (
-            <div className="flex items-center gap-2">
-              <button className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors">
-                <Bell className="h-4 w-4" />
+            <div className="flex items-center gap-1">
+              <button className="group p-2 text-slate-400 hover:text-white rounded-lg transition-all duration-300 hover:bg-white/5 hover:scale-110">
+                <Bell className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
               </button>
-              <button className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors">
-                <MessageSquare className="h-4 w-4" />
+              <button className="group p-2 text-slate-400 hover:text-white rounded-lg transition-all duration-300 hover:bg-white/5 hover:scale-110">
+                <MessageCircle className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
               </button>
-              <button className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors">
-                <Settings className="h-4 w-4" />
+              <button className="group p-2 text-slate-400 hover:text-white rounded-lg transition-all duration-300 hover:bg-white/5 hover:scale-110">
+                <Cog className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90" />
               </button>
             </div>
           )}
           <button 
             onClick={() => setCollapsed(!collapsed)}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
+            className="group p-2 text-slate-400 hover:text-white rounded-lg transition-all duration-300 hover:bg-white/5"
           >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+            ) : (
+              <ChevronLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
+            )}
           </button>
         </div>
 
@@ -239,9 +291,15 @@ const Sidebar = () => {
           {!collapsed && (
             <Link
               to="/vendas"
-              className="mt-3 flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-slate-700/50 hover:bg-slate-600/50 text-white text-sm font-medium rounded-lg border border-slate-600/50 transition-colors"
+              className={cn(
+                'group mt-3 flex items-center justify-center gap-2 w-full py-2.5 px-4',
+                'bg-gradient-to-r from-violet-600 to-purple-600 text-white text-sm font-medium rounded-xl',
+                'transition-all duration-300 ease-out',
+                'hover:from-violet-500 hover:to-purple-500 hover:shadow-lg hover:shadow-violet-500/30',
+                'hover:scale-[1.02] active:scale-[0.98]'
+              )}
             >
-              <MessageSquare className="h-4 w-4" />
+              <Sparkles className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
               Nova Venda
             </Link>
           )}
@@ -289,24 +347,41 @@ const Sidebar = () => {
                 <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                   Atividade Recente
                 </span>
-                <button className="text-slate-400 hover:text-blue-400 transition-colors">
-                  <Plus className="h-3.5 w-3.5" />
+                <button className="group text-slate-400 hover:text-violet-400 transition-all duration-300">
+                  <Plus className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-90" />
                 </button>
               </div>
               <div className="space-y-1">
-                <div className="flex items-center gap-3 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-700/30 rounded-lg cursor-pointer transition-all">
-                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-medium">
+                <div className={cn(
+                  'group flex items-center gap-3 px-3 py-2 text-sm rounded-lg cursor-pointer',
+                  'text-slate-400 hover:text-white hover:bg-white/5',
+                  'transition-all duration-300 ease-out hover:translate-x-1'
+                )}>
+                  <div className={cn(
+                    'h-7 w-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-medium',
+                    'transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-purple-500/30'
+                  )}>
                     VN
                   </div>
                   <span className="flex-1 truncate">Venda Nova</span>
-                  <div className="h-2 w-2 bg-emerald-500 rounded-full" />
+                  <div className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
                 </div>
-                <div className="flex items-center gap-3 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-700/30 rounded-lg cursor-pointer transition-all">
-                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white text-xs font-medium">
+                <div className={cn(
+                  'group flex items-center gap-3 px-3 py-2 text-sm rounded-lg cursor-pointer',
+                  'text-slate-400 hover:text-white hover:bg-white/5',
+                  'transition-all duration-300 ease-out hover:translate-x-1'
+                )}>
+                  <div className={cn(
+                    'h-7 w-7 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white text-xs font-medium',
+                    'transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-orange-500/30'
+                  )}>
                     AP
                   </div>
                   <span className="flex-1 truncate">Análise Pendente</span>
-                  <span className="text-xs text-slate-500">2</span>
+                  <span className={cn(
+                    'text-xs px-1.5 py-0.5 rounded-md transition-all duration-300',
+                    'text-slate-500 group-hover:text-white group-hover:bg-white/10'
+                  )}>2</span>
                 </div>
               </div>
             </div>
@@ -315,7 +390,7 @@ const Sidebar = () => {
 
         {/* Bottom Section - Logout */}
         <div className={cn(
-          'border-t border-slate-700/50',
+          'border-t border-slate-700/30',
           collapsed ? 'p-2' : 'p-3'
         )}>
           {collapsed ? (
@@ -325,9 +400,9 @@ const Sidebar = () => {
                   variant="ghost" 
                   size="icon"
                   onClick={signOut} 
-                  className="w-full h-10 text-slate-400 hover:text-white hover:bg-slate-700/50"
+                  className="group w-full h-10 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-all duration-300"
                 >
-                  <LogOut className="h-5 w-5" />
+                  <LogOut className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-0.5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right" className="bg-slate-800 text-white border-slate-700">
@@ -338,9 +413,13 @@ const Sidebar = () => {
             <Button 
               variant="ghost" 
               onClick={signOut} 
-              className="w-full justify-start gap-3 text-slate-400 hover:text-white hover:bg-slate-700/50 px-3"
+              className={cn(
+                'group w-full justify-start gap-3 px-3 rounded-xl',
+                'text-slate-400 hover:text-rose-400 hover:bg-rose-500/10',
+                'transition-all duration-300'
+              )}
             >
-              <LogOut className="h-5 w-5" />
+              <LogOut className="h-5 w-5 transition-transform duration-300 group-hover:-translate-x-0.5" />
               <span>Sair</span>
             </Button>
           )}

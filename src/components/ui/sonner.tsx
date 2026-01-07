@@ -10,15 +10,29 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      position="top-right"
+      duration={6000}
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+            "bg-[hsl(252,20%,12%)]/95 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/50",
+          title: "text-white font-semibold",
+          description: "text-white/60",
+          success: "border-l-4 border-l-emerald-500",
+          warning: "border-l-4 border-l-orange-500",
+          error: "border-l-4 border-l-red-500",
+          info: "border-l-4 border-l-violet-500",
+          actionButton: "bg-violet-500 text-white hover:bg-violet-600",
+          cancelButton: "bg-white/10 text-white/70 hover:bg-white/20",
         },
       }}
+      style={
+        {
+          "--normal-bg": "hsl(252, 20%, 12%)",
+          "--normal-text": "hsl(0, 0%, 100%)",
+          "--normal-border": "hsl(0, 0%, 100%, 0.1)",
+        } as React.CSSProperties
+      }
       {...props}
     />
   );

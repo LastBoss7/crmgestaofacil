@@ -9,38 +9,70 @@ import {
   BarChart3, 
   UserPlus, 
   Settings,
+  ChevronLeft,
   ChevronRight,
-  ChevronLeft
+  Bell,
+  MessageSquare,
+  Star,
+  Send,
+  Trash2,
+  AlertCircle,
+  Briefcase,
+  Calculator,
+  FolderOpen,
+  TrendingUp,
+  Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ROLE_LABELS } from '@/types/database';
 import NotificationsDropdown from '@/components/notifications/NotificationsDropdown';
 import AvatarUpload from '@/components/profile/AvatarUpload';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { supabase } from '@/integrations/supabase/client';
 
 const Sidebar = () => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [salesCount, setSalesCount] = useState(0);
   const {
     profile,
+    user,
     role,
     signOut,
     canManageUsers,
     isCEO,
-    isBackoffice,
   } = useAuth();
 
+  // Fetch sales count for badge
+  useEffect(() => {
+    const fetchSalesCount = async () => {
+      const { count } = await supabase
+        .from('sales')
+        .select('*', { count: 'exact', head: true });
+      setSalesCount(count || 0);
+    };
+    fetchSalesCount();
+  }, []);
+
   const mainNavigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, color: 'text-blue-400' },
-    { name: 'Vendas', href: '/vendas', icon: ShoppingCart, color: 'text-emerald-400' },
-    { name: 'Relatórios', href: '/relatorios', icon: BarChart3, color: 'text-purple-400' },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Vendas', href: '/vendas', icon: ShoppingCart, badge: salesCount > 0 ? salesCount : undefined },
+    { name: 'Relatórios', href: '/relatorios', icon: BarChart3 },
   ];
 
   const managementNavigation = [
-    ...(canManageUsers ? [{ name: 'Usuários', href: '/usuarios', icon: Users, color: 'text-orange-400' }] : []),
-    ...(isCEO ? [{ name: 'Convites', href: '/equipe/convites', icon: UserPlus, color: 'text-pink-400', badge: 'novo' }] : []),
-    ...(isCEO ? [{ name: 'Configurações', href: '/configuracoes', icon: Settings, color: 'text-cyan-400' }] : []),
+    ...(canManageUsers ? [{ name: 'Usuários', href: '/usuarios', icon: Users }] : []),
+    ...(isCEO ? [{ name: 'Convites', href: '/equipe/convites', icon: UserPlus }] : []),
+    ...(isCEO ? [{ name: 'Configurações', href: '/configuracoes', icon: Settings }] : []),
+  ];
+
+  // Categories with colored dots
+  const categories = [
+    { name: 'Novas', color: 'bg-emerald-500', count: 8 },
+    { name: 'Em Análise', color: 'bg-orange-500', count: 43 },
+    { name: 'Aprovadas', color: 'bg-blue-500', count: 76 },
+    { name: 'Instaladas', color: 'bg-purple-500', count: 253 },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -50,7 +82,9 @@ const Sidebar = () => {
     return ROLE_LABELS[role];
   };
 
-  const NavItem = ({ item }: { item: typeof mainNavigation[0] & { badge?: string } }) => {
+  type NavItemType = { name: string; href: string; icon: typeof LayoutDashboard; badge?: number };
+  
+  const NavItem = ({ item, showBadge = true }: { item: NavItemType; showBadge?: boolean }) => {
     const Icon = item.icon;
     const active = isActive(item.href);
     
@@ -58,25 +92,21 @@ const Sidebar = () => {
       <Link
         to={item.href}
         className={cn(
-          'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+          'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200',
           active
-            ? 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-white border-l-2 border-blue-400'
-            : 'text-slate-400 hover:text-white hover:bg-white/5'
+            ? 'bg-slate-700/50 text-white'
+            : 'text-slate-400 hover:text-white hover:bg-slate-700/30'
         )}
       >
-        <Icon className={cn('h-5 w-5 flex-shrink-0', active ? 'text-blue-400' : item.color)} />
+        <Icon className={cn('h-5 w-5 flex-shrink-0', active ? 'text-white' : 'text-slate-400')} />
         {!collapsed && (
           <>
-            <span className="flex-1">{item.name}</span>
-            {item.badge && (
-              <span className="px-2 py-0.5 text-[10px] font-semibold bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full">
+            <span className="flex-1 font-medium">{item.name}</span>
+            {showBadge && item.badge && (
+              <span className="px-2 py-0.5 text-xs font-medium bg-blue-500 text-white rounded-full min-w-[24px] text-center">
                 {item.badge}
               </span>
             )}
-            <ChevronRight className={cn(
-              'h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity',
-              active && 'opacity-100'
-            )} />
           </>
         )}
       </Link>
@@ -87,7 +117,44 @@ const Sidebar = () => {
         <Tooltip>
           <TooltipTrigger asChild>{content}</TooltipTrigger>
           <TooltipContent side="right" className="bg-slate-800 text-white border-slate-700">
-            {item.name}
+            <div className="flex items-center gap-2">
+              {item.name}
+              {item.badge && (
+                <span className="px-1.5 py-0.5 text-xs bg-blue-500 text-white rounded-full">
+                  {item.badge}
+                </span>
+              )}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return content;
+  };
+
+  const CategoryItem = ({ category }: { category: typeof categories[0] }) => {
+    const content = (
+      <div className="flex items-center gap-3 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-700/30 rounded-lg cursor-pointer transition-all duration-200">
+        <div className={cn('h-2.5 w-2.5 rounded-full flex-shrink-0', category.color)} />
+        {!collapsed && (
+          <>
+            <span className="flex-1">{category.name}</span>
+            <span className="text-xs text-slate-500">{category.count}</span>
+          </>
+        )}
+      </div>
+    );
+
+    if (collapsed) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>{content}</TooltipTrigger>
+          <TooltipContent side="right" className="bg-slate-800 text-white border-slate-700">
+            <div className="flex items-center gap-2">
+              {category.name}
+              <span className="text-xs text-slate-400">{category.count}</span>
+            </div>
           </TooltipContent>
         </Tooltip>
       );
@@ -100,147 +167,183 @@ const Sidebar = () => {
     <TooltipProvider delayDuration={0}>
       <div 
         className={cn(
-          'flex h-screen flex-col transition-all duration-300 ease-in-out',
-          'bg-gradient-to-b from-[#0c1929] via-[#0f1f35] to-[#0c1929]',
-          collapsed ? 'w-[70px]' : 'w-64'
+          'flex h-screen flex-col transition-all duration-300 ease-in-out relative',
+          'bg-[#1e2530]',
+          collapsed ? 'w-[60px]' : 'w-[260px]'
         )}
       >
-        {/* Logo */}
+        {/* Top bar with icons and toggle */}
         <div className={cn(
-          'flex h-16 items-center border-b border-white/5',
-          collapsed ? 'justify-center px-2' : 'gap-3 px-5'
+          'flex items-center border-b border-slate-700/50 h-14',
+          collapsed ? 'justify-center px-2' : 'justify-between px-3'
         )}>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-lg shadow-blue-500/25">
-            <ShoppingCart className="h-5 w-5 text-white" />
-          </div>
           {!collapsed && (
-            <div className="flex-1">
-              <h1 className="text-base font-bold text-white">CRM Telecom</h1>
-              <p className="text-[11px] text-slate-500">Gestão de Vendas</p>
+            <div className="flex items-center gap-2">
+              <button className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors">
+                <Bell className="h-4 w-4" />
+              </button>
+              <button className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors">
+                <MessageSquare className="h-4 w-4" />
+              </button>
+              <button className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors">
+                <Settings className="h-4 w-4" />
+              </button>
             </div>
+          )}
+          <button 
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
+          >
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </button>
+        </div>
+
+        {/* User Profile Section */}
+        <div className={cn(
+          'border-b border-slate-700/50',
+          collapsed ? 'p-2' : 'p-4'
+        )}>
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex justify-center">
+                  <AvatarUpload size="sm" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-slate-800 text-white border-slate-700">
+                <p className="font-medium">{profile?.nome || 'Usuário'}</p>
+                <p className="text-xs text-slate-400">{getRoleLabel()}</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <AvatarUpload size="md" />
+                <div className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-emerald-500 rounded-full border-2 border-[#1e2530]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">
+                  {profile?.nome || 'Usuário'}
+                </p>
+              </div>
+              <button 
+                onClick={() => setCollapsed(!collapsed)}
+                className="p-1.5 text-slate-400 hover:text-white transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
+          {/* New Action Button */}
+          {!collapsed && (
+            <Link
+              to="/vendas"
+              className="mt-3 flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-slate-700/50 hover:bg-slate-600/50 text-white text-sm font-medium rounded-lg border border-slate-600/50 transition-colors"
+            >
+              <MessageSquare className="h-4 w-4" />
+              Nova Venda
+            </Link>
           )}
         </div>
 
-        {/* Toggle Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCollapsed(!collapsed)}
-          className={cn(
-            'absolute top-4 -right-3 h-6 w-6 rounded-full border border-white/10 bg-[#0f1f35] hover:bg-[#1a2d4a] text-slate-400 hover:text-white z-10',
-            'shadow-lg'
-          )}
-        >
-          {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
-        </Button>
-
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 overflow-y-auto">
-          {/* Main Section */}
-          <div className="mb-6">
-            {!collapsed && (
-              <p className="px-3 mb-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                Principal
-              </p>
-            )}
-            <div className="space-y-1">
-              {mainNavigation.map((item) => (
-                <NavItem key={item.name} item={item} />
-              ))}
-            </div>
+        <nav className="flex-1 px-2 py-3 overflow-y-auto">
+          {/* Main Navigation */}
+          <div className="space-y-1">
+            {mainNavigation.map((item) => (
+              <NavItem key={item.name} item={item} />
+            ))}
           </div>
 
           {/* Management Section */}
           {managementNavigation.length > 0 && (
-            <div>
-              {!collapsed && (
-                <p className="px-3 mb-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  Gestão
-                </p>
-              )}
+            <div className="mt-4 space-y-1">
+              {managementNavigation.map((item) => (
+                <NavItem key={item.name} item={item} showBadge={false} />
+              ))}
+            </div>
+          )}
+
+          {/* Categories Section */}
+          <div className="mt-6">
+            {!collapsed && (
+              <div className="flex items-center justify-between px-3 mb-2">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Status das Vendas
+                </span>
+                <ChevronRight className="h-3 w-3 text-slate-500 rotate-90" />
+              </div>
+            )}
+            <div className="space-y-0.5">
+              {categories.map((category) => (
+                <CategoryItem key={category.name} category={category} />
+              ))}
+            </div>
+          </div>
+
+          {/* Recent Activity Section */}
+          {!collapsed && (
+            <div className="mt-6">
+              <div className="flex items-center justify-between px-3 mb-2">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Atividade Recente
+                </span>
+                <button className="text-slate-400 hover:text-blue-400 transition-colors">
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+              </div>
               <div className="space-y-1">
-                {managementNavigation.map((item) => (
-                  <NavItem key={item.name} item={item} />
-                ))}
+                <div className="flex items-center gap-3 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-700/30 rounded-lg cursor-pointer transition-all">
+                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-medium">
+                    VN
+                  </div>
+                  <span className="flex-1 truncate">Venda Nova</span>
+                  <div className="h-2 w-2 bg-emerald-500 rounded-full" />
+                </div>
+                <div className="flex items-center gap-3 px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-700/30 rounded-lg cursor-pointer transition-all">
+                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white text-xs font-medium">
+                    AP
+                  </div>
+                  <span className="flex-1 truncate">Análise Pendente</span>
+                  <span className="text-xs text-slate-500">2</span>
+                </div>
               </div>
             </div>
           )}
         </nav>
 
-        {/* Bottom Section */}
-        <div className="p-3 border-t border-white/5 space-y-3">
-          {/* Notifications */}
-          {!collapsed ? (
-            <NotificationsDropdown />
-          ) : (
+        {/* Bottom Section - Logout */}
+        <div className={cn(
+          'border-t border-slate-700/50',
+          collapsed ? 'p-2' : 'p-3'
+        )}>
+          {collapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex justify-center">
-                  <NotificationsDropdown />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="bg-slate-800 text-white border-slate-700">
-                Notificações
-              </TooltipContent>
-            </Tooltip>
-          )}
-
-          {/* User Profile Card */}
-          <div className={cn(
-            'rounded-xl bg-gradient-to-br from-[#1a2d4a] to-[#0f1f35] border border-white/5',
-            collapsed ? 'p-2' : 'p-3'
-          )}>
-            {collapsed ? (
-              <div className="flex flex-col items-center gap-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div>
-                      <AvatarUpload size="sm" />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="bg-slate-800 text-white border-slate-700">
-                    <p>{profile?.nome || 'Usuário'}</p>
-                    <p className="text-xs text-slate-400">{getRoleLabel()}</p>
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={signOut} 
-                      className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10"
-                    >
-                      <LogOut className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="bg-slate-800 text-white border-slate-700">
-                    Sair
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <AvatarUpload size="md" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">
-                    {profile?.nome || 'Usuário'}
-                  </p>
-                  <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-400 border border-blue-500/20 mt-1">
-                    {getRoleLabel() || <span className="animate-pulse">...</span>}
-                  </div>
-                </div>
                 <Button 
                   variant="ghost" 
                   size="icon"
                   onClick={signOut} 
-                  className="h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10"
+                  className="w-full h-10 text-slate-400 hover:text-white hover:bg-slate-700/50"
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className="h-5 w-5" />
                 </Button>
-              </div>
-            )}
-          </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="bg-slate-800 text-white border-slate-700">
+                Sair
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button 
+              variant="ghost" 
+              onClick={signOut} 
+              className="w-full justify-start gap-3 text-slate-400 hover:text-white hover:bg-slate-700/50 px-3"
+            >
+              <LogOut className="h-5 w-5" />
+              <span>Sair</span>
+            </Button>
+          )}
         </div>
       </div>
     </TooltipProvider>

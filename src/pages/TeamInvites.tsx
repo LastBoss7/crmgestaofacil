@@ -3,9 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -14,17 +12,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -32,12 +21,23 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { UserPlus, Copy, Trash2, Loader2, Link as LinkIcon, Clock, CheckCircle } from 'lucide-react';
+import { 
+  UserPlus, 
+  Copy, 
+  Trash2, 
+  Loader2, 
+  Clock, 
+  CheckCircle, 
+  Shield, 
+  Briefcase,
+  Sparkles,
+  KeyRound
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface TeamInvite {
   id: string;
   invite_code: string;
-  email: string | null;
   role: string;
   expires_at: string;
   used_at: string | null;
@@ -59,7 +59,6 @@ const TeamInvites = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   const [newInvite, setNewInvite] = useState({
-    email: '',
     role: 'SELLER' as 'SELLER' | 'BACKOFFICE',
     expiresInDays: '7'
   });
@@ -67,7 +66,6 @@ const TeamInvites = () => {
   const fetchData = async () => {
     if (!user) return;
 
-    // Get company
     const { data: companyData } = await supabase
       .from('companies')
       .select('id, nome_fantasia, razao_social')
@@ -81,7 +79,6 @@ const TeamInvites = () => {
 
     setCompany(companyData);
 
-    // Get invites
     const { data: invitesData, error } = await supabase
       .from('team_invites')
       .select('*')
@@ -100,9 +97,9 @@ const TeamInvites = () => {
   }, [user]);
 
   const generateInviteCode = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code = '';
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 8; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return code;
@@ -120,7 +117,6 @@ const TeamInvites = () => {
     const { error } = await supabase.from('team_invites').insert({
       company_id: company.id,
       invite_code: inviteCode,
-      email: newInvite.email || null,
       role: newInvite.role,
       invited_by: user!.id,
       expires_at: expiresAt.toISOString()
@@ -133,15 +129,15 @@ const TeamInvites = () => {
       return;
     }
 
-    toast.success('Convite criado com sucesso!');
+    toast.success('Código gerado com sucesso!');
     setIsDialogOpen(false);
-    setNewInvite({ email: '', role: 'SELLER', expiresInDays: '7' });
+    setNewInvite({ role: 'SELLER', expiresInDays: '7' });
     fetchData();
   };
 
   const handleCopyCode = async (code: string) => {
     await navigator.clipboard.writeText(code);
-    toast.success('Código copiado para a área de transferência!');
+    toast.success('Código copiado!');
   };
 
   const handleDeleteInvite = async (id: string) => {
@@ -164,26 +160,31 @@ const TeamInvites = () => {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     }).format(new Date(date));
   };
 
   const getInviteStatus = (invite: TeamInvite) => {
     if (invite.used_at) {
-      return { label: 'Usado', variant: 'default' as const, icon: CheckCircle };
+      return { label: 'Usado', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', icon: CheckCircle };
     }
     if (new Date(invite.expires_at) < new Date()) {
-      return { label: 'Expirado', variant: 'secondary' as const, icon: Clock };
+      return { label: 'Expirado', color: 'text-white/40', bg: 'bg-white/5', border: 'border-white/10', icon: Clock };
     }
-    return { label: 'Ativo', variant: 'outline' as const, icon: LinkIcon };
+    return { label: 'Ativo', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20', icon: Sparkles };
+  };
+
+  const getRoleInfo = (role: string) => {
+    if (role === 'BACKOFFICE') {
+      return { label: 'Backoffice', icon: Shield, color: 'from-blue-500 to-cyan-500' };
+    }
+    return { label: 'Vendedor', icon: Briefcase, color: 'from-violet-500 to-purple-500' };
   };
 
   if (!isCEO) {
     return (
       <Layout>
         <div className="flex items-center justify-center py-12">
-          <p className="text-muted-foreground">
+          <p className="text-white/50">
             Apenas o proprietário da empresa pode gerenciar convites.
           </p>
         </div>
@@ -193,184 +194,288 @@ const TeamInvites = () => {
 
   return (
     <Layout>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-8 max-w-4xl">
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Convites de Equipe</h1>
-            <p className="text-muted-foreground">
-              {company 
-                ? `Convide pessoas para ${company.nome_fantasia || company.razao_social}` 
-                : 'Gerencie os convites da sua equipe'}
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl blur-xl opacity-50" />
+              <div className="relative p-4 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl">
+                <UserPlus className="h-8 w-8 text-white" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white tracking-tight">Convites</h1>
+              <p className="text-white/50">
+                {company ? `Gerencie a equipe de ${company.nome_fantasia || company.razao_social}` : 'Gerencie sua equipe'}
+              </p>
+            </div>
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2">
+              <Button className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white gap-2 shadow-lg shadow-violet-500/25">
                 <UserPlus className="h-4 w-4" />
-                Novo Convite
+                Gerar Código
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="bg-slate-900/95 backdrop-blur-xl border-white/10">
               <DialogHeader>
-                <DialogTitle>Criar Convite</DialogTitle>
-                <DialogDescription>
-                  Gere um link único para convidar um membro para sua equipe
-                </DialogDescription>
+                <DialogTitle className="text-white text-xl">Novo Código de Convite</DialogTitle>
               </DialogHeader>
               
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">E-mail (opcional)</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="email@exemplo.com"
-                    value={newInvite.email}
-                    onChange={(e) => setNewInvite({ ...newInvite, email: e.target.value })}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Se informado, apenas este e-mail poderá usar o convite
-                  </p>
+              <div className="space-y-6 py-4">
+                {/* Role Selection */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-white/70">Função do Membro</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setNewInvite({ ...newInvite, role: 'SELLER' })}
+                      className={cn(
+                        "p-4 rounded-xl border transition-all duration-200 text-left",
+                        newInvite.role === 'SELLER'
+                          ? "bg-gradient-to-br from-violet-500/20 to-purple-500/20 border-violet-500/50"
+                          : "bg-white/[0.02] border-white/10 hover:bg-white/[0.04]"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "p-2 rounded-lg",
+                          newInvite.role === 'SELLER' 
+                            ? "bg-gradient-to-br from-violet-500 to-purple-600" 
+                            : "bg-white/10"
+                        )}>
+                          <Briefcase className="h-4 w-4 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-white font-medium text-sm">Vendedor</p>
+                          <p className="text-white/40 text-xs">Cadastra vendas</p>
+                        </div>
+                      </div>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setNewInvite({ ...newInvite, role: 'BACKOFFICE' })}
+                      className={cn(
+                        "p-4 rounded-xl border transition-all duration-200 text-left",
+                        newInvite.role === 'BACKOFFICE'
+                          ? "bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border-blue-500/50"
+                          : "bg-white/[0.02] border-white/10 hover:bg-white/[0.04]"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "p-2 rounded-lg",
+                          newInvite.role === 'BACKOFFICE' 
+                            ? "bg-gradient-to-br from-blue-500 to-cyan-600" 
+                            : "bg-white/10"
+                        )}>
+                          <Shield className="h-4 w-4 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-white font-medium text-sm">Backoffice</p>
+                          <p className="text-white/40 text-xs">Valida vendas</p>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label>Função</Label>
-                  <Select
-                    value={newInvite.role}
-                    onValueChange={(v) => setNewInvite({ ...newInvite, role: v as 'SELLER' | 'BACKOFFICE' })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SELLER">Vendedor</SelectItem>
-                      <SelectItem value="BACKOFFICE">Backoffice</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Validade</Label>
+                {/* Expiry Selection */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-white/70">Validade do Código</label>
                   <Select
                     value={newInvite.expiresInDays}
                     onValueChange={(v) => setNewInvite({ ...newInvite, expiresInDays: v })}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-white/[0.04] border-white/10 text-white h-12">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1 dia</SelectItem>
-                      <SelectItem value="7">7 dias</SelectItem>
-                      <SelectItem value="30">30 dias</SelectItem>
+                    <SelectContent className="bg-slate-900 border-white/10">
+                      <SelectItem value="1" className="text-white">1 dia</SelectItem>
+                      <SelectItem value="7" className="text-white">7 dias</SelectItem>
+                      <SelectItem value="30" className="text-white">30 dias</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <DialogFooter className="gap-3">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setIsDialogOpen(false)}
+                  className="text-white/60 hover:text-white hover:bg-white/5"
+                >
                   Cancelar
                 </Button>
-                <Button onClick={handleCreateInvite} disabled={creating}>
+                <Button 
+                  onClick={handleCreateInvite} 
+                  disabled={creating}
+                  className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white gap-2"
+                >
                   {creating ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Criando...
-                    </>
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    'Criar Convite'
+                    <KeyRound className="h-4 w-4" />
                   )}
+                  Gerar Código
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
 
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4">
+          <Card className="bg-white/[0.02] border-white/[0.06] backdrop-blur-xl">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-violet-500/10 border border-violet-500/20">
+                  <Sparkles className="h-5 w-5 text-violet-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">
+                    {invites.filter(i => !i.used_at && new Date(i.expires_at) > new Date()).length}
+                  </p>
+                  <p className="text-sm text-white/40">Ativos</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-white/[0.02] border-white/[0.06] backdrop-blur-xl">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                  <CheckCircle className="h-5 w-5 text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">
+                    {invites.filter(i => i.used_at).length}
+                  </p>
+                  <p className="text-sm text-white/40">Usados</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-white/[0.02] border-white/[0.06] backdrop-blur-xl">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                  <Clock className="h-5 w-5 text-white/40" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">
+                    {invites.filter(i => !i.used_at && new Date(i.expires_at) < new Date()).length}
+                  </p>
+                  <p className="text-sm text-white/40">Expirados</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Invites List */}
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle>Convites Enviados</CardTitle>
-            <CardDescription>
-              Gerencie os links de convite da sua equipe
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <Card className="bg-white/[0.02] border-white/[0.06] backdrop-blur-xl overflow-hidden">
+          <div className="p-6 border-b border-white/[0.06]">
+            <h2 className="text-lg font-semibold text-white">Códigos Gerados</h2>
+            <p className="text-sm text-white/40">Compartilhe o código com o novo membro</p>
+          </div>
+          
+          <CardContent className="p-0">
             {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
               </div>
             ) : invites.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <UserPlus className="h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-lg font-medium">Nenhum convite criado</p>
-                <p className="text-muted-foreground">
-                  Crie convites para adicionar membros à sua equipe
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06] mb-4">
+                  <UserPlus className="h-10 w-10 text-white/20" />
+                </div>
+                <p className="text-lg font-medium text-white">Nenhum convite criado</p>
+                <p className="text-white/40 text-sm mt-1">
+                  Clique em "Gerar Código" para convidar membros
                 </p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Função</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Expira em</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {invites.map((invite) => {
-                    const status = getInviteStatus(invite);
-                    const StatusIcon = status.icon;
-                    const isActive = !invite.used_at && new Date(invite.expires_at) > new Date();
-                    
-                    return (
-                      <TableRow key={invite.id}>
-                        <TableCell>
-                          <code className="px-2 py-1 bg-muted rounded text-xs font-mono">
-                            {invite.invite_code}
-                          </code>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {invite.role === 'SELLER' ? 'Vendedor' : 'Backoffice'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={status.variant} className="gap-1">
-                            <StatusIcon className="h-3 w-3" />
-                            {status.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{formatDate(invite.expires_at)}</TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
+              <div className="divide-y divide-white/[0.06]">
+                {invites.map((invite) => {
+                  const status = getInviteStatus(invite);
+                  const roleInfo = getRoleInfo(invite.role);
+                  const StatusIcon = status.icon;
+                  const RoleIcon = roleInfo.icon;
+                  const isActive = !invite.used_at && new Date(invite.expires_at) > new Date();
+                  
+                  return (
+                    <div 
+                      key={invite.id} 
+                      className={cn(
+                        "p-5 flex items-center justify-between transition-colors",
+                        isActive ? "hover:bg-white/[0.02]" : "opacity-60"
+                      )}
+                    >
+                      <div className="flex items-center gap-4">
+                        {/* Role Icon */}
+                        <div className={cn(
+                          "p-2.5 rounded-xl bg-gradient-to-br",
+                          roleInfo.color
+                        )}>
+                          <RoleIcon className="h-5 w-5 text-white" />
+                        </div>
+                        
+                        {/* Code */}
+                        <div>
+                          <div className="flex items-center gap-3">
+                            <code className="text-lg font-mono font-bold text-white tracking-widest">
+                              {invite.invite_code}
+                            </code>
                             {isActive && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
+                              <button
                                 onClick={() => handleCopyCode(invite.invite_code)}
+                                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
                                 title="Copiar código"
                               >
-                                <Copy className="h-4 w-4" />
-                              </Button>
+                                <Copy className="h-3.5 w-3.5 text-white/60" />
+                              </button>
                             )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteInvite(invite.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
                           </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-sm text-white/40">{roleInfo.label}</span>
+                            <span className="text-white/20">•</span>
+                            <span className="text-sm text-white/40">Expira {formatDate(invite.expires_at)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        {/* Status Badge */}
+                        <div className={cn(
+                          "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border",
+                          status.bg,
+                          status.border,
+                          status.color
+                        )}>
+                          <StatusIcon className="h-3 w-3" />
+                          {status.label}
+                        </div>
+                        
+                        {/* Delete Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteInvite(invite.id)}
+                          className="h-9 w-9 p-0 text-white/40 hover:text-red-400 hover:bg-red-500/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </CardContent>
         </Card>

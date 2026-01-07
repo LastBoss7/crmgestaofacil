@@ -16,13 +16,13 @@ import {
   FolderOpen,
   Folder,
   ChevronDown,
-  Bell,
   Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ROLE_LABELS } from '@/types/database';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useState } from 'react';
+import NotificationsDropdown from '@/components/notifications/NotificationsDropdown';
 
 const Sidebar = () => {
   const location = useLocation();
@@ -214,13 +214,7 @@ const Sidebar = () => {
       {/* Bottom Section */}
       <div className="p-3 border-t border-white/[0.06] space-y-2">
         {/* Notifications */}
-        <button className="w-full flex items-center gap-3 rounded-2xl px-4 py-2.5 text-sm text-white/60 hover:bg-white/[0.04] transition-colors">
-          <div className="relative">
-            <Bell className="h-4 w-4" />
-            <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-violet-500 rounded-full" />
-          </div>
-          <span>Notificações</span>
-        </button>
+        <NotificationsDropdown />
 
         {/* User Profile */}
         <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.04]">

@@ -44,10 +44,10 @@ export function useSalesNotifications() {
           let message = '';
 
           switch (newSale.status) {
-            case 'APROVADA':
+            case 'VENDA_AUDITADA':
               notificationType = 'success';
-              title = '🎉 Venda Aprovada!';
-              message = `${clientName} foi aprovada`;
+              title = '🎉 Venda Auditada!';
+              message = `${clientName} foi auditada`;
               break;
             case 'PENDENCIA':
               notificationType = 'alert';
@@ -59,14 +59,19 @@ export function useSalesNotifications() {
               title = '❌ Venda Cancelada';
               message = `${clientName} foi cancelada`;
               break;
-            case 'EM_ANALISE':
+            case 'AGUARDANDO_AUDITORIA':
               if (isCEO || isBackoffice) {
                 notificationType = 'sale';
-                title = '📋 Nova Venda para Análise';
-                message = `${clientName} aguardando aprovação`;
+                title = '📋 Nova Venda para Auditoria';
+                message = `${clientName} aguardando auditoria`;
               } else {
-                return; // Don't notify sellers about EM_ANALISE
+                return; // Don't notify sellers about AGUARDANDO_AUDITORIA
               }
+              break;
+            case 'INSTALACAO_MARCADA':
+              notificationType = 'success';
+              title = '📅 Instalação Marcada!';
+              message = `${clientName} teve a instalação agendada`;
               break;
             case 'INSTALADA':
               notificationType = 'success';

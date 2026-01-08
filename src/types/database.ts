@@ -1,6 +1,6 @@
 export type AppRole = 'CEO' | 'BACKOFFICE' | 'SELLER';
 
-export type SaleStatus = 'NOVA' | 'EM_ANALISE' | 'PENDENCIA' | 'APROVADA' | 'INSTALADA' | 'CANCELADA';
+export type SaleStatus = 'PRE_ANALISE' | 'AGUARDANDO_AUDITORIA' | 'PENDENCIA' | 'VENDA_AUDITADA' | 'INSTALACAO_MARCADA' | 'INSTALADA' | 'CANCELADA';
 
 export interface Profile {
   id: string;
@@ -54,10 +54,11 @@ export interface UserWithRole extends Profile {
 }
 
 export const SALE_STATUS_LABELS: Record<SaleStatus, string> = {
-  NOVA: 'Nova',
-  EM_ANALISE: 'Em Análise',
+  PRE_ANALISE: 'Pré-Análise',
+  AGUARDANDO_AUDITORIA: 'Aguardando Auditoria',
   PENDENCIA: 'Pendência',
-  APROVADA: 'Aprovada',
+  VENDA_AUDITADA: 'Venda Auditada',
+  INSTALACAO_MARCADA: 'Instalação Marcada',
   INSTALADA: 'Instalada',
   CANCELADA: 'Cancelada',
 };

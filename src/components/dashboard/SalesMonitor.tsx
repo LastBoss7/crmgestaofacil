@@ -1,12 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Activity, TrendingUp, Clock, Users, Zap, AlertTriangle } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Activity, TrendingUp, Clock, Users, Zap, AlertTriangle, CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SALE_STATUS_LABELS, SaleStatus } from '@/types/database';
 import { motion, AnimatePresence } from 'framer-motion';
+import { format, isToday, subDays, addDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface RealtimeSale {
   id: string;
@@ -19,63 +24,71 @@ interface RealtimeSale {
 }
 
 interface SalesStats {
-  today: number;
-  todayValue: number;
+  total: number;
+  totalValue: number;
   thisHour: number;
   pending: number;
   avgPerHour: number;
 }
 
 export const SalesMonitor = () => {
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [recentSales, setRecentSales] = useState<RealtimeSale[]>([]);
   const [stats, setStats] = useState<SalesStats>({
-    today: 0,
-    todayValue: 0,
+    total: 0,
+    totalValue: 0,
     thisHour: 0,
     pending: 0,
     avgPerHour: 0,
   });
   const [isLive, setIsLive] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
-  const fetchStats = async () => {
+  const formatDateForQuery = (date: Date) => {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  };
+
+  const fetchStats = useCallback(async () => {
     const now = new Date();
-    // Get today's date in local timezone (YYYY-MM-DD format)
-    const todayDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const queryDate = formatDateForQuery(selectedDate);
+    const isViewingToday = isToday(selectedDate);
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
 
-    // Fetch today's sales using data_venda (which is a DATE field, not timestamp)
-    const { data: todaySales, error: todayError } = await supabase
+    // Fetch sales for selected date using data_venda
+    const { data: salesData, error } = await supabase
       .from('sales')
       .select('id, valor_mensal, status, created_at, data_venda')
-      .eq('data_venda', todayDate);
+      .eq('data_venda', queryDate);
 
-    if (!todayError && todaySales) {
-      const todayValue = todaySales.reduce((sum, s) => sum + Number(s.valor_mensal), 0);
-      // Filter sales created in the last hour for "this hour" metric
-      const thisHourSales = todaySales.filter(s => s.created_at && s.created_at >= oneHourAgo);
-      const pendingSales = todaySales.filter(s => s.status === 'PENDENCIA' || s.status === 'AGUARDANDO_AUDITORIA');
+    if (!error && salesData) {
+      const totalValue = salesData.reduce((sum, s) => sum + Number(s.valor_mensal), 0);
+      // Only calculate "this hour" for today
+      const thisHourSales = isViewingToday 
+        ? salesData.filter(s => s.created_at && s.created_at >= oneHourAgo)
+        : [];
+      const pendingSales = salesData.filter(s => s.status === 'PENDENCIA' || s.status === 'AGUARDANDO_AUDITORIA');
       
-      // Calculate average per hour based on current hour of the day
-      const hoursElapsed = Math.max(1, now.getHours() + 1);
-      const avgPerHour = todaySales.length / hoursElapsed;
+      // Calculate average per hour
+      const hoursElapsed = isViewingToday ? Math.max(1, now.getHours() + 1) : 10; // Assume 10h workday for past dates
+      const avgPerHour = salesData.length / hoursElapsed;
 
       setStats({
-        today: todaySales.length,
-        todayValue,
+        total: salesData.length,
+        totalValue,
         thisHour: thisHourSales.length,
         pending: pendingSales.length,
         avgPerHour: Math.round(avgPerHour * 10) / 10,
       });
     }
 
-    // Fetch recent sales with seller info - only from today
+    // Fetch sales with seller info for selected date
     const { data: recentData } = await supabase
       .from('sales')
       .select('id, razao_social, nome_fantasia, valor_mensal, status, created_at, seller_id, data_venda')
-      .eq('data_venda', todayDate)
+      .eq('data_venda', queryDate)
       .order('created_at', { ascending: false })
-      .limit(10);
+      .limit(20);
 
     if (recentData) {
       const sellerIds = [...new Set(recentData.map(s => s.seller_id).filter(Boolean))];
@@ -100,32 +113,51 @@ export const SalesMonitor = () => {
     }
 
     setLastUpdate(new Date());
-  };
+  }, [selectedDate]);
 
   useEffect(() => {
     fetchStats();
 
-    // Subscribe to realtime changes
-    const channel = supabase
-      .channel('sales-monitor')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'sales' },
-        () => {
-          fetchStats();
-          setIsLive(true);
-        }
-      )
-      .subscribe();
+    // Subscribe to realtime changes only when viewing today
+    const isViewingToday = isToday(selectedDate);
+    
+    if (isViewingToday) {
+      const channel = supabase
+        .channel('sales-monitor')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'sales' },
+          () => {
+            fetchStats();
+            setIsLive(true);
+          }
+        )
+        .subscribe();
 
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchStats, 30000);
+      // Refresh every 30 seconds when viewing today
+      const interval = setInterval(fetchStats, 30000);
 
-    return () => {
-      supabase.removeChannel(channel);
-      clearInterval(interval);
-    };
-  }, []);
+      return () => {
+        supabase.removeChannel(channel);
+        clearInterval(interval);
+      };
+    }
+  }, [fetchStats, selectedDate]);
+
+  const handlePreviousDay = () => {
+    setSelectedDate(prev => subDays(prev, 1));
+  };
+
+  const handleNextDay = () => {
+    const tomorrow = addDays(selectedDate, 1);
+    if (tomorrow <= new Date()) {
+      setSelectedDate(tomorrow);
+    }
+  };
+
+  const handleToday = () => {
+    setSelectedDate(new Date());
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -154,20 +186,101 @@ export const SalesMonitor = () => {
     return colors[status];
   };
 
+  const isViewingToday = isToday(selectedDate);
+
   return (
     <div className="space-y-6">
-      {/* Live Indicator */}
-      <div className="flex items-center justify-between">
+      {/* Header with Date Filter */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <div className={`h-3 w-3 rounded-full ${isLive ? 'bg-green-500 animate-pulse' : 'bg-muted'}`} />
+          <div className={cn(
+            "h-3 w-3 rounded-full",
+            isViewingToday && isLive ? 'bg-green-500 animate-pulse' : 'bg-muted'
+          )} />
           <span className="text-sm text-muted-foreground">
-            {isLive ? 'Monitoramento em tempo real' : 'Conectando...'}
+            {isViewingToday 
+              ? (isLive ? 'Monitoramento em tempo real' : 'Conectando...') 
+              : 'Visualizando histórico'
+            }
           </span>
         </div>
-        <span className="text-xs text-muted-foreground">
-          Última atualização: {lastUpdate.toLocaleTimeString('pt-BR')}
-        </span>
+
+        {/* Date Filter */}
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={handlePreviousDay}
+            className="h-8 w-8"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                className={cn(
+                  "min-w-[180px] justify-start text-left font-normal",
+                  !isViewingToday && "border-primary text-primary"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {isViewingToday 
+                  ? 'Hoje' 
+                  : format(selectedDate, "dd 'de' MMM, yyyy", { locale: ptBR })
+                }
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => {
+                  if (date) {
+                    setSelectedDate(date);
+                    setCalendarOpen(false);
+                  }
+                }}
+                disabled={(date) => date > new Date()}
+                locale={ptBR}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={handleNextDay}
+            disabled={isViewingToday}
+            className="h-8 w-8"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+
+          {!isViewingToday && (
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              onClick={handleToday}
+              className="ml-2"
+            >
+              Voltar para Hoje
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* Date indicator for past dates */}
+      {!isViewingToday && (
+        <div className="bg-muted/50 border rounded-lg p-3 flex items-center gap-2">
+          <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm">
+            Exibindo vendas de <strong>{format(selectedDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</strong>
+          </span>
+        </div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
@@ -175,8 +288,10 @@ export const SalesMonitor = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Vendas Hoje</p>
-                <p className="text-3xl font-bold">{stats.today}</p>
+                <p className="text-sm text-muted-foreground">
+                  {isViewingToday ? 'Vendas Hoje' : 'Total de Vendas'}
+                </p>
+                <p className="text-3xl font-bold">{stats.total}</p>
               </div>
               <div className="p-3 rounded-full bg-blue-500/20">
                 <TrendingUp className="h-6 w-6 text-blue-400" />
@@ -189,8 +304,10 @@ export const SalesMonitor = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Valor Total Hoje</p>
-                <p className="text-2xl font-bold">{formatCurrency(stats.todayValue)}</p>
+                <p className="text-sm text-muted-foreground">
+                  {isViewingToday ? 'Valor Total Hoje' : 'Valor Total'}
+                </p>
+                <p className="text-2xl font-bold">{formatCurrency(stats.totalValue)}</p>
               </div>
               <div className="p-3 rounded-full bg-green-500/20">
                 <Activity className="h-6 w-6 text-green-400" />
@@ -199,19 +316,21 @@ export const SalesMonitor = () => {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Última Hora</p>
-                <p className="text-3xl font-bold">{stats.thisHour}</p>
+        {isViewingToday && (
+          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Última Hora</p>
+                  <p className="text-3xl font-bold">{stats.thisHour}</p>
+                </div>
+                <div className="p-3 rounded-full bg-purple-500/20">
+                  <Clock className="h-6 w-6 text-purple-400" />
+                </div>
               </div>
-              <div className="p-3 rounded-full bg-purple-500/20">
-                <Clock className="h-6 w-6 text-purple-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20">
           <CardContent className="pt-6">
@@ -242,55 +361,75 @@ export const SalesMonitor = () => {
         </Card>
       </div>
 
-      {/* Recent Sales Feed */}
+      {/* Sales Feed */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
-            Feed de Vendas em Tempo Real
+            {isViewingToday ? 'Feed de Vendas em Tempo Real' : `Vendas do Dia`}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[400px]">
             <AnimatePresence>
-              {recentSales.map((sale, index) => (
-                <motion.div
-                  key={sale.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="flex items-center justify-between p-4 border-b last:border-0 hover:bg-muted/30 transition-colors"
-                >
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium truncate">
-                        {sale.nome_fantasia || sale.razao_social}
+              {recentSales.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <CalendarIcon className="h-12 w-12 mb-4 opacity-50" />
+                  <p className="text-lg font-medium">Nenhuma venda encontrada</p>
+                  <p className="text-sm">
+                    {isViewingToday 
+                      ? 'Aguardando novas vendas...' 
+                      : `Não há vendas registradas em ${format(selectedDate, "dd/MM/yyyy")}`
+                    }
+                  </p>
+                </div>
+              ) : (
+                recentSales.map((sale, index) => (
+                  <motion.div
+                    key={sale.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex items-center justify-between p-4 border-b last:border-0 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium truncate">
+                          {sale.nome_fantasia || sale.razao_social}
+                        </p>
+                        <Badge className={getStatusColor(sale.status)} variant="secondary">
+                          {SALE_STATUS_LABELS[sale.status]}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                        <Users className="h-3 w-3" />
+                        <span>{sale.seller_name || 'Vendedor'}</span>
+                        <span>•</span>
+                        <Clock className="h-3 w-3" />
+                        <span>{formatTime(sale.created_at)}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-green-400">
+                        {formatCurrency(Number(sale.valor_mensal))}
                       </p>
-                      <Badge className={getStatusColor(sale.status)} variant="secondary">
-                        {SALE_STATUS_LABELS[sale.status]}
-                      </Badge>
+                      <p className="text-xs text-muted-foreground">/mês</p>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <Users className="h-3 w-3" />
-                      <span>{sale.seller_name || 'Vendedor'}</span>
-                      <span>•</span>
-                      <Clock className="h-3 w-3" />
-                      <span>{formatTime(sale.created_at)}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-green-400">
-                      {formatCurrency(Number(sale.valor_mensal))}
-                    </p>
-                    <p className="text-xs text-muted-foreground">/mês</p>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                ))
+              )}
             </AnimatePresence>
           </ScrollArea>
         </CardContent>
       </Card>
+
+      {/* Last update info */}
+      <div className="text-right">
+        <span className="text-xs text-muted-foreground">
+          Última atualização: {lastUpdate.toLocaleTimeString('pt-BR')}
+        </span>
+      </div>
     </div>
   );
 };

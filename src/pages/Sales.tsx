@@ -5,12 +5,13 @@ import Layout from '@/components/layout/Layout';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
-import { Plus, Search, Filter, Eye, History } from 'lucide-react';
+import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SaleComments } from '@/components/sales/SaleComments';
 import { SaleStatusActions } from '@/components/sales/SaleStatusActions';
 import { SaleForm } from '@/components/sales/SaleForm';
+import { exportToExcel, exportToPDF, getPeriodLabel } from '@/lib/export-utils';
 import {
   Select,
   SelectContent,
@@ -34,6 +35,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -133,29 +140,61 @@ const Sales = () => {
               {isSeller ? 'Suas vendas cadastradas' : 'Todas as vendas do sistema'}
             </p>
           </div>
-          <Dialog open={isNewSaleOpen} onOpenChange={setIsNewSaleOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus className="h-4 w-4" />
-                Nova Venda
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Cadastrar Nova Venda</DialogTitle>
-                <DialogDescription>
-                  Preencha todos os dados necessários para a contratação
-                </DialogDescription>
-              </DialogHeader>
-              {user && (
-                <SaleForm
-                  userId={user.id}
-                  onSuccess={handleSaleCreated}
-                  onCancel={() => setIsNewSaleOpen(false)}
-                />
-              )}
-            </DialogContent>
-          </Dialog>
+          <div className="flex gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Exportar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    exportToExcel(filteredSales, sellers, `vendas-${new Date().toISOString().split('T')[0]}`);
+                    toast.success('Arquivo Excel exportado!');
+                  }}
+                  className="gap-2"
+                >
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Exportar Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    exportToPDF(filteredSales, sellers, getPeriodLabel('all'), `vendas-${new Date().toISOString().split('T')[0]}`);
+                    toast.success('Arquivo PDF exportado!');
+                  }}
+                  className="gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  Exportar PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Dialog open={isNewSaleOpen} onOpenChange={setIsNewSaleOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Nova Venda
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Cadastrar Nova Venda</DialogTitle>
+                  <DialogDescription>
+                    Preencha todos os dados necessários para a contratação
+                  </DialogDescription>
+                </DialogHeader>
+                {user && (
+                  <SaleForm
+                    userId={user.id}
+                    onSuccess={handleSaleCreated}
+                    onCancel={() => setIsNewSaleOpen(false)}
+                  />
+                )}
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Filters */}

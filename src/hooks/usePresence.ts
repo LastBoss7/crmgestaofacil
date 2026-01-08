@@ -175,9 +175,12 @@ export const usePresence = (channelContext?: string) => {
     return `${minutes}m`;
   }, [onlineUsers]);
 
+  // Check if current user is in the online list (more reliable than local state)
+  const currentUserOnline = user ? onlineUsers.some(u => u.user_id === user.id) : false;
+
   return {
     onlineUsers,
-    isOnline,
+    isOnline: isOnline || currentUserOnline,
     isUserOnline,
     onlineCount: onlineUsers.length,
     setTyping,

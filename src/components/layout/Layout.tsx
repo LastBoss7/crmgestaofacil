@@ -7,10 +7,10 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   return (
-    <div className="flex h-screen overflow-hidden bg-background p-2 gap-2">
+    <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar />
-      <main className="flex-1 overflow-auto bg-card rounded-2xl lg:rounded-3xl border border-border">
-        <div className="p-6">
+      <main className="flex-1 overflow-auto">
+        <div className="p-4 lg:p-6">
           {children}
         </div>
       </main>

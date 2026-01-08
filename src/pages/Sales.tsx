@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/layout/Layout';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
-import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2 } from 'lucide-react';
+import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SaleComments } from '@/components/sales/SaleComments';
@@ -60,6 +60,67 @@ const Sales = () => {
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSeller | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [newDocuments, setNewDocuments] = useState<File[]>([]);
+  const [isUploadingDocs, setIsUploadingDocs] = useState(false);
+  const docInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDocumentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles = files.filter(file => {
+      const isValidType = file.type.startsWith('image/') || file.type === 'application/pdf';
+      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB
+      if (!isValidType) toast.error(`${file.name}: Tipo de arquivo não suportado`);
+      if (!isValidSize) toast.error(`${file.name}: Arquivo muito grande (máx 10MB)`);
+      return isValidType && isValidSize;
+    });
+    setNewDocuments(prev => [...prev, ...validFiles]);
+    if (e.target) e.target.value = '';
+  };
+
+  const removeNewDocument = (index: number) => {
+    setNewDocuments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadNewDocuments = async () => {
+    if (!selectedSale || newDocuments.length === 0) return;
+    
+    setIsUploadingDocs(true);
+    try {
+      const uploadedPaths: string[] = [];
+      
+      for (const file of newDocuments) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${selectedSale.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('sale-documents')
+          .upload(fileName, file);
+        
+        if (uploadError) throw uploadError;
+        uploadedPaths.push(fileName);
+      }
+      
+      const existingDocs = selectedSale.documentos || [];
+      const allDocs = [...existingDocs, ...uploadedPaths];
+      
+      const { error: updateError } = await supabase
+        .from('sales')
+        .update({ documentos: allDocs })
+        .eq('id', selectedSale.id);
+      
+      if (updateError) throw updateError;
+      
+      setSelectedSale({ ...selectedSale, documentos: allDocs });
+      setNewDocuments([]);
+      toast.success(`${uploadedPaths.length} documento(s) adicionado(s)`);
+      fetchSales();
+    } catch (error) {
+      console.error('Error uploading documents:', error);
+      toast.error('Erro ao enviar documentos');
+    } finally {
+      setIsUploadingDocs(false);
+    }
+  };
 
   const fetchSales = async () => {
     if (!user) return;
@@ -357,9 +418,11 @@ const Sales = () => {
                 )}
 
                 {/* Documents Section */}
-                {selectedSale.documentos && selectedSale.documentos.length > 0 && (
-                  <div className="space-y-3">
-                    <Label className="text-muted-foreground">Documentos Anexados</Label>
+                <div className="space-y-3">
+                  <Label className="text-muted-foreground">Documentos Anexados</Label>
+                  
+                  {/* Existing documents */}
+                  {selectedSale.documentos && selectedSale.documentos.length > 0 ? (
                     <div className="grid gap-2">
                       {selectedSale.documentos.map((docUrl, index) => {
                         const fileName = docUrl.split('/').pop() || `Documento ${index + 1}`;
@@ -399,8 +462,80 @@ const Sales = () => {
                         );
                       })}
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Nenhum documento anexado</p>
+                  )}
+                  
+                  {/* New documents to upload */}
+                  {newDocuments.length > 0 && (
+                    <div className="space-y-2 border-t pt-3">
+                      <Label className="text-sm text-muted-foreground">Novos documentos para enviar:</Label>
+                      <div className="grid gap-2">
+                        {newDocuments.map((file, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between rounded-lg border border-dashed border-primary/50 bg-primary/5 p-3"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              {file.type.startsWith('image/') ? (
+                                <ImageIcon className="h-5 w-5 text-blue-500 shrink-0" />
+                              ) : (
+                                <FileText className="h-5 w-5 text-red-500 shrink-0" />
+                              )}
+                              <span className="text-sm truncate">{file.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                ({(file.size / 1024 / 1024).toFixed(2)} MB)
+                              </span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeNewDocument(index)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                      <Button
+                        onClick={uploadNewDocuments}
+                        disabled={isUploadingDocs}
+                        className="w-full gap-2"
+                      >
+                        {isUploadingDocs ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4" />
+                            Enviar {newDocuments.length} documento(s)
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {/* Add document button */}
+                  <input
+                    ref={docInputRef}
+                    type="file"
+                    accept="image/*,.pdf"
+                    multiple
+                    className="hidden"
+                    onChange={handleDocumentSelect}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => docInputRef.current?.click()}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Adicionar Documento
+                  </Button>
+                </div>
 
                 {/* History Link */}
                 <div className="flex justify-end">

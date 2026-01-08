@@ -34,7 +34,7 @@ interface CompanyData {
 }
 
 const Settings = () => {
-  const { user, profile, isCEO } = useAuth();
+  const { user, profile, isCEO, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -112,11 +112,7 @@ const Settings = () => {
     }
   };
 
-  if (!isCEO) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <Layout>
         <div className="flex items-center justify-center h-[60vh]">
@@ -124,6 +120,10 @@ const Settings = () => {
         </div>
       </Layout>
     );
+  }
+
+  if (!isCEO) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return (

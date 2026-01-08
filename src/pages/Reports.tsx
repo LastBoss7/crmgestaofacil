@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon, TrendingUp, Users, DollarSign, Target } from 'lucide-react';
+import { Calendar as CalendarIcon, TrendingUp, Users, DollarSign, Target, FileSpreadsheet, FileText, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -20,9 +20,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatCard } from '@/components/ui/stat-card';
 import { cn } from '@/lib/utils';
+import { exportToExcel, exportToPDF } from '@/lib/export-utils';
+import { toast } from 'sonner';
 import {
   AreaChart,
   Area,
@@ -186,6 +194,36 @@ const Reports = () => {
     return formatCurrency(value);
   };
 
+  // Create sellers map for export functions
+  const sellersMap = useMemo(() => {
+    const map: Record<string, Profile> = {};
+    sellers.forEach(s => { map[s.id] = s; });
+    return map;
+  }, [sellers]);
+
+  const handleExportExcel = () => {
+    if (filteredSales.length === 0) {
+      toast.error('Não há vendas para exportar no período selecionado');
+      return;
+    }
+    
+    const periodStr = `${format(dateRange.from, 'dd-MM-yyyy')}_${format(dateRange.to, 'dd-MM-yyyy')}`;
+    exportToExcel(filteredSales, sellersMap, `relatorio-vendas_${periodStr}`);
+    toast.success('Relatório Excel gerado com sucesso!');
+  };
+
+  const handleExportPDF = () => {
+    if (filteredSales.length === 0) {
+      toast.error('Não há vendas para exportar no período selecionado');
+      return;
+    }
+    
+    const periodLabel = `${format(dateRange.from, 'dd/MM/yyyy', { locale: ptBR })} a ${format(dateRange.to, 'dd/MM/yyyy', { locale: ptBR })}`;
+    const periodStr = `${format(dateRange.from, 'dd-MM-yyyy')}_${format(dateRange.to, 'dd-MM-yyyy')}`;
+    exportToPDF(filteredSales, sellersMap, periodLabel, `relatorio-vendas_${periodStr}`);
+    toast.success('Relatório PDF gerado com sucesso!');
+  };
+
   return (
     <Layout>
       <div className="space-y-6 animate-fade-in">
@@ -273,6 +311,26 @@ const Reports = () => {
                 </SelectContent>
               </Select>
             )}
+
+            {/* Export Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="default" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Exportar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportExcel} className="gap-2 cursor-pointer">
+                  <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                  Exportar Excel (.xlsx)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF} className="gap-2 cursor-pointer">
+                  <FileText className="h-4 w-4 text-red-600" />
+                  Exportar PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 

@@ -154,25 +154,25 @@ export function CallCenterMetrics({ sales }: CallCenterMetricsProps) {
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 to-transparent">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Taxa de Auditoria</p>
-                  <p className="text-3xl font-bold text-emerald-500">
+          <Card className="border-emerald-500/20">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-emerald-500/10 flex-shrink-0">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground truncate">Taxa Auditoria</p>
+                  <p className="text-xl font-bold text-emerald-500">
                     {auditMetrics.auditRate.toFixed(1)}%
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {auditMetrics.audited} de {auditMetrics.totalSubmitted} vendas
+                  <p className="text-[10px] text-muted-foreground">
+                    {auditMetrics.audited}/{auditMetrics.totalSubmitted}
                   </p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                  <CheckCircle2 className="h-6 w-6 text-emerald-500" />
                 </div>
               </div>
             </CardContent>
@@ -184,20 +184,20 @@ export function CallCenterMetrics({ sales }: CallCenterMetricsProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-transparent">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Taxa de Instalação</p>
-                  <p className="text-3xl font-bold text-violet-500">
+          <Card className="border-violet-500/20">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-violet-500/10 flex-shrink-0">
+                  <Zap className="h-4 w-4 text-violet-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground truncate">Taxa Instalação</p>
+                  <p className="text-xl font-bold text-violet-500">
                     {auditMetrics.installRate.toFixed(1)}%
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-[10px] text-muted-foreground">
                     {auditMetrics.installed} instaladas
                   </p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-violet-500/10 flex items-center justify-center">
-                  <Zap className="h-6 w-6 text-violet-500" />
                 </div>
               </div>
             </CardContent>
@@ -209,20 +209,20 @@ export function CallCenterMetrics({ sales }: CallCenterMetricsProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="border-orange-500/20 bg-gradient-to-br from-orange-500/5 to-transparent">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Taxa de Pendência</p>
-                  <p className="text-3xl font-bold text-orange-500">
+          <Card className="border-orange-500/20">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-orange-500/10 flex-shrink-0">
+                  <AlertTriangle className="h-4 w-4 text-orange-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground truncate">Taxa Pendência</p>
+                  <p className="text-xl font-bold text-orange-500">
                     {auditMetrics.pendingRate.toFixed(1)}%
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-[10px] text-muted-foreground">
                     {auditMetrics.pending} pendentes
                   </p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-orange-500/10 flex items-center justify-center">
-                  <AlertTriangle className="h-6 w-6 text-orange-500" />
                 </div>
               </div>
             </CardContent>
@@ -234,20 +234,20 @@ export function CallCenterMetrics({ sales }: CallCenterMetricsProps) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Aguardando Auditoria</p>
-                  <p className="text-3xl font-bold text-amber-500">
+          <Card className="border-amber-500/20">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-500/10 flex-shrink-0">
+                  <Clock className="h-4 w-4 text-amber-500" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-muted-foreground truncate">Aguard. Auditoria</p>
+                  <p className="text-xl font-bold text-amber-500">
                     {auditMetrics.awaitingAudit}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-[10px] text-muted-foreground">
                     vendas na fila
                   </p>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-amber-500" />
                 </div>
               </div>
             </CardContent>
@@ -392,23 +392,25 @@ export function CallCenterMetrics({ sales }: CallCenterMetricsProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
               {stageMetrics.map((stage) => (
                 <div
                   key={stage.status}
-                  className="p-4 rounded-xl border bg-card hover:bg-muted/50 transition-colors"
+                  className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
                 >
-                  <div 
-                    className="w-3 h-3 rounded-full mb-3"
-                    style={{ backgroundColor: stage.color }}
-                  />
-                  <p className="text-xs text-muted-foreground mb-1 truncate" title={stage.label}>
-                    {stage.label}
-                  </p>
-                  <p className="text-2xl font-bold">{stage.count}</p>
-                  <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    <span>Média: {formatHours(stage.avgHours)}</span>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div 
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: stage.color }}
+                    />
+                    <p className="text-[10px] text-muted-foreground truncate" title={stage.label}>
+                      {stage.label}
+                    </p>
+                  </div>
+                  <p className="text-lg font-bold">{stage.count}</p>
+                  <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground">
+                    <Clock className="h-2.5 w-2.5" />
+                    <span className="truncate">{formatHours(stage.avgHours)}</span>
                   </div>
                 </div>
               ))}

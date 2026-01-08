@@ -203,28 +203,28 @@ const Dashboard = () => {
 
           <TabsContent value="clients" className="mt-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
           {/* Total Customers */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             onClick={() => setStatusFilter('all')}
             className={cn(
-              "bg-card border border-border rounded-xl p-6 cursor-pointer transition-all hover:border-primary/50",
+              "bg-card border border-border rounded-xl p-4 cursor-pointer transition-all hover:border-primary/50",
               statusFilter === 'all' && "ring-2 ring-primary"
             )}
           >
-            <div className="flex items-center gap-2 mb-4">
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Total Clientes</span>
-            </div>
-            <div className="flex items-end justify-between">
-              <span className="text-4xl font-bold text-foreground">{stats.total.toLocaleString('pt-BR')}</span>
-              {stats.total > 0 && (
-                <div className="flex items-center gap-1 text-emerald-500 text-sm font-medium">
-                  <TrendingUp className="h-4 w-4" />
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                <Building2 className="h-4 w-4 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground">Total Clientes</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-foreground">{stats.total.toLocaleString('pt-BR')}</span>
+                  {stats.total > 0 && <TrendingUp className="h-3 w-3 text-emerald-500" />}
                 </div>
-              )}
+              </div>
             </div>
           </motion.div>
 
@@ -235,21 +235,21 @@ const Dashboard = () => {
             transition={{ delay: 0.1 }}
             onClick={() => setStatusFilter(statusFilter === 'VENDA_AUDITADA' ? 'all' : 'VENDA_AUDITADA')}
             className={cn(
-              "bg-card border border-border rounded-xl p-6 cursor-pointer transition-all hover:border-emerald-500/50",
+              "bg-card border border-border rounded-xl p-4 cursor-pointer transition-all hover:border-emerald-500/50",
               statusFilter === 'VENDA_AUDITADA' && "ring-2 ring-emerald-500"
             )}
           >
-            <div className="flex items-center gap-2 mb-4">
-              <UserCheck className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Aprovados</span>
-            </div>
-            <div className="flex items-end justify-between">
-              <span className="text-4xl font-bold text-foreground">{stats.aprovadas.toLocaleString('pt-BR')}</span>
-              {stats.aprovadas > 0 && (
-                <div className="flex items-center gap-1 text-emerald-500 text-sm font-medium">
-                  <TrendingUp className="h-4 w-4" />
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-500/10 flex-shrink-0">
+                <UserCheck className="h-4 w-4 text-emerald-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground">Aprovados</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-foreground">{stats.aprovadas.toLocaleString('pt-BR')}</span>
+                  {stats.aprovadas > 0 && <TrendingUp className="h-3 w-3 text-emerald-500" />}
                 </div>
-              )}
+              </div>
             </div>
           </motion.div>
 
@@ -259,28 +259,32 @@ const Dashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             onClick={() => navigate('/usuarios')}
-            className="bg-card border border-border rounded-xl p-6 cursor-pointer transition-all hover:border-primary/50"
+            className="bg-card border border-border rounded-xl p-4 cursor-pointer transition-all hover:border-primary/50"
           >
-            <div className="flex items-center gap-2 mb-4">
-              <Activity className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Equipe</span>
-            </div>
-            <div className="flex items-end justify-between">
-              <span className="text-4xl font-bold text-foreground">{sellers.length}</span>
-              <div className="flex -space-x-2">
-                {sellers.slice(0, 4).map((seller, idx) => (
-                  <Avatar key={idx} className="h-8 w-8 border-2 border-card">
-                    <AvatarImage src={seller.avatar_url || ''} />
-                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                      {getInitials(seller.nome)}
-                    </AvatarFallback>
-                  </Avatar>
-                ))}
-                {sellers.length > 4 && (
-                  <div className="h-8 w-8 rounded-full bg-muted border-2 border-card flex items-center justify-center">
-                    <span className="text-[10px] text-muted-foreground font-medium">+{sellers.length - 4}</span>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-violet-500/10 flex-shrink-0">
+                <Activity className="h-4 w-4 text-violet-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs text-muted-foreground">Equipe</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-foreground">{sellers.length}</span>
+                  <div className="flex -space-x-1">
+                    {sellers.slice(0, 3).map((seller, idx) => (
+                      <Avatar key={idx} className="h-6 w-6 border-2 border-card">
+                        <AvatarImage src={seller.avatar_url || ''} />
+                        <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
+                          {getInitials(seller.nome)}
+                        </AvatarFallback>
+                      </Avatar>
+                    ))}
+                    {sellers.length > 3 && (
+                      <div className="h-6 w-6 rounded-full bg-muted border-2 border-card flex items-center justify-center">
+                        <span className="text-[8px] text-muted-foreground font-medium">+{sellers.length - 3}</span>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </motion.div>

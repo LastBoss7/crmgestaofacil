@@ -455,7 +455,7 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
 
       {/* Podium - Top 3 */}
       {top3.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* 2nd Place */}
           {top3[1] && (
             <motion.div
@@ -464,31 +464,25 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
               transition={{ delay: 0.1 }}
               className="md:order-1"
             >
-              <Card className="border-gray-400/30 bg-gradient-to-br from-gray-400/5 to-transparent h-full">
-                <CardContent className="pt-6 flex flex-col items-center text-center">
-                  <div className="relative mb-4">
-                    <Avatar className="h-16 w-16 ring-4 ring-gray-400/30">
+              <Card className="border-gray-400/30 h-full">
+                <CardContent className="p-4 flex flex-col items-center text-center">
+                  <div className="relative mb-3">
+                    <Avatar className="h-12 w-12 ring-2 ring-gray-400/30">
                       <AvatarImage src={top3[1].avatarUrl || ''} />
-                      <AvatarFallback className="bg-gray-400/10 text-gray-600 dark:text-gray-300 text-lg font-bold">
+                      <AvatarFallback className="bg-gray-400/10 text-gray-600 dark:text-gray-300 text-sm font-bold">
                         {getInitials(top3[1].name)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-gray-400 flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-sm">2</span>
-                    </div>
+                    <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gray-400 flex items-center justify-center text-[10px] text-white font-bold">2</div>
                   </div>
-                  <h3 className="font-semibold text-foreground truncate max-w-full">{top3[1].name}</h3>
-                  <p className={cn("text-2xl font-bold mt-2", getScoreColor(top3[1].score))}>
-                    {top3[1].score} pts
-                  </p>
-                  
-                  {/* Goal Progress */}
-                  <div className="w-full mt-4 space-y-2">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Meta Vendas</span>
-                      <span className="font-medium">{top3[1].totalSales}/{top3[1].goalSales}</span>
+                  <h3 className="text-sm font-semibold text-foreground truncate max-w-full">{top3[1].name}</h3>
+                  <p className={cn("text-lg font-bold", getScoreColor(top3[1].score))}>{top3[1].score} pts</p>
+                  <div className="w-full mt-2">
+                    <div className="flex justify-between text-[10px] mb-1">
+                      <span className="text-muted-foreground">Meta</span>
+                      <span>{top3[1].totalSales}/{top3[1].goalSales}</span>
                     </div>
-                    <Progress value={top3[1].goalSalesProgress} className="h-2" />
+                    <Progress value={top3[1].goalSalesProgress} className="h-1.5" />
                   </div>
                 </CardContent>
               </Card>
@@ -502,45 +496,34 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
               animate={{ opacity: 1, y: 0 }}
               className="md:order-2"
             >
-              <Card className="border-yellow-500/30 bg-gradient-to-br from-yellow-500/10 to-amber-500/5 h-full relative overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-yellow-500 to-amber-500" />
-                <CardContent className="pt-6 flex flex-col items-center text-center">
-                  <div className="relative mb-4">
-                    <Avatar className="h-20 w-20 ring-4 ring-yellow-500/50">
+              <Card className="border-yellow-500/30 h-full relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-yellow-500 to-amber-500" />
+                <CardContent className="p-4 flex flex-col items-center text-center">
+                  <div className="relative mb-3">
+                    <Avatar className="h-14 w-14 ring-2 ring-yellow-500/50">
                       <AvatarImage src={top3[0].avatarUrl || ''} />
-                      <AvatarFallback className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 text-xl font-bold">
+                      <AvatarFallback className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 font-bold">
                         {getInitials(top3[0].name)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="absolute -top-3 -right-1">
-                      <Crown className="h-8 w-8 text-yellow-500 drop-shadow-lg" />
-                    </div>
+                    <Crown className="absolute -top-2 -right-1 h-5 w-5 text-yellow-500" />
                   </div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                    <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400">TOP PERFORMER</span>
-                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                  </div>
-                  <h3 className="font-bold text-lg text-foreground truncate max-w-full">{top3[0].name}</h3>
-                  <p className={cn("text-3xl font-bold mt-2", getScoreColor(top3[0].score))}>
-                    {top3[0].score} pts
-                  </p>
-                  
-                  {/* Goal Progress */}
-                  <div className="w-full mt-4 space-y-3">
+                  <h3 className="text-sm font-bold text-foreground truncate max-w-full">{top3[0].name}</h3>
+                  <p className={cn("text-xl font-bold", getScoreColor(top3[0].score))}>{top3[0].score} pts</p>
+                  <div className="w-full mt-2 space-y-1.5">
                     <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-muted-foreground">Meta Vendas</span>
-                        <span className="font-medium">{top3[0].totalSales}/{top3[0].goalSales}</span>
+                      <div className="flex justify-between text-[10px] mb-0.5">
+                        <span className="text-muted-foreground">Vendas</span>
+                        <span>{top3[0].totalSales}/{top3[0].goalSales}</span>
                       </div>
-                      <Progress value={top3[0].goalSalesProgress} className="h-2" />
+                      <Progress value={top3[0].goalSalesProgress} className="h-1.5" />
                     </div>
                     <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span className="text-muted-foreground">Meta Valor</span>
-                        <span className="font-medium">{formatCurrency(top3[0].totalValue)}/{formatCurrency(top3[0].goalValue)}</span>
+                      <div className="flex justify-between text-[10px] mb-0.5">
+                        <span className="text-muted-foreground">Valor</span>
+                        <span>{formatCurrency(top3[0].totalValue)}</span>
                       </div>
-                      <Progress value={top3[0].goalValueProgress} className="h-2" />
+                      <Progress value={top3[0].goalValueProgress} className="h-1.5" />
                     </div>
                   </div>
                 </CardContent>
@@ -556,31 +539,25 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
               transition={{ delay: 0.2 }}
               className="md:order-3"
             >
-              <Card className="border-amber-600/30 bg-gradient-to-br from-amber-600/5 to-transparent h-full">
-                <CardContent className="pt-6 flex flex-col items-center text-center">
-                  <div className="relative mb-4">
-                    <Avatar className="h-16 w-16 ring-4 ring-amber-600/30">
+              <Card className="border-amber-600/30 h-full">
+                <CardContent className="p-4 flex flex-col items-center text-center">
+                  <div className="relative mb-3">
+                    <Avatar className="h-12 w-12 ring-2 ring-amber-600/30">
                       <AvatarImage src={top3[2].avatarUrl || ''} />
-                      <AvatarFallback className="bg-amber-600/10 text-amber-700 dark:text-amber-400 text-lg font-bold">
+                      <AvatarFallback className="bg-amber-600/10 text-amber-700 dark:text-amber-400 text-sm font-bold">
                         {getInitials(top3[2].name)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="absolute -top-2 -right-2 h-8 w-8 rounded-full bg-amber-600 flex items-center justify-center shadow-lg">
-                      <span className="text-white font-bold text-sm">3</span>
-                    </div>
+                    <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-amber-600 flex items-center justify-center text-[10px] text-white font-bold">3</div>
                   </div>
-                  <h3 className="font-semibold text-foreground truncate max-w-full">{top3[2].name}</h3>
-                  <p className={cn("text-2xl font-bold mt-2", getScoreColor(top3[2].score))}>
-                    {top3[2].score} pts
-                  </p>
-                  
-                  {/* Goal Progress */}
-                  <div className="w-full mt-4 space-y-2">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">Meta Vendas</span>
-                      <span className="font-medium">{top3[2].totalSales}/{top3[2].goalSales}</span>
+                  <h3 className="text-sm font-semibold text-foreground truncate max-w-full">{top3[2].name}</h3>
+                  <p className={cn("text-lg font-bold", getScoreColor(top3[2].score))}>{top3[2].score} pts</p>
+                  <div className="w-full mt-2">
+                    <div className="flex justify-between text-[10px] mb-1">
+                      <span className="text-muted-foreground">Meta</span>
+                      <span>{top3[2].totalSales}/{top3[2].goalSales}</span>
                     </div>
-                    <Progress value={top3[2].goalSalesProgress} className="h-2" />
+                    <Progress value={top3[2].goalSalesProgress} className="h-1.5" />
                   </div>
                 </CardContent>
               </Card>

@@ -341,12 +341,12 @@ const Reports = () => {
         ) : (
           <>
             {/* Stats Cards */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
               <StatCard
-                title="Total de Vendas"
+                title="Total Vendas"
                 value={stats.total}
                 icon={TrendingUp}
-                description="No período selecionado"
+                description="Período selecionado"
               />
               <StatCard
                 title="Valor Total"
@@ -355,10 +355,10 @@ const Reports = () => {
                 description="Receita recorrente"
               />
               <StatCard
-                title="Taxa de Conversão"
+                title="Conversão"
                 value={`${stats.taxaConversao}%`}
                 icon={Target}
-                description="Aprovadas + Instaladas"
+                description="Aprovadas"
               />
               <StatCard
                 title="Ticket Médio"
@@ -369,15 +369,15 @@ const Reports = () => {
             </div>
 
             {/* Charts Grid */}
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-4 lg:grid-cols-2">
               {/* Area Chart - Daily Sales */}
-              <Card className="shadow-card lg:col-span-2">
-                <CardHeader>
-                  <CardTitle>Vendas por Dia</CardTitle>
-                  <CardDescription>Evolução de vendas e valores no período</CardDescription>
+              <Card className="lg:col-span-2">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Vendas por Dia</CardTitle>
+                  <CardDescription className="text-xs">Evolução de vendas e valores</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-80">
+                  <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={dailyData}>
                         <defs>
@@ -445,16 +445,16 @@ const Reports = () => {
               </Card>
 
               {/* Pie Chart - Status Distribution */}
-              <Card className="shadow-card">
-                <CardHeader>
-                  <CardTitle>Distribuição por Status</CardTitle>
-                  <CardDescription>Quantidade de vendas por status</CardDescription>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Distribuição por Status</CardTitle>
+                  <CardDescription className="text-xs">Quantidade por status</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-72">
+                  <div className="h-56">
                     {statusData.length === 0 ? (
-                      <div className="flex h-full items-center justify-center text-muted-foreground">
-                        Nenhuma venda no período
+                      <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+                        Nenhuma venda
                       </div>
                     ) : (
                       <ResponsiveContainer width="100%" height="100%">
@@ -463,8 +463,8 @@ const Reports = () => {
                             data={statusData}
                             cx="50%"
                             cy="50%"
-                            innerRadius={60}
-                            outerRadius={100}
+                            innerRadius={45}
+                            outerRadius={75}
                             paddingAngle={2}
                             dataKey="value"
                           >
@@ -477,10 +477,13 @@ const Reports = () => {
                               backgroundColor: 'hsl(var(--card))',
                               border: '1px solid hsl(var(--border))',
                               borderRadius: '8px',
+                              fontSize: '12px',
                             }}
                             formatter={(value: number) => [value, 'Vendas']}
                           />
-                          <Legend />
+                          <Legend 
+                            wrapperStyle={{ fontSize: '10px' }}
+                          />
                         </PieChart>
                       </ResponsiveContainer>
                     )}
@@ -490,16 +493,16 @@ const Reports = () => {
 
               {/* Bar Chart - Sales by Seller */}
               {!isSeller && (
-                <Card className="shadow-card">
-                  <CardHeader>
-                    <CardTitle>Ranking de Vendedores</CardTitle>
-                    <CardDescription>Top 10 vendedores por valor</CardDescription>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Ranking Vendedores</CardTitle>
+                    <CardDescription className="text-xs">Top 10 por valor</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-72">
+                    <div className="h-56">
                       {sellerData.length === 0 ? (
-                        <div className="flex h-full items-center justify-center text-muted-foreground">
-                          Nenhuma venda no período
+                        <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+                          Nenhuma venda
                         </div>
                       ) : (
                         <ResponsiveContainer width="100%" height="100%">
@@ -507,14 +510,14 @@ const Reports = () => {
                             <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                             <XAxis 
                               type="number" 
-                              className="text-xs fill-muted-foreground"
+                              className="text-[10px] fill-muted-foreground"
                               tickFormatter={(value) => formatCurrencyShort(value)}
                             />
                             <YAxis 
                               type="category" 
                               dataKey="nome" 
-                              className="text-xs fill-muted-foreground"
-                              width={100}
+                              className="text-[10px] fill-muted-foreground"
+                              width={80}
                               tickLine={false}
                             />
                             <Tooltip
@@ -522,6 +525,7 @@ const Reports = () => {
                                 backgroundColor: 'hsl(var(--card))',
                                 border: '1px solid hsl(var(--border))',
                                 borderRadius: '8px',
+                                fontSize: '12px',
                               }}
                               formatter={(value: number, name: string) => [
                                 name === 'valor' ? formatCurrency(value) : value,
@@ -531,7 +535,7 @@ const Reports = () => {
                             <Bar 
                               dataKey="valor" 
                               name="Valor Total"
-                              fill="hsl(300, 70%, 40%)" 
+                              fill="hsl(var(--primary))" 
                               radius={[0, 4, 4, 0]}
                             />
                           </BarChart>

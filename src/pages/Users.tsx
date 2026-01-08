@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, AppRole, ROLE_LABELS, UserRole } from '@/types/database';
-import { Plus, Search, UserCheck, UserX, Shield, UserPlus } from 'lucide-react';
+import { Plus, Search, UserCheck, UserX, Shield, UserPlus, Users2 } from 'lucide-react';
 import { CreateUserDialog } from '@/components/users/CreateUserDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +37,7 @@ import { toast } from 'sonner';
 
 interface UserWithRole extends Profile {
   role?: AppRole;
+  team_name?: string;
 }
 
 const Users = () => {
@@ -80,15 +81,30 @@ const Users = () => {
       console.error('Error fetching roles:', rolesError);
     }
 
-    // Combine profiles with roles
+    // Fetch all teams
+    const { data: teams, error: teamsError } = await supabase
+      .from('teams')
+      .select('id, name');
+
+    if (teamsError) {
+      console.error('Error fetching teams:', teamsError);
+    }
+
+    // Create maps
     const rolesMap: Record<string, AppRole> = {};
     (roles || []).forEach((r: UserRole) => {
       rolesMap[r.user_id] = r.role;
     });
 
+    const teamsMap: Record<string, string> = {};
+    (teams || []).forEach((t) => {
+      teamsMap[t.id] = t.name;
+    });
+
     const usersWithRoles: UserWithRole[] = (profiles || []).map((p: Profile) => ({
       ...p,
       role: rolesMap[p.id],
+      team_name: p.team_id ? teamsMap[p.team_id] : undefined,
     }));
 
     setUsers(usersWithRoles);
@@ -220,6 +236,7 @@ const Users = () => {
                     <TableRow>
                       <TableHead>Usuário</TableHead>
                       <TableHead>Função</TableHead>
+                      <TableHead>Equipe</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Cadastro</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
@@ -242,6 +259,16 @@ const Users = () => {
                             </Badge>
                           ) : (
                             <span className="text-muted-foreground text-sm">Sem função</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {user.team_name ? (
+                            <Badge variant="secondary" className="gap-1">
+                              <Users2 className="h-3 w-3" />
+                              {user.team_name}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
                           )}
                         </TableCell>
                         <TableCell>

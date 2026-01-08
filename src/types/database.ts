@@ -2,6 +2,8 @@ export type AppRole = 'CEO' | 'BACKOFFICE' | 'SELLER';
 
 export type SaleStatus = 'PRE_ANALISE' | 'AGUARDANDO_AUDITORIA' | 'PENDENCIA' | 'VENDA_AUDITADA' | 'INSTALACAO_MARCADA' | 'INSTALADA' | 'CANCELADA';
 
+export type OperatorStatus = 'DISPONIVEL' | 'EM_LIGACAO' | 'PAUSA' | 'ALMOCO' | 'OFFLINE';
+
 export interface Profile {
   id: string;
   nome: string;
@@ -63,6 +65,25 @@ export interface SaleComment {
   created_at: string;
 }
 
+export interface OperatorStatusLog {
+  id: string;
+  user_id: string;
+  status: OperatorStatus;
+  started_at: string;
+  ended_at: string | null;
+  duration_seconds: number | null;
+  company_id: string | null;
+  created_at: string;
+}
+
+export interface OperatorCurrentStatus {
+  user_id: string;
+  status: OperatorStatus;
+  status_started_at: string;
+  company_id: string | null;
+  updated_at: string;
+}
+
 export interface UserWithRole extends Profile {
   role?: AppRole;
 }
@@ -81,4 +102,20 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   CEO: 'CEO',
   BACKOFFICE: 'Backoffice',
   SELLER: 'Vendedor',
+};
+
+export const OPERATOR_STATUS_LABELS: Record<OperatorStatus, string> = {
+  DISPONIVEL: 'Disponível',
+  EM_LIGACAO: 'Em Ligação',
+  PAUSA: 'Pausa',
+  ALMOCO: 'Almoço',
+  OFFLINE: 'Offline',
+};
+
+export const OPERATOR_STATUS_COLORS: Record<OperatorStatus, string> = {
+  DISPONIVEL: 'bg-green-500',
+  EM_LIGACAO: 'bg-blue-500',
+  PAUSA: 'bg-yellow-500',
+  ALMOCO: 'bg-orange-500',
+  OFFLINE: 'bg-gray-500',
 };

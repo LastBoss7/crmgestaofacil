@@ -121,6 +121,79 @@ export type Database = {
         }
         Relationships: []
       }
+      operator_current_status: {
+        Row: {
+          company_id: string | null
+          status: Database["public"]["Enums"]["operator_status"]
+          status_started_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          status?: Database["public"]["Enums"]["operator_status"]
+          status_started_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          status?: Database["public"]["Enums"]["operator_status"]
+          status_started_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operator_current_status_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operator_status_logs: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          started_at: string
+          status: Database["public"]["Enums"]["operator_status"]
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          status: Database["public"]["Enums"]["operator_status"]
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          status?: Database["public"]["Enums"]["operator_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operator_status_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active: boolean | null
@@ -589,6 +662,12 @@ export type Database = {
     }
     Enums: {
       app_role: "CEO" | "BACKOFFICE" | "SELLER"
+      operator_status:
+        | "DISPONIVEL"
+        | "EM_LIGACAO"
+        | "PAUSA"
+        | "ALMOCO"
+        | "OFFLINE"
       sale_status:
         | "PRE_ANALISE"
         | "AGUARDANDO_AUDITORIA"
@@ -725,6 +804,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["CEO", "BACKOFFICE", "SELLER"],
+      operator_status: [
+        "DISPONIVEL",
+        "EM_LIGACAO",
+        "PAUSA",
+        "ALMOCO",
+        "OFFLINE",
+      ],
       sale_status: [
         "PRE_ANALISE",
         "AGUARDANDO_AUDITORIA",

@@ -19,6 +19,7 @@ import Teams from "./pages/Teams";
 import ChatMonitor from "./pages/ChatMonitor";
 import TeamDashboard from "./pages/TeamDashboard";
 import SalesMonitorPage from "./pages/SalesMonitorPage";
+import OperatorStatus from "./pages/OperatorStatus";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -147,6 +148,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <SalesMonitorPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/pausas"
+        element={
+          <ProtectedRoute>
+            <OperatorStatus />
           </ProtectedRoute>
         }
       />

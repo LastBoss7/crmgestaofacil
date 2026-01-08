@@ -38,7 +38,7 @@ interface CreateUserDialogProps {
 }
 
 export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUserDialogProps) => {
-  const { profile, isCEO } = useAuth();
+  const { profile, isCEO, isBackoffice } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -99,13 +99,20 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
         return;
       }
 
-      // Update profile with company_id
+      // Update profile with company_id and team_id (if backoffice creating seller)
+      const updateData: { company_id: string; nome: string; team_id?: string } = { 
+        company_id: profile.company_id,
+        nome: fullName 
+      };
+
+      // If backoffice is creating a seller, add them to the backoffice's team
+      if (isBackoffice && formData.role === 'SELLER' && profile.team_id) {
+        updateData.team_id = profile.team_id;
+      }
+
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ 
-          company_id: profile.company_id,
-          nome: fullName 
-        })
+        .update(updateData)
         .eq('id', authData.user.id);
 
       if (profileError) {
@@ -281,7 +288,7 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
                 <>
                   <li>• Ver todas as vendas</li>
                   <li>• Alterar status de vendas</li>
-                  <li>• Cadastrar novos vendedores</li>
+                  <li>• Cadastrar vendedores na própria equipe</li>
                 </>
               )}
               {formData.role === 'SELLER' && (

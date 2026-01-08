@@ -322,7 +322,7 @@ const Users = () => {
                     <>
                       <li>• Ver todas as vendas</li>
                       <li>• Alterar status de vendas</li>
-                      <li>• Não pode gerenciar usuários</li>
+                      <li>• Cadastrar vendedores na própria equipe</li>
                     </>
                   )}
                   {newRole === 'SELLER' && (

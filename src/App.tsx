@@ -16,6 +16,7 @@ import SaleHistory from "./pages/SaleHistory";
 import SellerDetails from "./pages/SellerDetails";
 import TeamInvites from "./pages/TeamInvites";
 import Teams from "./pages/Teams";
+import ChatMonitor from "./pages/ChatMonitor";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -112,6 +113,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Teams />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/monitor-chats"
+        element={
+          <ProtectedRoute>
+            <ChatMonitor />
           </ProtectedRoute>
         }
       />

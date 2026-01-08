@@ -14,7 +14,8 @@ import {
   Bell,
   Search,
   HelpCircle,
-  Sparkles
+  Sparkles,
+  MessageSquare
 } from 'lucide-react';
 import { ROLE_LABELS } from '@/types/database';
 import { useState, useEffect } from 'react';
@@ -105,6 +106,7 @@ const Sidebar = () => {
   const managementNavigation = [
     ...(canManageUsers ? [{ name: 'Usuários', href: '/usuarios', icon: Users2 }] : []),
     ...(isCEO ? [{ name: 'Equipes', href: '/equipes', icon: Users2 }] : []),
+    ...(isCEO ? [{ name: 'Monitor Chats', href: '/monitor-chats', icon: MessageSquare }] : []),
     ...(isCEO ? [{ name: 'Convites', href: '/equipe/convites', icon: UserPlus2 }] : []),
     ...(isCEO ? [{ name: 'Configurações', href: '/configuracoes', icon: Cog }] : []),
   ];

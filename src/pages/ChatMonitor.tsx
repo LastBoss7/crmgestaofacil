@@ -5,15 +5,21 @@ import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, MessageSquare, Users, Filter } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Search, MessageSquare, Users, Filter, Download, FileSpreadsheet, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Profile, Team } from '@/types/database';
+import { toast } from 'sonner';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface DirectMessage {
   id: string;
@@ -170,6 +176,198 @@ export default function ChatMonitor() {
     ? conversations.get(selectedConversation) || []
     : [];
 
+  // Export functions
+  const exportDirectMessagesToExcel = () => {
+    const filteredConvs = getFilteredConversations();
+    const allMessages: DirectMessage[] = [];
+    
+    filteredConvs.forEach(({ messages }) => {
+      allMessages.push(...messages);
+    });
+
+    if (allMessages.length === 0) {
+      toast.error('Nenhuma mensagem para exportar');
+      return;
+    }
+
+    const data = allMessages.map(msg => {
+      const sender = getProfile(msg.sender_id);
+      const receiver = getProfile(msg.receiver_id);
+      return {
+        'Data/Hora': formatDate(msg.created_at),
+        'Remetente': msg.sender_name,
+        'Equipe Remetente': sender?.team_id ? getTeam(sender.team_id)?.name || '-' : '-',
+        'Destinatário': receiver?.nome || '-',
+        'Equipe Destinatário': receiver?.team_id ? getTeam(receiver.team_id)?.name || '-' : '-',
+        'Mensagem': msg.message,
+        'Status': msg.read_at ? 'Lida' : 'Não lida',
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws['!cols'] = [
+      { wch: 18 },
+      { wch: 25 },
+      { wch: 20 },
+      { wch: 25 },
+      { wch: 20 },
+      { wch: 60 },
+      { wch: 10 },
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Mensagens Diretas');
+    XLSX.writeFile(wb, `chat-direto-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    toast.success('Exportado com sucesso!');
+  };
+
+  const exportTeamMessagesToExcel = () => {
+    const messages = getFilteredTeamMessages();
+
+    if (messages.length === 0) {
+      toast.error('Nenhuma mensagem para exportar');
+      return;
+    }
+
+    const data = messages.map(msg => {
+      const sender = getProfile(msg.user_id);
+      return {
+        'Data/Hora': formatDate(msg.created_at),
+        'Usuário': msg.user_name,
+        'Cargo': msg.user_role,
+        'Equipe': sender?.team_id ? getTeam(sender.team_id)?.name || '-' : '-',
+        'Mensagem': msg.message,
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    ws['!cols'] = [
+      { wch: 18 },
+      { wch: 25 },
+      { wch: 15 },
+      { wch: 20 },
+      { wch: 60 },
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Chat de Equipe');
+    XLSX.writeFile(wb, `chat-equipe-${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    toast.success('Exportado com sucesso!');
+  };
+
+  const exportDirectMessagesToPDF = () => {
+    const filteredConvs = getFilteredConversations();
+    const allMessages: DirectMessage[] = [];
+    
+    filteredConvs.forEach(({ messages }) => {
+      allMessages.push(...messages);
+    });
+
+    if (allMessages.length === 0) {
+      toast.error('Nenhuma mensagem para exportar');
+      return;
+    }
+
+    const doc = new jsPDF('landscape');
+    
+    doc.setFontSize(18);
+    doc.text('Relatório de Mensagens Diretas', 14, 20);
+    
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 14, 28);
+    doc.text(`Total de mensagens: ${allMessages.length}`, 14, 34);
+    
+    if (selectedTeam !== 'all') {
+      const team = getTeam(selectedTeam);
+      doc.text(`Filtro: Equipe ${team?.name}`, 14, 40);
+    }
+
+    const tableData = allMessages.slice(0, 100).map(msg => {
+      const receiver = getProfile(msg.receiver_id);
+      return [
+        format(new Date(msg.created_at), 'dd/MM HH:mm'),
+        msg.sender_name.substring(0, 20),
+        receiver?.nome?.substring(0, 20) || '-',
+        msg.message.substring(0, 50) + (msg.message.length > 50 ? '...' : ''),
+        msg.read_at ? 'Lida' : 'Não lida',
+      ];
+    });
+
+    autoTable(doc, {
+      startY: selectedTeam !== 'all' ? 46 : 40,
+      head: [['Data', 'Remetente', 'Destinatário', 'Mensagem', 'Status']],
+      body: tableData,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [139, 92, 246] },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      columnStyles: {
+        0: { cellWidth: 25 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 40 },
+        3: { cellWidth: 120 },
+        4: { cellWidth: 25 },
+      },
+    });
+
+    if (allMessages.length > 100) {
+      doc.setFontSize(8);
+      doc.text(`* Exibindo apenas as primeiras 100 mensagens de ${allMessages.length} total`, 14, doc.internal.pageSize.height - 10);
+    }
+    
+    doc.save(`chat-direto-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    toast.success('Exportado com sucesso!');
+  };
+
+  const exportTeamMessagesToPDF = () => {
+    const messages = getFilteredTeamMessages();
+
+    if (messages.length === 0) {
+      toast.error('Nenhuma mensagem para exportar');
+      return;
+    }
+
+    const doc = new jsPDF('landscape');
+    
+    doc.setFontSize(18);
+    doc.text('Relatório de Chat de Equipe', 14, 20);
+    
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 14, 28);
+    doc.text(`Total de mensagens: ${messages.length}`, 14, 34);
+
+    const tableData = messages.slice(0, 100).map(msg => [
+      format(new Date(msg.created_at), 'dd/MM HH:mm'),
+      msg.user_name.substring(0, 20),
+      msg.user_role,
+      msg.message.substring(0, 60) + (msg.message.length > 60 ? '...' : ''),
+    ]);
+
+    autoTable(doc, {
+      startY: 40,
+      head: [['Data', 'Usuário', 'Cargo', 'Mensagem']],
+      body: tableData,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [139, 92, 246] },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      columnStyles: {
+        0: { cellWidth: 25 },
+        1: { cellWidth: 45 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 150 },
+      },
+    });
+
+    if (messages.length > 100) {
+      doc.setFontSize(8);
+      doc.text(`* Exibindo apenas as primeiras 100 mensagens de ${messages.length} total`, 14, doc.internal.pageSize.height - 10);
+    }
+    
+    doc.save(`chat-equipe-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    toast.success('Exportado com sucesso!');
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -183,9 +381,11 @@ export default function ChatMonitor() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Monitor de Chats</h1>
-          <p className="text-muted-foreground">Visualize todas as conversas da empresa</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Monitor de Chats</h1>
+            <p className="text-muted-foreground">Visualize todas as conversas da empresa</p>
+          </div>
         </div>
 
         {/* Filters */}
@@ -231,18 +431,47 @@ export default function ChatMonitor() {
         </Card>
 
         <Tabs defaultValue="direct" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="direct" className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              Mensagens Diretas
-            </TabsTrigger>
-            <TabsTrigger value="team" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Chat de Equipe
-            </TabsTrigger>
-          </TabsList>
+          <div className="flex items-center justify-between mb-4">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="direct" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Mensagens Diretas
+              </TabsTrigger>
+              <TabsTrigger value="team" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Chat de Equipe
+              </TabsTrigger>
+            </TabsList>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={exportDirectMessagesToExcel}>
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  Mensagens Diretas (Excel)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportDirectMessagesToPDF}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Mensagens Diretas (PDF)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportTeamMessagesToExcel}>
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  Chat de Equipe (Excel)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportTeamMessagesToPDF}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Chat de Equipe (PDF)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
-          <TabsContent value="direct" className="mt-4">
+          <TabsContent value="direct" className="mt-0">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Conversations List */}
               <Card className="lg:col-span-1">

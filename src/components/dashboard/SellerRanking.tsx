@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sale, SaleStatus, Profile } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,6 +33,7 @@ import {
   Star,
   Settings,
   Save,
+  Eye,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -82,6 +84,7 @@ interface SellerMetrics {
 }
 
 export function SellerRanking({ sales, sellers }: SellerRankingProps) {
+  const navigate = useNavigate();
   const { isCEO } = useAuth();
   const [goals, setGoals] = useState<SellerGoal[]>([]);
   const [isGoalsDialogOpen, setIsGoalsDialogOpen] = useState(false);
@@ -616,6 +619,7 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
                     <TableHead className="text-center">Taxa Conv.</TableHead>
                     <TableHead className="text-center">Tempo Médio</TableHead>
                     <TableHead className="text-center">Score</TableHead>
+                    <TableHead className="w-12"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -699,6 +703,16 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
                         <Badge className={cn("font-bold", getRankBadgeColor(index + 1))}>
                           {seller.score} pts
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => navigate(`/vendedor/${seller.id}`)}
+                          title="Ver detalhes"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

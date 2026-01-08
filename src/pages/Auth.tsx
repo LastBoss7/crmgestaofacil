@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Building2, Users, ArrowRight, Check, Eye, EyeOff, ArrowLeft, ShoppingCart, Mail, Lock, User } from 'lucide-react';
+import { Loader2, Building2, Users, ArrowRight, Check, Eye, EyeOff, ArrowLeft, Mail, Lock, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
+import logo from '@/assets/logo.png';
 
 const loginSchema = z.object({
   email: z.string().trim().email('E-mail inválido'),
@@ -348,9 +349,7 @@ const Auth = () => {
           animate={{ opacity: 1, scale: 1 }}
           className="flex flex-col items-center gap-4"
         >
-          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-emerald-400 flex items-center justify-center">
-            <ShoppingCart className="h-6 w-6 text-primary-foreground animate-pulse" />
-          </div>
+          <img src={logo} alt="Logo" className="h-16 w-16 object-contain" />
           <Loader2 className="h-5 w-5 animate-spin text-primary" />
         </motion.div>
       </div>
@@ -362,7 +361,7 @@ const Auth = () => {
       {/* Background Pattern */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-bl from-primary/10 via-transparent to-transparent rounded-full blur-3xl" />
-        <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-emerald-500/10 via-transparent to-transparent rounded-full blur-3xl" />
+        <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-purple-500/10 via-transparent to-transparent rounded-full blur-3xl" />
       </div>
 
       {/* Left Panel - Branding */}
@@ -377,12 +376,9 @@ const Auth = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="flex items-center gap-3"
+          className="flex items-center"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-emerald-400 shadow-lg shadow-primary/30">
-            <ShoppingCart className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <span className="text-2xl font-bold gradient-text">CRM Telecom</span>
+          <img src={logo} alt="Logo" className="h-14 w-14 object-contain" />
         </motion.div>
 
         {/* Hero Text */}
@@ -438,12 +434,9 @@ const Auth = () => {
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="lg:hidden flex items-center justify-center gap-3 mb-8"
+            className="lg:hidden flex items-center justify-center mb-8"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-emerald-400 shadow-lg shadow-primary/30">
-              <ShoppingCart className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <span className="text-2xl font-bold gradient-text">CRM Telecom</span>
+            <img src={logo} alt="Logo" className="h-16 w-16 object-contain" />
           </motion.div>
 
           {/* Auth Card */}

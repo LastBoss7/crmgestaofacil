@@ -49,7 +49,7 @@ const Sidebar = () => {
     isCEO,
   } = useAuth();
   
-  const { isOnline, onlineCount } = usePresence();
+  const { isOnline, onlineCount, sessionDuration } = usePresence();
 
   // Fetch real sales stats from database
   useEffect(() => {
@@ -250,6 +250,13 @@ const Sidebar = () => {
                   {isOnline ? 'Online' : 'Conectando...'}
                 </span>
               </div>
+              {isOnline && (
+                <div className="flex items-center gap-1.5 mt-1 pt-1 border-t border-border/50">
+                  <span className="text-xs text-muted-foreground">
+                    ⏱️ Na plataforma há {sessionDuration}
+                  </span>
+                </div>
+              )}
               {onlineCount > 1 && (
                 <span className="text-xs text-muted-foreground mt-1">
                   {onlineCount} usuários online

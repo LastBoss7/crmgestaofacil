@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePresence } from '@/hooks/usePresence';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface TeamMessage {
   id: string;
@@ -15,11 +17,6 @@ interface TeamMessage {
   user_role: string;
   message: string;
   created_at: string;
-}
-
-interface UserAvatar {
-  id: string;
-  avatar_url: string | null;
 }
 
 interface TeamChatProps {
@@ -33,6 +30,9 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
   const [loading, setLoading] = useState(true);
   const [userAvatars, setUserAvatars] = useState<Record<string, string | null>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
+  
+  const { setTyping, getTypingUsers, onlineUsers } = usePresence('team-chat');
+  const typingUsers = getTypingUsers('team-chat').filter(u => u.user_id !== user?.id);
 
   // Fetch user avatars
   useEffect(() => {
@@ -76,7 +76,7 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
 
     // Subscribe to new messages
     const channel = supabase
-      .channel('team-chat')
+      .channel('team-chat-messages')
       .on(
         'postgres_changes',
         {
@@ -102,8 +102,19 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
     }
   }, [messages]);
 
+  const handleInputChange = useCallback((value: string) => {
+    setNewMessage(value);
+    if (value.trim()) {
+      setTyping(true, 'team-chat');
+    } else {
+      setTyping(false);
+    }
+  }, [setTyping]);
+
   const handleSend = async () => {
     if (!newMessage.trim() || !companyId || !user || !profile || !role) return;
+
+    setTyping(false);
 
     const { error } = await supabase.from('team_messages').insert({
       company_id: companyId,
@@ -223,6 +234,59 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
         )}
       </ScrollArea>
 
+      {/* Typing Indicator */}
+      <AnimatePresence>
+        {typingUsers.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="px-4 py-2 border-t border-border/30"
+          >
+            <div className="flex items-center gap-2">
+              <div className="flex -space-x-2">
+                {typingUsers.slice(0, 3).map((typingUser) => (
+                  <Avatar key={typingUser.user_id} className="h-5 w-5 ring-2 ring-card">
+                    <AvatarImage src={typingUser.avatar_url || undefined} />
+                    <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
+                      {getInitials(typingUser.nome)}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-muted-foreground">
+                  {typingUsers.length === 1 
+                    ? `${typingUsers[0].nome.split(' ')[0]} está digitando`
+                    : `${typingUsers.length} pessoas estão digitando`
+                  }
+                </span>
+                <motion.div 
+                  className="flex gap-0.5"
+                  initial="start"
+                  animate="end"
+                >
+                  {[0, 1, 2].map((i) => (
+                    <motion.span
+                      key={i}
+                      className="w-1 h-1 bg-primary rounded-full"
+                      animate={{
+                        y: [0, -3, 0],
+                      }}
+                      transition={{
+                        duration: 0.6,
+                        repeat: Infinity,
+                        delay: i * 0.15,
+                      }}
+                    />
+                  ))}
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="p-4 border-t border-border/50">
         <form
           onSubmit={(e) => {
@@ -234,7 +298,8 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
           <Input
             placeholder="Escreva uma mensagem..."
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onBlur={() => setTyping(false)}
             className="flex-1 h-10 bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/50 placeholder:text-muted-foreground/50"
           />
           <Button 

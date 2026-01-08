@@ -15,6 +15,7 @@ import Users from "./pages/Users";
 import SaleHistory from "./pages/SaleHistory";
 import TeamInvites from "./pages/TeamInvites";
 import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -101,6 +102,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Settings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/perfil"
+        element={
+          <ProtectedRoute>
+            <Profile />
           </ProtectedRoute>
         }
       />

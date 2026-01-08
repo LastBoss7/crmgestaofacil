@@ -9,7 +9,8 @@ import {
   PieChart, 
   UserPlus2, 
   Cog,
-  Plus
+  Plus,
+  UserCircle
 } from 'lucide-react';
 import { ROLE_LABELS } from '@/types/database';
 import { useState, useEffect } from 'react';
@@ -225,11 +226,40 @@ const Sidebar = () => {
         <div className="w-6 h-px bg-border my-3" />
 
         {/* User Avatar with Online Status */}
+        {/* Profile Button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              to="/perfil"
+              onClick={() => handleClick('Perfil')}
+              className={cn(
+                'group relative flex items-center justify-center w-10 h-10 lg:w-11 lg:h-11 rounded-xl transition-all duration-200',
+                isActive('/perfil') 
+                  ? 'bg-primary/15' 
+                  : 'hover:bg-muted'
+              )}
+            >
+              {isActive('/perfil') && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
+              )}
+              <UserCircle className={cn(
+                'w-4 h-4 lg:w-5 lg:h-5 transition-all duration-200',
+                isActive('/perfil') 
+                  ? 'text-primary' 
+                  : 'text-muted-foreground group-hover:text-foreground group-hover:scale-110'
+              )} />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="bg-card text-card-foreground border-border font-medium">
+            Meu Perfil
+          </TooltipContent>
+        </Tooltip>
+
         {/* User Avatar with Online Status - Opens Drawer */}
         <OnlineUsersDrawer>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="relative group cursor-pointer">
+              <div className="relative group cursor-pointer mt-2">
                 <Avatar className="w-9 h-9 lg:w-10 lg:h-10 ring-2 ring-border group-hover:ring-primary/50 transition-all duration-200">
                   <AvatarImage src={profile?.avatar_url || ''} alt={profile?.nome || 'Usuário'} />
                   <AvatarFallback className="bg-primary/10 text-primary text-xs lg:text-sm font-medium">

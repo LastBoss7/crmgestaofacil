@@ -512,10 +512,11 @@ export type Database = {
     Enums: {
       app_role: "CEO" | "BACKOFFICE" | "SELLER"
       sale_status:
-        | "NOVA"
-        | "EM_ANALISE"
+        | "PRE_ANALISE"
+        | "AGUARDANDO_AUDITORIA"
         | "PENDENCIA"
-        | "APROVADA"
+        | "VENDA_AUDITADA"
+        | "INSTALACAO_MARCADA"
         | "INSTALADA"
         | "CANCELADA"
     }
@@ -647,10 +648,11 @@ export const Constants = {
     Enums: {
       app_role: ["CEO", "BACKOFFICE", "SELLER"],
       sale_status: [
-        "NOVA",
-        "EM_ANALISE",
+        "PRE_ANALISE",
+        "AGUARDANDO_AUDITORIA",
         "PENDENCIA",
-        "APROVADA",
+        "VENDA_AUDITADA",
+        "INSTALACAO_MARCADA",
         "INSTALADA",
         "CANCELADA",
       ],

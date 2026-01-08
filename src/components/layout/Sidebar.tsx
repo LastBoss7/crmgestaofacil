@@ -23,10 +23,11 @@ import logo from '@/assets/logo.png';
 
 interface SalesStats {
   total: number;
-  novas: number;
-  emAnalise: number;
+  preAnalise: number;
+  aguardandoAuditoria: number;
   pendencia: number;
-  aprovadas: number;
+  vendaAuditada: number;
+  instalacaoMarcada: number;
   instaladas: number;
   canceladas: number;
 }
@@ -35,10 +36,11 @@ const Sidebar = () => {
   const location = useLocation();
   const [salesStats, setSalesStats] = useState<SalesStats>({
     total: 0,
-    novas: 0,
-    emAnalise: 0,
+    preAnalise: 0,
+    aguardandoAuditoria: 0,
     pendencia: 0,
-    aprovadas: 0,
+    vendaAuditada: 0,
+    instalacaoMarcada: 0,
     instaladas: 0,
     canceladas: 0,
   });
@@ -66,10 +68,11 @@ const Sidebar = () => {
       if (sales) {
         setSalesStats({
           total: sales.length,
-          novas: sales.filter(s => s.status === 'NOVA').length,
-          emAnalise: sales.filter(s => s.status === 'EM_ANALISE').length,
+          preAnalise: sales.filter(s => s.status === 'PRE_ANALISE').length,
+          aguardandoAuditoria: sales.filter(s => s.status === 'AGUARDANDO_AUDITORIA').length,
           pendencia: sales.filter(s => s.status === 'PENDENCIA').length,
-          aprovadas: sales.filter(s => s.status === 'APROVADA').length,
+          vendaAuditada: sales.filter(s => s.status === 'VENDA_AUDITADA').length,
+          instalacaoMarcada: sales.filter(s => s.status === 'INSTALACAO_MARCADA').length,
           instaladas: sales.filter(s => s.status === 'INSTALADA').length,
           canceladas: sales.filter(s => s.status === 'CANCELADA').length,
         });

@@ -400,7 +400,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         valor_mensal: parseFloat(form.valor_mensal) || parseFloat(totalPlano) || 0,
         produtos: form.produtos || null,
         observacoes_vendedor: form.observacoes_vendedor || null,
-        status: 'NOVA',
+        status: 'PRE_ANALISE',
       }).select('id').single();
 
       if (error) throw error;

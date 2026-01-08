@@ -42,7 +42,7 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
   const [loading, setLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
-    action: 'APROVADA' | 'CANCELADA' | null;
+    action: 'VENDA_AUDITADA' | 'CANCELADA' | null;
   }>({ open: false, action: null });
 
   const canApprove = isCEO || isBackoffice;
@@ -52,16 +52,16 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
   const getAvailableStatuses = (): SaleStatus[] => {
     if (isCEO) {
       // CEO pode fazer tudo
-      return ['NOVA', 'EM_ANALISE', 'PENDENCIA', 'APROVADA', 'INSTALADA', 'CANCELADA'];
+      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA'];
     }
     if (isBackoffice) {
       // Backoffice analisa, aprova ou devolve
-      return ['EM_ANALISE', 'PENDENCIA', 'APROVADA', 'CANCELADA'];
+      return ['AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'CANCELADA'];
     }
     if (isSeller && isOwner) {
-      // Vendedor só pode colocar em análise (submeter para aprovação)
-      if (sale.status === 'NOVA' || sale.status === 'PENDENCIA') {
-        return ['EM_ANALISE'];
+      // Vendedor só pode colocar em auditoria (submeter para aprovação)
+      if (sale.status === 'PRE_ANALISE' || sale.status === 'PENDENCIA') {
+        return ['AGUARDANDO_AUDITORIA'];
       }
     }
     return [];
@@ -123,7 +123,7 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
   };
 
   // Quick actions for Backoffice/CEO
-  if (canApprove && (sale.status === 'NOVA' || sale.status === 'EM_ANALISE')) {
+  if (canApprove && (sale.status === 'PRE_ANALISE' || sale.status === 'AGUARDANDO_AUDITORIA')) {
     return (
       <div className="space-y-4 border-t pt-4">
         <h3 className="font-semibold text-sm">Ações Rápidas</h3>
@@ -133,11 +133,11 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
             variant="default"
             size="sm"
             className="gap-2 bg-green-600 hover:bg-green-700"
-            onClick={() => setConfirmDialog({ open: true, action: 'APROVADA' })}
+            onClick={() => setConfirmDialog({ open: true, action: 'VENDA_AUDITADA' })}
             disabled={loading}
           >
             <CheckCircle className="h-4 w-4" />
-            Aprovar
+            Auditar Venda
           </Button>
           
           <Button
@@ -167,18 +167,18 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>
-                {confirmDialog.action === 'APROVADA' ? 'Aprovar Venda' : 'Cancelar Venda'}
+                {confirmDialog.action === 'VENDA_AUDITADA' ? 'Auditar Venda' : 'Cancelar Venda'}
               </AlertDialogTitle>
               <AlertDialogDescription>
-                {confirmDialog.action === 'APROVADA'
-                  ? 'Tem certeza que deseja aprovar esta venda? Esta ação não poderá ser desfeita facilmente.'
+                {confirmDialog.action === 'VENDA_AUDITADA'
+                  ? 'Tem certeza que deseja marcar esta venda como auditada? Esta ação não poderá ser desfeita facilmente.'
                   : 'Tem certeza que deseja cancelar esta venda? Esta ação não poderá ser desfeita facilmente.'}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Voltar</AlertDialogCancel>
               <AlertDialogAction
-                className={confirmDialog.action === 'APROVADA' 
+                className={confirmDialog.action === 'VENDA_AUDITADA' 
                   ? 'bg-green-600 hover:bg-green-700' 
                   : 'bg-destructive hover:bg-destructive/90'}
                 onClick={() => {
@@ -188,7 +188,7 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
                   setConfirmDialog({ open: false, action: null });
                 }}
               >
-                {confirmDialog.action === 'APROVADA' ? 'Sim, Aprovar' : 'Sim, Cancelar'}
+                {confirmDialog.action === 'VENDA_AUDITADA' ? 'Sim, Auditar' : 'Sim, Cancelar'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -227,20 +227,20 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
   }
 
   // Seller submit for analysis
-  if (isSeller && isOwner && (sale.status === 'NOVA' || sale.status === 'PENDENCIA')) {
+  if (isSeller && isOwner && (sale.status === 'PRE_ANALISE' || sale.status === 'PENDENCIA')) {
     return (
       <div className="space-y-4 border-t pt-4">
         <h3 className="font-semibold text-sm">Ações</h3>
         <Button
           className="w-full gap-2"
-          onClick={() => handleQuickAction('EM_ANALISE')}
+          onClick={() => handleQuickAction('AGUARDANDO_AUDITORIA')}
           disabled={loading}
         >
           <Clock className="h-4 w-4" />
-          Enviar para Análise
+          Enviar para Auditoria
         </Button>
         <p className="text-xs text-muted-foreground text-center">
-          Sua venda será analisada pelo Backoffice
+          Sua venda será auditada pelo Backoffice
         </p>
       </div>
     );

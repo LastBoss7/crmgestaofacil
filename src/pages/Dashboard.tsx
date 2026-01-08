@@ -25,15 +25,16 @@ import { useSalesNotifications } from '@/hooks/useSalesNotifications';
 import { motion } from 'framer-motion';
 
 const STATUS_BADGE_STYLES: Record<SaleStatus, { bg: string; text: string; label: string }> = {
-  NOVA: { bg: 'bg-blue-50 dark:bg-blue-500/10', text: 'text-blue-600 dark:text-blue-400', label: 'Nova' },
-  EM_ANALISE: { bg: 'bg-amber-50 dark:bg-amber-500/10', text: 'text-amber-600 dark:text-amber-400', label: 'Análise' },
+  PRE_ANALISE: { bg: 'bg-blue-50 dark:bg-blue-500/10', text: 'text-blue-600 dark:text-blue-400', label: 'Pré-Análise' },
+  AGUARDANDO_AUDITORIA: { bg: 'bg-amber-50 dark:bg-amber-500/10', text: 'text-amber-600 dark:text-amber-400', label: 'Aguard. Auditoria' },
   PENDENCIA: { bg: 'bg-orange-50 dark:bg-orange-500/10', text: 'text-orange-600 dark:text-orange-400', label: 'Pendência' },
-  APROVADA: { bg: 'bg-emerald-50 dark:bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', label: 'Aprovada' },
+  VENDA_AUDITADA: { bg: 'bg-emerald-50 dark:bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', label: 'Auditada' },
+  INSTALACAO_MARCADA: { bg: 'bg-cyan-50 dark:bg-cyan-500/10', text: 'text-cyan-600 dark:text-cyan-400', label: 'Inst. Marcada' },
   INSTALADA: { bg: 'bg-violet-50 dark:bg-violet-500/10', text: 'text-violet-600 dark:text-violet-400', label: 'Instalada' },
   CANCELADA: { bg: 'bg-gray-50 dark:bg-gray-500/10', text: 'text-gray-500 dark:text-gray-400', label: 'Cancelada' },
 };
 
-const ALL_STATUSES: SaleStatus[] = ['NOVA', 'EM_ANALISE', 'PENDENCIA', 'APROVADA', 'INSTALADA', 'CANCELADA'];
+const ALL_STATUSES: SaleStatus[] = ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA'];
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -112,8 +113,8 @@ const Dashboard = () => {
   const stats = useMemo(() => ({
     total: allSales.length,
     valorTotal: allSales.reduce((acc, sale) => acc + Number(sale.valor_mensal), 0),
-    pendentes: allSales.filter(s => s.status === 'NOVA' || s.status === 'EM_ANALISE' || s.status === 'PENDENCIA').length,
-    aprovadas: allSales.filter(s => s.status === 'APROVADA' || s.status === 'INSTALADA').length,
+    pendentes: allSales.filter(s => s.status === 'PRE_ANALISE' || s.status === 'AGUARDANDO_AUDITORIA' || s.status === 'PENDENCIA').length,
+    aprovadas: allSales.filter(s => s.status === 'VENDA_AUDITADA' || s.status === 'INSTALACAO_MARCADA' || s.status === 'INSTALADA').length,
   }), [allSales]);
 
   const formatCurrency = (value: number) => {
@@ -128,7 +129,7 @@ const Dashboard = () => {
   };
 
   const getProgressValue = (sale: Sale) => {
-    const statusOrder: SaleStatus[] = ['NOVA', 'EM_ANALISE', 'PENDENCIA', 'APROVADA', 'INSTALADA'];
+    const statusOrder: SaleStatus[] = ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA'];
     if (sale.status === 'CANCELADA') return 0;
     const index = statusOrder.indexOf(sale.status);
     return ((index + 1) / statusOrder.length) * 100;
@@ -190,10 +191,10 @@ const Dashboard = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            onClick={() => setStatusFilter(statusFilter === 'APROVADA' ? 'all' : 'APROVADA')}
+            onClick={() => setStatusFilter(statusFilter === 'VENDA_AUDITADA' ? 'all' : 'VENDA_AUDITADA')}
             className={cn(
               "bg-card border border-border rounded-xl p-6 cursor-pointer transition-all hover:border-emerald-500/50",
-              statusFilter === 'APROVADA' && "ring-2 ring-emerald-500"
+              statusFilter === 'VENDA_AUDITADA' && "ring-2 ring-emerald-500"
             )}
           >
             <div className="flex items-center gap-2 mb-4">

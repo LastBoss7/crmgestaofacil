@@ -1,10 +1,11 @@
 import { cn } from '@/lib/utils';
 import { SaleStatus, SALE_STATUS_LABELS } from '@/types/database';
 import { 
-  Sparkles, 
-  Search, 
+  FileSearch, 
+  Clock, 
   AlertTriangle, 
   CheckCircle2, 
+  Calendar, 
   Zap, 
   XCircle 
 } from 'lucide-react';
@@ -18,17 +19,17 @@ interface StatusBadgeProps {
 
 const statusConfig: Record<SaleStatus, { 
   className: string; 
-  icon: typeof Sparkles;
+  icon: typeof FileSearch;
   gradient: string;
 }> = {
-  NOVA: { 
-    className: 'status-nova',
-    icon: Sparkles,
+  PRE_ANALISE: { 
+    className: 'status-pre_analise',
+    icon: FileSearch,
     gradient: 'from-blue-500/20 to-blue-600/10'
   },
-  EM_ANALISE: { 
-    className: 'status-em_analise',
-    icon: Search,
+  AGUARDANDO_AUDITORIA: { 
+    className: 'status-aguardando_auditoria',
+    icon: Clock,
     gradient: 'from-amber-500/20 to-amber-600/10'
   },
   PENDENCIA: { 
@@ -36,10 +37,15 @@ const statusConfig: Record<SaleStatus, {
     icon: AlertTriangle,
     gradient: 'from-orange-500/20 to-orange-600/10'
   },
-  APROVADA: { 
-    className: 'status-aprovada',
+  VENDA_AUDITADA: { 
+    className: 'status-venda_auditada',
     icon: CheckCircle2,
     gradient: 'from-emerald-500/20 to-emerald-600/10'
+  },
+  INSTALACAO_MARCADA: { 
+    className: 'status-instalacao_marcada',
+    icon: Calendar,
+    gradient: 'from-cyan-500/20 to-cyan-600/10'
   },
   INSTALADA: { 
     className: 'status-instalada',

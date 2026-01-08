@@ -85,7 +85,7 @@ export const exportToPDF = (
   // Summary
   const totalVendas = sales.length;
   const valorTotal = sales.reduce((acc, s) => acc + Number(s.valor_mensal), 0);
-  const aprovadas = sales.filter(s => s.status === 'APROVADA' || s.status === 'INSTALADA').length;
+  const aprovadas = sales.filter(s => s.status === 'VENDA_AUDITADA' || s.status === 'INSTALACAO_MARCADA' || s.status === 'INSTALADA').length;
   
   doc.setTextColor(0);
   doc.setFontSize(10);

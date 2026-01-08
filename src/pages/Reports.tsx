@@ -40,10 +40,11 @@ import {
 } from 'recharts';
 
 const STATUS_COLORS: Record<SaleStatus, string> = {
-  NOVA: '#3B82F6',
-  EM_ANALISE: '#F59E0B',
+  PRE_ANALISE: '#3B82F6',
+  AGUARDANDO_AUDITORIA: '#F59E0B',
   PENDENCIA: '#F97316',
-  APROVADA: '#22C55E',
+  VENDA_AUDITADA: '#22C55E',
+  INSTALACAO_MARCADA: '#06B6D4',
   INSTALADA: '#14B8A6',
   CANCELADA: '#EF4444',
 };
@@ -101,7 +102,7 @@ const Reports = () => {
   const stats = useMemo(() => {
     const total = filteredSales.length;
     const valorTotal = filteredSales.reduce((acc, s) => acc + Number(s.valor_mensal), 0);
-    const aprovadas = filteredSales.filter(s => s.status === 'APROVADA' || s.status === 'INSTALADA').length;
+    const aprovadas = filteredSales.filter(s => s.status === 'VENDA_AUDITADA' || s.status === 'INSTALACAO_MARCADA' || s.status === 'INSTALADA').length;
     const taxaConversao = total > 0 ? ((aprovadas / total) * 100).toFixed(1) : '0';
     const ticketMedio = total > 0 ? valorTotal / total : 0;
 
@@ -129,7 +130,7 @@ const Reports = () => {
   // Sales by status for pie chart
   const statusData = useMemo(() => {
     const counts: Record<SaleStatus, number> = {
-      NOVA: 0, EM_ANALISE: 0, PENDENCIA: 0, APROVADA: 0, INSTALADA: 0, CANCELADA: 0
+      PRE_ANALISE: 0, AGUARDANDO_AUDITORIA: 0, PENDENCIA: 0, VENDA_AUDITADA: 0, INSTALACAO_MARCADA: 0, INSTALADA: 0, CANCELADA: 0
     };
     
     filteredSales.forEach(s => {

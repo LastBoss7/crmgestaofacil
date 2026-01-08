@@ -254,9 +254,9 @@ const Sidebar = () => {
                   )} />
                   <span className={cn(
                     "text-xs",
-                    isOnline ? "text-emerald-500" : "text-muted-foreground"
+                    isOnline ? "text-emerald-500" : "text-amber-500"
                   )}>
-                    {isOnline ? 'Online' : 'Conectando...'}
+                    {isOnline ? 'Online' : 'Entrando...'}
                   </span>
                 </div>
                 {isOnline && (

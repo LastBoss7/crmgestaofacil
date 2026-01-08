@@ -117,9 +117,53 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   const [form, setForm] = useState<FormData>(initialFormData);
   const [loading, setLoading] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
-
+  const [loadingCnpj, setLoadingCnpj] = useState(false);
   const updateForm = (field: keyof FormData, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const fetchCompanyByCnpj = async (cnpj: string) => {
+    const cleanCnpj = cnpj.replace(/\D/g, '');
+    if (cleanCnpj.length !== 14) return;
+
+    setLoadingCnpj(true);
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
+      const data = await response.json();
+      
+      if (data.message || response.status !== 200) {
+        toast.error('CNPJ não encontrado');
+        return;
+      }
+
+      setForm(prev => ({
+        ...prev,
+        razao_social: data.razao_social || prev.razao_social,
+        nome_fantasia: data.nome_fantasia || prev.nome_fantasia,
+        email: data.email || prev.email,
+        telefone_1: data.ddd_telefone_1?.replace(/\D/g, '') || prev.telefone_1,
+        telefone_2: data.ddd_telefone_2?.replace(/\D/g, '') || prev.telefone_2,
+        endereco_rua: data.logradouro || prev.endereco_rua,
+        endereco_numero: data.numero || prev.endereco_numero,
+        endereco_bairro: data.bairro || prev.endereco_bairro,
+        endereco_cidade: data.municipio || prev.endereco_cidade,
+        endereco_cep: data.cep?.replace(/\D/g, '') || prev.endereco_cep,
+      }));
+      toast.success('Dados da empresa preenchidos automaticamente');
+    } catch (error) {
+      console.error('Erro ao buscar CNPJ:', error);
+      toast.error('Erro ao buscar dados do CNPJ');
+    } finally {
+      setLoadingCnpj(false);
+    }
+  };
+
+  const handleCnpjChange = (value: string) => {
+    updateForm('cnpj_cliente', value);
+    const cleanCnpj = value.replace(/\D/g, '');
+    if (cleanCnpj.length === 14) {
+      fetchCompanyByCnpj(cleanCnpj);
+    }
   };
 
   const fetchAddressByCep = async (cep: string) => {
@@ -291,13 +335,18 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="cnpj">CNPJ *</Label>
-            <Input
-              id="cnpj"
-              placeholder="00.000.000/0000-00"
-              value={form.cnpj_cliente}
-              onChange={(e) => updateForm('cnpj_cliente', e.target.value)}
-              required
-            />
+            <div className="relative">
+              <Input
+                id="cnpj"
+                placeholder="00.000.000/0000-00"
+                value={form.cnpj_cliente}
+                onChange={(e) => handleCnpjChange(e.target.value)}
+                required
+              />
+              {loadingCnpj && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="razao">Razão Social *</Label>

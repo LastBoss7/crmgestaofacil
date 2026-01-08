@@ -13,15 +13,19 @@ import {
   UserCheck,
   Activity,
   Eye,
+  BarChart3,
+  Users,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
 import { useSalesNotifications } from '@/hooks/useSalesNotifications';
+import { CallCenterMetrics } from '@/components/dashboard/CallCenterMetrics';
 import { motion } from 'framer-motion';
 
 const STATUS_BADGE_STYLES: Record<SaleStatus, { bg: string; text: string; label: string }> = {
@@ -148,9 +152,9 @@ const Dashboard = () => {
   return (
     <Layout>
       <div className="space-y-6 animate-fade-in">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-foreground">Clientes</h1>
+        {/* Header with Tabs */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
           <Button 
             onClick={() => navigate('/vendas')}
             className="gap-2 bg-primary hover:bg-primary/90"
@@ -160,8 +164,25 @@ const Dashboard = () => {
           </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Tabs defaultValue="metrics" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="metrics" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Métricas Call Center
+            </TabsTrigger>
+            <TabsTrigger value="clients" className="gap-2">
+              <Users className="h-4 w-4" />
+              Clientes
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="metrics" className="mt-6">
+            <CallCenterMetrics sales={allSales} />
+          </TabsContent>
+
+          <TabsContent value="clients" className="mt-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {/* Total Customers */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -242,7 +263,7 @@ const Dashboard = () => {
               </div>
             </div>
           </motion.div>
-        </div>
+            </div>
 
         {/* Filters & Search */}
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -419,7 +440,9 @@ const Dashboard = () => {
               </Button>
             </div>
           )}
-        </motion.div>
+          </motion.div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Floating Chat Button */}

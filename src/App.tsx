@@ -17,6 +17,7 @@ import SellerDetails from "./pages/SellerDetails";
 import TeamInvites from "./pages/TeamInvites";
 import Teams from "./pages/Teams";
 import ChatMonitor from "./pages/ChatMonitor";
+import TeamDashboard from "./pages/TeamDashboard";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -121,6 +122,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <ChatMonitor />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/minha-equipe"
+        element={
+          <ProtectedRoute>
+            <TeamDashboard />
           </ProtectedRoute>
         }
       />

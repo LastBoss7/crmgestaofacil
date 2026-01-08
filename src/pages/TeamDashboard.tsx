@@ -22,6 +22,7 @@ import {
   Zap,
   ArrowRight,
   Eye,
+  FileDown,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -41,6 +42,8 @@ import {
 } from 'recharts';
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const STATUS_COLORS: Record<SaleStatus, string> = {
   PRE_ANALISE: '#3B82F6',
@@ -285,6 +288,104 @@ export default function TeamDashboard() {
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ];
 
+  const exportTeamReportToPDF = () => {
+    if (!team) return;
+
+    const doc = new jsPDF('landscape');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Title
+    doc.setFontSize(20);
+    doc.text(`Relatório da Equipe: ${team.name}`, 14, 20);
+    
+    // Period info
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Período: ${monthNames[currentMonth - 1]} ${currentYear}`, 14, 28);
+    doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, 14, 34);
+    doc.text(`Supervisor: ${profile?.nome || '-'}`, 14, 40);
+    
+    // Team KPIs
+    doc.setTextColor(0);
+    doc.setFontSize(14);
+    doc.text('Resumo de Desempenho', 14, 52);
+    
+    doc.setFontSize(10);
+    const kpiY = 60;
+    doc.text(`Total de Vendas: ${teamTotals.totalSales}`, 14, kpiY);
+    doc.text(`Valor Total Mensal: ${formatCurrency(teamTotals.totalValue)}`, 80, kpiY);
+    doc.text(`Instaladas: ${teamTotals.installedSales}`, 180, kpiY);
+    doc.text(`Pendências: ${teamTotals.pendingSales}`, 230, kpiY);
+    
+    // Goals progress if available
+    let tableStartY = 70;
+    if (goals.length > 0) {
+      doc.text(`Meta de Vendas: ${teamTotals.totalSales}/${teamGoalsProgress.totalTargetSales} (${teamGoalsProgress.salesProgress.toFixed(0)}%)`, 14, kpiY + 8);
+      doc.text(`Meta de Valor: ${formatCurrency(teamTotals.totalValue)}/${formatCurrency(teamGoalsProgress.totalTargetValue)} (${teamGoalsProgress.valueProgress.toFixed(0)}%)`, 140, kpiY + 8);
+      tableStartY = 78;
+    }
+    
+    // Team Members Table
+    doc.setFontSize(14);
+    doc.text('Desempenho Individual', 14, tableStartY + 6);
+
+    const memberTableData = memberMetrics.map((member, index) => [
+      `${index + 1}º`,
+      member.name,
+      member.totalSales.toString(),
+      member.auditedSales.toString(),
+      member.installedSales.toString(),
+      member.pendingSales.toString(),
+      formatCurrency(member.totalValue),
+      `${member.conversionRate.toFixed(0)}%`,
+      `${member.score}`,
+    ]);
+
+    autoTable(doc, {
+      startY: tableStartY + 12,
+      head: [['#', 'Vendedor', 'Vendas', 'Auditadas', 'Instaladas', 'Pendências', 'Valor', 'Conversão', 'Score']],
+      body: memberTableData,
+      styles: { fontSize: 9, cellPadding: 2 },
+      headStyles: { fillColor: [139, 92, 246] },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      columnStyles: {
+        0: { cellWidth: 15 },
+        1: { cellWidth: 50 },
+        2: { cellWidth: 25 },
+        3: { cellWidth: 25 },
+        4: { cellWidth: 25 },
+        5: { cellWidth: 25 },
+        6: { cellWidth: 35 },
+        7: { cellWidth: 25 },
+        8: { cellWidth: 20 },
+      },
+    });
+
+    // Status Distribution (new page)
+    doc.addPage();
+    doc.setFontSize(14);
+    doc.text('Distribuição por Status', 14, 20);
+    
+    const statusTableData = statusDistribution.map(item => [
+      item.label,
+      item.count.toString(),
+      `${((item.count / teamTotals.totalSales) * 100).toFixed(1)}%`,
+    ]);
+
+    autoTable(doc, {
+      startY: 26,
+      head: [['Status', 'Quantidade', 'Percentual']],
+      body: statusTableData,
+      styles: { fontSize: 10, cellPadding: 3 },
+      headStyles: { fillColor: [139, 92, 246] },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+    });
+
+    // Save PDF
+    const filename = `relatorio-equipe-${team.name.toLowerCase().replace(/\s+/g, '-')}-${monthNames[currentMonth - 1].toLowerCase()}-${currentYear}.pdf`;
+    doc.save(filename);
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -326,9 +427,15 @@ export default function TeamDashboard() {
               Dashboard de desempenho • {monthNames[currentMonth - 1]} {currentYear}
             </p>
           </div>
-          <Button onClick={() => navigate('/equipes')} variant="outline">
-            Gerenciar Equipe
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={exportTeamReportToPDF} variant="outline">
+              <FileDown className="h-4 w-4 mr-2" />
+              Exportar PDF
+            </Button>
+            <Button onClick={() => navigate('/equipes')} variant="outline">
+              Gerenciar Equipe
+            </Button>
+          </div>
         </div>
 
         {/* KPI Cards */}

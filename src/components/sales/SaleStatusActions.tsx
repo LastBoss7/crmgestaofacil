@@ -129,7 +129,7 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
           <Button
             variant="outline"
             size="sm"
-            className="gap-2 border-orange-300 text-orange-600 hover:bg-orange-50"
+            className="gap-2 border-orange-500/50 text-orange-500 hover:bg-orange-500/10"
             onClick={() => setStatusUpdate({ ...statusUpdate, status: 'PENDENCIA' })}
             disabled={loading}
           >
@@ -140,7 +140,7 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
           <Button
             variant="outline"
             size="sm"
-            className="gap-2 border-red-300 text-red-600 hover:bg-red-50"
+            className="gap-2 border-red-500/50 text-red-500 hover:bg-red-500/10"
             onClick={() => handleQuickAction('CANCELADA')}
             disabled={loading}
           >
@@ -150,13 +150,13 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
         </div>
 
         {statusUpdate.status === 'PENDENCIA' && (
-          <div className="space-y-3 p-4 rounded-lg border border-orange-200 bg-orange-50">
-            <Label className="text-orange-700">Motivo da Pendência *</Label>
+          <div className="space-y-3 p-4 rounded-lg border border-orange-500/30 bg-orange-500/10">
+            <Label className="text-orange-400">Motivo da Pendência *</Label>
             <Textarea
               placeholder="Ex: Falta de documentos, CNPJ inválido, etc..."
               value={statusUpdate.motivo_pendencia}
               onChange={(e) => setStatusUpdate({ ...statusUpdate, motivo_pendencia: e.target.value })}
-              className="bg-white"
+              className="bg-card border-border"
             />
             <div className="flex gap-2">
               <Button
@@ -168,7 +168,7 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
               </Button>
               <Button
                 size="sm"
-                className="bg-orange-600 hover:bg-orange-700"
+                className="bg-orange-600 hover:bg-orange-700 text-white"
                 onClick={handleStatusUpdate}
                 disabled={loading || !statusUpdate.motivo_pendencia.trim()}
               >

@@ -411,9 +411,9 @@ const Sales = () => {
                 </div>
 
                 {selectedSale.motivo_pendencia && (
-                  <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
-                    <Label className="text-orange-700">Motivo da Pendência</Label>
-                    <p className="text-orange-800">{selectedSale.motivo_pendencia}</p>
+                  <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 p-4">
+                    <Label className="text-orange-400">Motivo da Pendência</Label>
+                    <p className="text-orange-300">{selectedSale.motivo_pendencia}</p>
                   </div>
                 )}
 

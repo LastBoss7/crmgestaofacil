@@ -3,6 +3,7 @@ import Sidebar from './Sidebar';
 import { StatusSelector } from '@/components/operator/StatusSelector';
 import { useAuth } from '@/hooks/useAuth';
 import { usePauseAlerts } from '@/hooks/usePauseAlerts';
+import { BroadcastBanner } from '@/components/broadcast/BroadcastBanner';
 
 interface LayoutProps {
   children: ReactNode;
@@ -29,6 +30,7 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
         )}
         <div className="p-4 lg:p-6">
+          <BroadcastBanner />
           {children}
         </div>
       </main>

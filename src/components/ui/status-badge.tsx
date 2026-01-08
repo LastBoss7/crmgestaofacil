@@ -40,17 +40,17 @@ const statusConfig: Record<SaleStatus, {
   VENDA_AUDITADA: { 
     className: 'status-venda_auditada',
     icon: CheckCircle2,
-    gradient: 'from-emerald-500/20 to-emerald-600/10'
+    gradient: 'from-violet-500/20 to-violet-600/10'
   },
   INSTALACAO_MARCADA: { 
     className: 'status-instalacao_marcada',
     icon: Calendar,
-    gradient: 'from-cyan-500/20 to-cyan-600/10'
+    gradient: 'from-purple-500/20 to-purple-600/10'
   },
   INSTALADA: { 
     className: 'status-instalada',
     icon: Zap,
-    gradient: 'from-violet-500/20 to-violet-600/10'
+    gradient: 'from-purple-500/20 to-purple-600/10'
   },
   CANCELADA: { 
     className: 'status-cancelada',

@@ -195,7 +195,7 @@ const Sidebar = () => {
           <TooltipTrigger asChild>
             <Link
               to="/vendas"
-              className="flex items-center justify-center w-10 h-10 lg:w-11 lg:h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 hover:scale-105 active:scale-95 mb-4"
+              className="flex items-center justify-center w-10 h-10 lg:w-11 lg:h-11 rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-500 hover:to-purple-500 hover:shadow-lg hover:shadow-purple-500/25 transition-all duration-200 hover:scale-105 active:scale-95 mb-4"
             >
               <Plus className="w-5 h-5 lg:w-6 lg:h-6" />
             </Link>

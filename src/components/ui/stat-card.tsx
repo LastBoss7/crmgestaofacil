@@ -20,8 +20,8 @@ const variantStyles = {
     glow: 'shadow-violet-500/20'
   },
   success: {
-    icon: 'from-emerald-500 to-teal-600',
-    glow: 'shadow-emerald-500/20'
+    icon: 'from-violet-500 to-purple-600',
+    glow: 'shadow-violet-500/20'
   },
   warning: {
     icon: 'from-amber-500 to-orange-600',

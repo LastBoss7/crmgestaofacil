@@ -10,38 +10,38 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 142 76% 36%;
-    --primary-foreground: 355.7 100% 97.3%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 262 83% 95%;
+    --accent-foreground: 262 83% 40%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 142 76% 36%;
+    --ring: 262 83% 58%;
     --radius: 0.75rem;
     
     /* Status Colors */
     --status-nova: 217 91% 60%;
     --status-analise: 45 93% 58%;
     --status-pendencia: 25 95% 53%;
-    --status-aprovada: 142 71% 45%;
-    --status-instalada: 173 58% 50%;
+    --status-aprovada: 262 83% 58%;
+    --status-instalada: 262 70% 65%;
     --status-cancelada: 0 72% 51%;
     
     /* Sidebar */
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 142 76% 36%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-primary: 262 83% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 262 83% 97%;
+    --sidebar-accent-foreground: 262 83% 40%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 142 76% 36%;
+    --sidebar-ring: 262 83% 58%;
   }
 
   .dark {
@@ -51,37 +51,37 @@
     --card-foreground: 210 40% 98%;
     --popover: 220 16% 10%;
     --popover-foreground: 210 40% 98%;
-    --primary: 142 76% 36%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 220 16% 14%;
     --secondary-foreground: 210 40% 98%;
     --muted: 220 16% 16%;
     --muted-foreground: 215 20% 55%;
-    --accent: 220 16% 14%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 262 50% 20%;
+    --accent-foreground: 262 83% 75%;
     --destructive: 0 62.8% 50%;
     --destructive-foreground: 210 40% 98%;
     --border: 220 16% 18%;
     --input: 220 16% 14%;
-    --ring: 142 76% 36%;
+    --ring: 262 83% 58%;
     
     /* Status Colors Dark */
     --status-nova: 217 91% 60%;
     --status-analise: 45 93% 58%;
     --status-pendencia: 25 95% 53%;
-    --status-aprovada: 142 71% 45%;
-    --status-instalada: 173 58% 50%;
+    --status-aprovada: 262 83% 65%;
+    --status-instalada: 262 70% 70%;
     --status-cancelada: 0 72% 51%;
     
     /* Sidebar Dark */
     --sidebar-background: 220 18% 10%;
     --sidebar-foreground: 210 40% 95%;
-    --sidebar-primary: 142 76% 36%;
+    --sidebar-primary: 262 83% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 16% 14%;
-    --sidebar-accent-foreground: 210 40% 95%;
+    --sidebar-accent: 262 50% 15%;
+    --sidebar-accent-foreground: 262 83% 75%;
     --sidebar-border: 220 16% 16%;
-    --sidebar-ring: 142 76% 36%;
+    --sidebar-ring: 262 83% 65%;
   }
 
   * {
@@ -134,7 +134,7 @@
 
   /* Gradient Text */
   .gradient-text {
-    @apply bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-violet-500 to-purple-600 bg-clip-text text-transparent;
   }
 
   /* Cards com Hover */
@@ -185,11 +185,11 @@
   }
   
   .status-aprovada {
-    @apply bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20;
+    @apply bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20;
   }
   
   .status-instalada {
-    @apply bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20;
+    @apply bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20;
   }
   
   .status-cancelada {

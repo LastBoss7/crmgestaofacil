@@ -5,39 +5,45 @@ import Layout from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
 import { 
-  ShoppingCart, 
-  TrendingUp,
   Users,
-  FileText,
-  Clock,
+  TrendingUp,
+  MoreVertical,
+  Search,
+  SlidersHorizontal,
+  X,
+  ChevronLeft,
   ChevronRight,
-  Star,
-  MoreHorizontal,
-  Folder,
-  ArrowRight,
+  Trash2,
+  Pencil,
+  Building2,
+  UserCheck,
+  Activity,
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
 import { useSalesNotifications } from '@/hooks/useSalesNotifications';
 import { motion } from 'framer-motion';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-interface SellerStats {
-  id: string;
-  nome: string;
-  totalVendas: number;
-  valorTotal: number;
-  aprovadas: number;
-}
-
-const STATUS_COLORS: Record<SaleStatus, string> = {
-  NOVA: 'bg-blue-500',
-  EM_ANALISE: 'bg-amber-500',
-  PENDENCIA: 'bg-orange-500',
-  APROVADA: 'bg-emerald-500',
-  INSTALADA: 'bg-violet-500',
-  CANCELADA: 'bg-gray-500',
+const STATUS_BADGE_STYLES: Record<SaleStatus, { bg: string; text: string; label: string }> = {
+  NOVA: { bg: 'bg-blue-50 dark:bg-blue-500/10', text: 'text-blue-600 dark:text-blue-400', label: 'Nova' },
+  EM_ANALISE: { bg: 'bg-amber-50 dark:bg-amber-500/10', text: 'text-amber-600 dark:text-amber-400', label: 'Análise' },
+  PENDENCIA: { bg: 'bg-orange-50 dark:bg-orange-500/10', text: 'text-orange-600 dark:text-orange-400', label: 'Pendência' },
+  APROVADA: { bg: 'bg-emerald-50 dark:bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400', label: 'Aprovada' },
+  INSTALADA: { bg: 'bg-violet-50 dark:bg-violet-500/10', text: 'text-violet-600 dark:text-violet-400', label: 'Instalada' },
+  CANCELADA: { bg: 'bg-gray-50 dark:bg-gray-500/10', text: 'text-gray-500 dark:text-gray-400', label: 'Cancelada' },
 };
 
 const Dashboard = () => {
@@ -46,9 +52,13 @@ const Dashboard = () => {
   const [allSales, setAllSales] = useState<Sale[]>([]);
   const [sellers, setSellers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [starredFolders, setStarredFolders] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSales, setSelectedSales] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [activeFilters, setActiveFilters] = useState<string[]>(['all']);
+  const [activeTab, setActiveTab] = useState('overview');
+  const itemsPerPage = 6;
 
-  // Ativar notificações de vendas
   useSalesNotifications();
 
   useEffect(() => {
@@ -78,16 +88,41 @@ const Dashboard = () => {
     fetchData();
   }, [user, isSeller, isCEO, isBackoffice]);
 
-  const sales = allSales;
+  // Filter and search logic
+  const filteredSales = useMemo(() => {
+    let result = allSales;
+
+    // Apply status filter
+    if (!activeFilters.includes('all')) {
+      result = result.filter(sale => activeFilters.includes(sale.status));
+    }
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(sale => 
+        sale.razao_social.toLowerCase().includes(query) ||
+        sale.nome_fantasia?.toLowerCase().includes(query) ||
+        sale.cnpj_cliente.includes(query)
+      );
+    }
+
+    return result;
+  }, [allSales, activeFilters, searchQuery]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredSales.length / itemsPerPage);
+  const paginatedSales = filteredSales.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const stats = useMemo(() => ({
-    total: sales.length,
-    valorTotal: sales.reduce((acc, sale) => acc + Number(sale.valor_mensal), 0),
-    pendentes: sales.filter(s => s.status === 'NOVA' || s.status === 'EM_ANALISE' || s.status === 'PENDENCIA').length,
-    aprovadas: sales.filter(s => s.status === 'APROVADA' || s.status === 'INSTALADA').length,
-  }), [sales]);
-
-  const recentSales = sales.slice(0, 4);
+    total: allSales.length,
+    valorTotal: allSales.reduce((acc, sale) => acc + Number(sale.valor_mensal), 0),
+    pendentes: allSales.filter(s => s.status === 'NOVA' || s.status === 'EM_ANALISE' || s.status === 'PENDENCIA').length,
+    aprovadas: allSales.filter(s => s.status === 'APROVADA' || s.status === 'INSTALADA').length,
+  }), [allSales]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -96,41 +131,37 @@ const Dashboard = () => {
     }).format(value);
   };
 
-  const formatTimeAgo = (date: string) => {
-    const now = new Date();
-    const past = new Date(date);
-    const diff = Math.floor((now.getTime() - past.getTime()) / 1000 / 60);
-    
-    if (diff < 60) return `${diff}m atrás`;
-    if (diff < 1440) return `${Math.floor(diff / 60)}h atrás`;
-    return `${Math.floor(diff / 1440)}d atrás`;
-  };
-
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
   };
 
-  // Shared folders data with navigation
-  const sharedFolders = [
-    { name: 'Vendas Aprovadas', color: 'from-emerald-500 to-teal-600', count: stats.aprovadas, users: sellers.slice(0, 3), filter: 'APROVADA' },
-    { name: 'Em Análise', color: 'from-amber-500 to-orange-500', count: stats.pendentes, users: sellers.slice(0, 2), filter: 'EM_ANALISE' },
-    { name: 'Relatórios', color: 'from-primary to-pink-600', count: 12, users: sellers.slice(0, 4), href: '/relatorios' },
-  ];
+  const toggleSelectAll = () => {
+    if (selectedSales.length === paginatedSales.length) {
+      setSelectedSales([]);
+    } else {
+      setSelectedSales(paginatedSales.map(s => s.id));
+    }
+  };
 
-  const toggleStar = (folderName: string) => {
-    setStarredFolders(prev => 
-      prev.includes(folderName) 
-        ? prev.filter(f => f !== folderName)
-        : [...prev, folderName]
+  const toggleSelect = (id: string) => {
+    setSelectedSales(prev => 
+      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
     );
   };
 
-  const handleFolderClick = (folder: typeof sharedFolders[0]) => {
-    if (folder.href) {
-      navigate(folder.href);
-    } else if (folder.filter) {
-      navigate(`/vendas?status=${folder.filter}`);
-    }
+  const removeFilter = (filter: string) => {
+    if (filter === 'all') return;
+    setActiveFilters(prev => {
+      const newFilters = prev.filter(f => f !== filter);
+      return newFilters.length === 0 ? ['all'] : newFilters;
+    });
+  };
+
+  const getProgressValue = (sale: Sale) => {
+    const statusOrder: SaleStatus[] = ['NOVA', 'EM_ANALISE', 'PENDENCIA', 'APROVADA', 'INSTALADA'];
+    if (sale.status === 'CANCELADA') return 0;
+    const index = statusOrder.indexOf(sale.status);
+    return ((index + 1) / statusOrder.length) * 100;
   };
 
   if (loading) {
@@ -145,264 +176,374 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="space-y-8 animate-fade-in max-w-6xl">
-        {/* Breadcrumbs */}
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Dashboard</span>
-          <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-          <span className="text-muted-foreground">Overview</span>
-          <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
-          <span className="text-foreground">Atividade Recente</span>
+      <div className="space-y-6 animate-fade-in">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold text-foreground">Clientes</h1>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" className="gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Exportar
+            </Button>
+            <Button 
+              onClick={() => navigate('/vendas')}
+              className="gap-2 bg-primary hover:bg-primary/90"
+            >
+              <span className="text-lg leading-none">+</span>
+              Adicionar Cliente
+            </Button>
+          </div>
         </div>
 
-        {/* Recent Edited Section */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-foreground">Editados Recentemente</h2>
-            <button 
-              onClick={() => navigate('/vendas')}
-              className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors group"
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="bg-transparent border-b border-border rounded-none h-auto p-0 gap-6">
+            <TabsTrigger 
+              value="overview"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none pb-3 px-0"
             >
-              Ver tudo
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {recentSales.length === 0 ? (
-              <div className="col-span-full flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <FileText className="h-12 w-12 mb-3 opacity-50" />
-                <p className="text-sm font-medium">Nenhuma venda recente</p>
-                <button 
-                  onClick={() => navigate('/vendas')}
-                  className="mt-3 text-sm text-primary hover:underline"
-                >
-                  Cadastrar primeira venda
-                </button>
+              Visão Geral
+            </TabsTrigger>
+            <TabsTrigger 
+              value="table"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none pb-3 px-0"
+            >
+              Tabela
+            </TabsTrigger>
+            <TabsTrigger 
+              value="list"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none pb-3 px-0"
+            >
+              Lista
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Total Customers */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card border border-border rounded-xl p-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Total Clientes</span>
               </div>
-            ) : (
-              recentSales.map((sale, index) => (
-                <motion.div 
-                  key={sale.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  onClick={() => navigate('/vendas')}
-                  className="bg-card border border-border rounded-2xl p-5 hover:bg-accent/50 transition-all duration-200 cursor-pointer group card-hover"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
-                      <FileText className="h-6 w-6 text-primary" />
-                    </div>
-                    <button 
-                      onClick={(e) => e.stopPropagation()}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-accent"
-                    >
-                      <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                    </button>
-                  </div>
-                  <h3 className="text-sm font-medium text-foreground truncate mb-1">
-                    {sale.nome_fantasia || sale.razao_social}
-                  </h3>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    <span>Editado {formatTimeAgo(sale.updated_at || sale.created_at)}</span>
-                  </div>
-                  <div className="mt-3 flex items-center gap-2">
-                    <div className={cn("w-2 h-2 rounded-full", STATUS_COLORS[sale.status])} />
-                    <span className="text-xs text-muted-foreground">{SALE_STATUS_LABELS[sale.status]}</span>
-                  </div>
-                </motion.div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Shared Folders Section */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-foreground">Pastas Compartilhadas</h2>
-            <button 
-              onClick={() => navigate('/vendas')}
-              className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors group"
-            >
-              Ver tudo
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {sharedFolders.map((folder, index) => (
-              <motion.div 
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                onClick={() => handleFolderClick(folder)}
-                className="bg-card border border-border rounded-2xl p-5 hover:bg-accent/50 transition-all duration-200 cursor-pointer group card-hover"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={cn("p-3 rounded-xl bg-gradient-to-br", folder.color)}>
-                    <Folder className="h-6 w-6 text-primary-foreground" />
-                  </div>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleStar(folder.name);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-accent"
-                  >
-                    <Star className={cn(
-                      "h-4 w-4 transition-colors",
-                      starredFolders.includes(folder.name) 
-                        ? "text-amber-500 fill-amber-500" 
-                        : "text-muted-foreground"
-                    )} />
-                  </button>
-                </div>
-                <h3 className="text-sm font-medium text-foreground mb-1">{folder.name}</h3>
-                <p className="text-xs text-muted-foreground mb-3">{folder.count} itens</p>
-                
-                {/* User avatars */}
-                <div className="flex -space-x-2">
-                  {folder.users.slice(0, 3).map((user, idx) => (
-                    <Avatar key={idx} className="h-7 w-7 border-2 border-card">
-                      <AvatarFallback className="text-[10px] bg-gradient-to-br from-primary to-emerald-500 text-primary-foreground">
-                        {getInitials(user.nome)}
-                      </AvatarFallback>
-                    </Avatar>
-                  ))}
-                  {folder.users.length > 3 && (
-                    <div className="h-7 w-7 rounded-full bg-muted border-2 border-card flex items-center justify-center">
-                      <span className="text-[10px] text-muted-foreground">+{folder.users.length - 3}</span>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Files Table */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-foreground">Arquivos Recentes</h2>
-            <button 
-              onClick={() => navigate('/vendas')}
-              className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 transition-colors group"
-            >
-              Ver tudo
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-            </button>
-          </div>
-          
-          <div className="bg-card border border-border rounded-2xl overflow-hidden">
-            {/* Table Header */}
-            <div className="grid grid-cols-3 gap-4 px-6 py-4 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              <span>Nome do Arquivo</span>
-              <span>Proprietário</span>
-              <span className="text-right">Data de Upload</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => navigate('/vendas')}>Ver todos</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            
-            {/* Table Body */}
-            {sales.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                <FileText className="h-10 w-10 mb-3 opacity-50" />
-                <p className="text-sm">Nenhum arquivo encontrado</p>
+            <div className="flex items-end justify-between">
+              <span className="text-4xl font-bold text-foreground">{stats.total.toLocaleString('pt-BR')}</span>
+              <div className="flex items-center gap-1 text-emerald-500 text-sm font-medium">
+                <TrendingUp className="h-4 w-4" />
+                <span>20%</span>
               </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {sales.slice(0, 6).map((sale, index) => (
-                  <motion.div 
+            </div>
+          </motion.div>
+
+          {/* Members */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-card border border-border rounded-xl p-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <UserCheck className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Aprovados</span>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => navigate('/vendas?status=APROVADA')}>Ver aprovados</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="flex items-end justify-between">
+              <span className="text-4xl font-bold text-foreground">{stats.aprovadas.toLocaleString('pt-BR')}</span>
+              <div className="flex items-center gap-1 text-emerald-500 text-sm font-medium">
+                <TrendingUp className="h-4 w-4" />
+                <span>15%</span>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Active Now */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-card border border-border rounded-xl p-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Activity className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Equipe Ativa</span>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => navigate('/usuarios')}>Ver equipe</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <div className="flex items-end justify-between">
+              <span className="text-4xl font-bold text-foreground">{sellers.length}</span>
+              <div className="flex -space-x-2">
+                {sellers.slice(0, 4).map((seller, idx) => (
+                  <Avatar key={idx} className="h-8 w-8 border-2 border-card">
+                    <AvatarImage src={seller.avatar_url || ''} />
+                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                      {getInitials(seller.nome)}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+                {sellers.length > 4 && (
+                  <div className="h-8 w-8 rounded-full bg-muted border-2 border-card flex items-center justify-center">
+                    <span className="text-[10px] text-muted-foreground font-medium">+{sellers.length - 4}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Filters & Search */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Active Filter Chips */}
+            <Badge 
+              variant={activeFilters.includes('all') ? 'default' : 'outline'}
+              className="cursor-pointer gap-1.5 px-3 py-1.5"
+              onClick={() => setActiveFilters(['all'])}
+            >
+              Todos
+              {activeFilters.includes('all') && activeFilters.length === 1 && (
+                <X className="h-3 w-3" />
+              )}
+            </Badge>
+            
+            {!activeFilters.includes('all') && activeFilters.map(filter => (
+              <Badge 
+                key={filter}
+                variant="outline"
+                className="cursor-pointer gap-1.5 px-3 py-1.5 bg-primary/5"
+              >
+                {STATUS_BADGE_STYLES[filter as SaleStatus]?.label || filter}
+                <X 
+                  className="h-3 w-3 hover:text-destructive" 
+                  onClick={() => removeFilter(filter)}
+                />
+              </Badge>
+            ))}
+
+            <Button variant="outline" size="sm" className="gap-2 h-8">
+              <SlidersHorizontal className="h-4 w-4" />
+              Mais Filtros
+            </Button>
+          </div>
+
+          {/* Search */}
+          <div className="relative w-full md:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 bg-card"
+            />
+          </div>
+        </div>
+
+        {/* Table */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="bg-card border border-border rounded-xl overflow-hidden"
+        >
+          {/* Table Header */}
+          <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-border bg-muted/30">
+            <div className="col-span-4 flex items-center gap-3">
+              <Checkbox 
+                checked={selectedSales.length === paginatedSales.length && paginatedSales.length > 0}
+                onCheckedChange={toggleSelectAll}
+              />
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                Empresa
+                <ChevronRight className="h-3 w-3 rotate-90" />
+              </span>
+            </div>
+            <div className="col-span-2">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</span>
+            </div>
+            <div className="col-span-3">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Sobre</span>
+            </div>
+            <div className="col-span-1">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Equipe</span>
+            </div>
+            <div className="col-span-1">
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Progresso</span>
+            </div>
+            <div className="col-span-1"></div>
+          </div>
+
+          {/* Table Body */}
+          {paginatedSales.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <Building2 className="h-12 w-12 mb-4 opacity-50" />
+              <p className="text-lg font-medium">Nenhum cliente encontrado</p>
+              <p className="text-sm mt-1">Tente ajustar os filtros ou adicione um novo cliente.</p>
+              <Button onClick={() => navigate('/vendas')} className="mt-4">
+                Adicionar Cliente
+              </Button>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {paginatedSales.map((sale, index) => {
+                const statusStyle = STATUS_BADGE_STYLES[sale.status];
+                const isSelected = selectedSales.includes(sale.id);
+                
+                return (
+                  <motion.div
                     key={sale.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
+                    className={cn(
+                      "grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-muted/50 transition-colors cursor-pointer",
+                      isSelected && "bg-primary/5"
+                    )}
                     onClick={() => navigate('/vendas')}
-                    className="grid grid-cols-3 gap-4 px-6 py-4 items-center hover:bg-accent/50 transition-colors cursor-pointer"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <FileText className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
+                    {/* Company */}
+                    <div className="col-span-4 flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                      <Checkbox 
+                        checked={isSelected}
+                        onCheckedChange={() => toggleSelect(sale.id)}
+                      />
+                      <Avatar className="h-10 w-10 rounded-lg">
+                        <AvatarFallback className="rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+                          {getInitials(sale.razao_social)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-foreground truncate">
                           {sale.nome_fantasia || sale.razao_social}
                         </p>
-                        <p className="text-xs text-muted-foreground">{formatCurrency(Number(sale.valor_mensal))}</p>
+                        <p className="text-xs text-muted-foreground truncate">{sale.cnpj_cliente}</p>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center">
-                      <div className="flex -space-x-2">
-                        <Avatar className="h-6 w-6 border-2 border-card">
-                          <AvatarFallback className="text-[9px] bg-gradient-to-br from-primary to-emerald-500 text-primary-foreground">
-                            {profile?.nome ? getInitials(profile.nome) : 'U'}
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
+
+                    {/* Status */}
+                    <div className="col-span-2">
+                      <Badge className={cn("font-medium", statusStyle.bg, statusStyle.text)}>
+                        {statusStyle.label}
+                      </Badge>
                     </div>
-                    
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(sale.created_at).toLocaleDateString('pt-BR')}
+
+                    {/* About */}
+                    <div className="col-span-3">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {sale.produtos || 'Produto não definido'}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {formatCurrency(Number(sale.valor_mensal))}/mês
                       </p>
                     </div>
+
+                    {/* Team Avatars */}
+                    <div className="col-span-1">
+                      <div className="flex -space-x-2">
+                        {sellers.slice(0, 3).map((seller, idx) => (
+                          <Avatar key={idx} className="h-7 w-7 border-2 border-card">
+                            <AvatarImage src={seller.avatar_url || ''} />
+                            <AvatarFallback className="text-[9px] bg-primary/10 text-primary">
+                              {getInitials(seller.nome)}
+                            </AvatarFallback>
+                          </Avatar>
+                        ))}
+                        {sellers.length > 3 && (
+                          <div className="h-7 w-7 rounded-full bg-muted border-2 border-card flex items-center justify-center">
+                            <span className="text-[9px] text-muted-foreground">+{sellers.length - 3}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Progress */}
+                    <div className="col-span-1">
+                      <Progress value={getProgressValue(sale)} className="h-2 w-16" />
+                    </div>
+
+                    {/* Actions */}
+                    <div className="col-span-1 flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </motion.div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+                );
+              })}
+            </div>
+          )}
 
-        {/* Stats Cards at Bottom */}
-        {(isCEO || isBackoffice) && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-card border border-border rounded-2xl p-5 card-hover">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2.5 rounded-xl bg-primary/10 border border-primary/20">
-                  <ShoppingCart className="h-5 w-5 text-primary" />
-                </div>
-                <span className="text-sm text-muted-foreground">Total Vendas</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/30">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Anterior
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Página {currentPage} de {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="gap-1"
+              >
+                Próximo
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-            
-            <div className="bg-card border border-border rounded-2xl p-5 card-hover">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                  <TrendingUp className="h-5 w-5 text-emerald-500" />
-                </div>
-                <span className="text-sm text-muted-foreground">Aprovadas</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{stats.aprovadas}</p>
-            </div>
-            
-            <div className="bg-card border border-border rounded-2xl p-5 card-hover">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                  <Clock className="h-5 w-5 text-amber-500" />
-                </div>
-                <span className="text-sm text-muted-foreground">Pendentes</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{stats.pendentes}</p>
-            </div>
-            
-            <div className="bg-card border border-border rounded-2xl p-5 card-hover">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
-                  <Users className="h-5 w-5 text-blue-500" />
-                </div>
-                <span className="text-sm text-muted-foreground">Equipe</span>
-              </div>
-              <p className="text-2xl font-bold text-foreground">{sellers.length}</p>
-            </div>
-          </div>
-        )}
-
+          )}
+        </motion.div>
       </div>
 
-      {/* Botão flutuante do chat */}
+      {/* Floating Chat Button */}
       <FloatingChatButton />
     </Layout>
   );

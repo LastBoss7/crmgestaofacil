@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,14 +12,15 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search, MessageSquare, Users, Filter, Download, FileSpreadsheet, FileText } from 'lucide-react';
-import { format } from 'date-fns';
+import { Search, MessageSquare, Users, Filter, Download, FileSpreadsheet, FileText, BarChart3, TrendingUp, Clock, UserCheck } from 'lucide-react';
+import { format, getHours, getDay, subDays, isAfter } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Profile, Team } from '@/types/database';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from 'recharts';
 
 interface DirectMessage {
   id: string;
@@ -175,6 +176,95 @@ export default function ChatMonitor() {
   const selectedConvMessages = selectedConversation 
     ? conversations.get(selectedConversation) || []
     : [];
+
+  // Statistics calculations
+  const CHART_COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
+  const DAYS_OF_WEEK = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+  const stats = useMemo(() => {
+    const allMessages = [...directMessages, ...teamMessages.map(m => ({ ...m, sender_id: m.user_id, sender_name: m.user_name }))];
+    const last30Days = allMessages.filter(m => isAfter(new Date(m.created_at), subDays(new Date(), 30)));
+    
+    // Messages per user
+    const userMessageCount: Record<string, { name: string; count: number; avatar?: string }> = {};
+    allMessages.forEach(msg => {
+      const senderId = 'sender_id' in msg ? msg.sender_id : (msg as any).user_id;
+      const senderName = 'sender_name' in msg ? msg.sender_name : (msg as any).user_name;
+      if (!userMessageCount[senderId]) {
+        const profile = profiles.find(p => p.id === senderId);
+        userMessageCount[senderId] = { name: senderName || profile?.nome || 'Desconhecido', count: 0, avatar: profile?.avatar_url || undefined };
+      }
+      userMessageCount[senderId].count++;
+    });
+    const topUsers = Object.entries(userMessageCount)
+      .map(([id, data]) => ({ id, ...data }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    // Messages by hour
+    const hourlyData: Record<number, number> = {};
+    for (let i = 0; i < 24; i++) hourlyData[i] = 0;
+    last30Days.forEach(msg => {
+      const hour = getHours(new Date(msg.created_at));
+      hourlyData[hour]++;
+    });
+    const hourlyChart = Object.entries(hourlyData).map(([hour, count]) => ({
+      hour: `${hour}h`,
+      mensagens: count,
+    }));
+
+    // Messages by day of week
+    const weekdayData: Record<number, number> = {};
+    for (let i = 0; i < 7; i++) weekdayData[i] = 0;
+    last30Days.forEach(msg => {
+      const day = getDay(new Date(msg.created_at));
+      weekdayData[day]++;
+    });
+    const weekdayChart = Object.entries(weekdayData).map(([day, count]) => ({
+      dia: DAYS_OF_WEEK[parseInt(day)],
+      mensagens: count,
+    }));
+
+    // Messages per day (last 30 days trend)
+    const dailyData: Record<string, number> = {};
+    for (let i = 29; i >= 0; i--) {
+      const date = format(subDays(new Date(), i), 'dd/MM');
+      dailyData[date] = 0;
+    }
+    last30Days.forEach(msg => {
+      const date = format(new Date(msg.created_at), 'dd/MM');
+      if (dailyData[date] !== undefined) dailyData[date]++;
+    });
+    const dailyChart = Object.entries(dailyData).map(([date, count]) => ({
+      data: date,
+      mensagens: count,
+    }));
+
+    // Peak hour
+    const peakHour = Object.entries(hourlyData).reduce((a, b) => (b[1] > a[1] ? b : a), ['0', 0]);
+    
+    // Most active day
+    const peakDay = Object.entries(weekdayData).reduce((a, b) => (b[1] > a[1] ? b : a), ['0', 0]);
+
+    // Response rate (messages read)
+    const readMessages = directMessages.filter(m => m.read_at).length;
+    const responseRate = directMessages.length > 0 ? Math.round((readMessages / directMessages.length) * 100) : 0;
+
+    return {
+      totalMessages: allMessages.length,
+      directCount: directMessages.length,
+      teamCount: teamMessages.length,
+      last30DaysCount: last30Days.length,
+      topUsers,
+      hourlyChart,
+      weekdayChart,
+      dailyChart,
+      peakHour: `${peakHour[0]}h`,
+      peakDay: DAYS_OF_WEEK[parseInt(peakDay[0])],
+      responseRate,
+      avgPerDay: Math.round(last30Days.length / 30),
+    };
+  }, [directMessages, teamMessages, profiles]);
 
   // Export functions
   const exportDirectMessagesToExcel = () => {
@@ -430,9 +520,13 @@ export default function ChatMonitor() {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="direct" className="w-full">
+        <Tabs defaultValue="stats" className="w-full">
           <div className="flex items-center justify-between mb-4">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsList className="grid w-full max-w-lg grid-cols-3">
+              <TabsTrigger value="stats" className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Estatísticas
+              </TabsTrigger>
               <TabsTrigger value="direct" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
                 Mensagens Diretas
@@ -470,6 +564,216 @@ export default function ChatMonitor() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
+
+          {/* Statistics Tab */}
+          <TabsContent value="stats" className="mt-0 space-y-6">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <MessageSquare className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{stats.totalMessages}</p>
+                      <p className="text-xs text-muted-foreground">Total de Mensagens</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-green-500/10">
+                      <TrendingUp className="h-5 w-5 text-green-500" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{stats.avgPerDay}</p>
+                      <p className="text-xs text-muted-foreground">Média/Dia (30d)</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-orange-500/10">
+                      <Clock className="h-5 w-5 text-orange-500" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{stats.peakHour}</p>
+                      <p className="text-xs text-muted-foreground">Horário de Pico</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-blue-500/10">
+                      <UserCheck className="h-5 w-5 text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{stats.responseRate}%</p>
+                      <p className="text-xs text-muted-foreground">Taxa de Leitura</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Daily Trend */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Mensagens por Dia (últimos 30 dias)</CardTitle>
+                  <CardDescription>Tendência de uso do chat</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[250px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={stats.dailyChart}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis dataKey="data" tick={{ fontSize: 10 }} interval={4} />
+                        <YAxis tick={{ fontSize: 10 }} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="mensagens" 
+                          stroke="hsl(var(--primary))" 
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Hourly Distribution */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Distribuição por Horário</CardTitle>
+                  <CardDescription>Horários mais ativos</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[250px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.hourlyChart}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis dataKey="hour" tick={{ fontSize: 10 }} interval={2} />
+                        <YAxis tick={{ fontSize: 10 }} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Bar dataKey="mensagens" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Weekday Distribution */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Distribuição por Dia da Semana</CardTitle>
+                  <CardDescription>Dia mais ativo: {stats.peakDay}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[250px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={stats.weekdayChart}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis dataKey="dia" tick={{ fontSize: 12 }} />
+                        <YAxis tick={{ fontSize: 10 }} />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }} 
+                        />
+                        <Bar dataKey="mensagens" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Top Users */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">Usuários Mais Ativos</CardTitle>
+                  <CardDescription>Top 5 por número de mensagens</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {stats.topUsers.map((user, index) => (
+                      <div key={user.id} className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-muted text-xs font-medium">
+                          {index + 1}
+                        </div>
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={user.avatar} />
+                          <AvatarFallback className="text-xs">
+                            {user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{user.name}</p>
+                        </div>
+                        <Badge variant="secondary">{user.count} msgs</Badge>
+                      </div>
+                    ))}
+                    {stats.topUsers.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        Nenhuma mensagem encontrada
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-primary">{stats.directCount}</p>
+                    <p className="text-sm text-muted-foreground">Mensagens Diretas</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-primary">{stats.teamCount}</p>
+                    <p className="text-sm text-muted-foreground">Mensagens de Equipe</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-primary">{stats.last30DaysCount}</p>
+                    <p className="text-sm text-muted-foreground">Últimos 30 Dias</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
 
           <TabsContent value="direct" className="mt-0">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

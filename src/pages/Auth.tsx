@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Building2, Users, ArrowRight, Check, Eye, EyeOff, ArrowLeft, ShoppingCart } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, Building2, Users, ArrowRight, Check, Eye, EyeOff, ArrowLeft, ShoppingCart, Mail, Lock, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
@@ -42,6 +44,21 @@ interface InviteData {
 type AuthMode = 'login' | 'signup';
 type SignupType = 'company' | 'employee' | null;
 type SignupStep = 1 | 2;
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 },
+  transition: { duration: 0.3, ease: "easeOut" }
+};
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -325,459 +342,608 @@ const Auth = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          <p className="text-muted-foreground text-sm">Carregando...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary to-emerald-400 flex items-center justify-center">
+            <ShoppingCart className="h-6 w-6 text-primary-foreground animate-pulse" />
+          </div>
+          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Left Panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-card border-r border-border flex-col justify-between p-12">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-              <ShoppingCart className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-semibold text-foreground">CRM Telecom</span>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <h2 className="text-4xl font-semibold text-foreground leading-tight">
-            Gerencie suas vendas<br />
-            de forma inteligente
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-md">
-            Plataforma completa para gestão de vendas corporativas com acompanhamento em tempo real.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-8">
-          <div className="text-center">
-            <p className="text-3xl font-semibold text-foreground">500+</p>
-            <p className="text-sm text-muted-foreground">Empresas</p>
-          </div>
-          <div className="w-px h-12 bg-border" />
-          <div className="text-center">
-            <p className="text-3xl font-semibold text-foreground">10k+</p>
-            <p className="text-sm text-muted-foreground">Vendas</p>
-          </div>
-          <div className="w-px h-12 bg-border" />
-          <div className="text-center">
-            <p className="text-3xl font-semibold text-foreground">98%</p>
-            <p className="text-sm text-muted-foreground">Satisfação</p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5 flex">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-bl from-primary/10 via-transparent to-transparent rounded-full blur-3xl" />
+        <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-emerald-500/10 via-transparent to-transparent rounded-full blur-3xl" />
       </div>
 
+      {/* Left Panel - Branding */}
+      <motion.div 
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6 }}
+        className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12"
+      >
+        {/* Logo */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="flex items-center gap-3"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-emerald-400 shadow-lg shadow-primary/30">
+            <ShoppingCart className="h-6 w-6 text-primary-foreground" />
+          </div>
+          <span className="text-2xl font-bold gradient-text">CRM Telecom</span>
+        </motion.div>
+
+        {/* Hero Text */}
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="space-y-6"
+        >
+          <h1 className="text-5xl font-bold text-foreground leading-tight">
+            Gerencie suas vendas
+            <br />
+            <span className="gradient-text">de forma inteligente</span>
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-md leading-relaxed">
+            Plataforma completa para gestão de vendas corporativas com acompanhamento em tempo real.
+          </p>
+        </motion.div>
+
+        {/* Stats */}
+        <motion.div 
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+          className="flex items-center gap-10"
+        >
+          {[
+            { value: '500+', label: 'Empresas' },
+            { value: '10k+', label: 'Vendas' },
+            { value: '98%', label: 'Satisfação' },
+          ].map((stat, index) => (
+            <motion.div 
+              key={stat.label}
+              variants={fadeInUp}
+              className="text-center"
+            >
+              <p className="text-4xl font-bold gradient-text">{stat.value}</p>
+              <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
+            </motion.div>
+          ))}
+        </motion.div>
+      </motion.div>
+
       {/* Right Panel - Auth Form */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-md">
+      <div className="flex-1 flex items-center justify-center p-6 relative z-10">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="w-full max-w-md"
+        >
           {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-              <ShoppingCart className="h-5 w-5 text-primary-foreground" />
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="lg:hidden flex items-center justify-center gap-3 mb-8"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-emerald-400 shadow-lg shadow-primary/30">
+              <ShoppingCart className="h-6 w-6 text-primary-foreground" />
             </div>
-            <span className="text-xl font-semibold text-foreground">CRM Telecom</span>
-          </div>
+            <span className="text-2xl font-bold gradient-text">CRM Telecom</span>
+          </motion.div>
 
-          {/* Card */}
-          <div className="bg-card rounded-xl border border-border p-8">
-            {/* Mode Tabs */}
-            <div className="flex gap-1 p-1 bg-secondary rounded-lg mb-8">
-              <button
-                onClick={() => { setMode('login'); resetSignup(); }}
-                className={cn(
-                  "flex-1 py-2.5 text-sm font-medium rounded-md transition-all duration-150",
-                  mode === 'login' 
-                    ? "bg-background text-foreground shadow-sm" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
+          {/* Auth Card */}
+          <Card className="glass-card border-0 shadow-2xl">
+            <CardHeader className="text-center pb-2">
+              <motion.div
+                key={mode}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
               >
-                Entrar
-              </button>
-              <button
-                onClick={() => { setMode('signup'); resetSignup(); }}
-                className={cn(
-                  "flex-1 py-2.5 text-sm font-medium rounded-md transition-all duration-150",
-                  mode === 'signup' 
-                    ? "bg-background text-foreground shadow-sm" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                Criar Conta
-              </button>
-            </div>
-
-            {/* Login Form */}
-            {mode === 'login' && (
-              <form onSubmit={handleLogin} className="space-y-5 animate-fade-in">
-                <div className="space-y-2">
-                  <Label className="text-foreground text-sm">E-mail</Label>
-                  <Input
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={loginData.email}
-                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                    className="h-11"
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label className="text-foreground text-sm">Senha</Label>
-                  <div className="relative">
-                    <Input
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      value={loginData.password}
-                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                      className="h-11 pr-11"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <Button type="submit" disabled={isLoading} className="w-full h-11">
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Entrar'}
-                </Button>
-              </form>
-            )}
-
-            {/* Signup Flow */}
-            {mode === 'signup' && (
-              <div className="animate-fade-in">
-                {/* Type Selection */}
-                {signupType === null && (
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground text-center mb-6">
-                      Como deseja se cadastrar?
-                    </p>
-
-                    <button
-                      onClick={() => setSignupType('company')}
-                      className="w-full p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-secondary/50 transition-all duration-150 text-left group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                          <Building2 className="h-5 w-5 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-foreground">Sou uma Empresa</p>
-                          <p className="text-sm text-muted-foreground">Cadastrar minha empresa</p>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                      </div>
-                    </button>
-
-                    <button
-                      onClick={() => setSignupType('employee')}
-                      className="w-full p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-secondary/50 transition-all duration-150 text-left group"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
-                          <Users className="h-5 w-5 text-accent" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-medium text-foreground">Tenho um Convite</p>
-                          <p className="text-sm text-muted-foreground">Usar código de convite</p>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                      </div>
-                    </button>
-                  </div>
-                )}
-
-                {/* Company Signup - Step 1 */}
-                {signupType === 'company' && signupStep === 1 && (
-                  <div className="space-y-5">
-                    <button
-                      onClick={() => setSignupType(null)}
-                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      Voltar
-                    </button>
-
-                    <div>
-                      <h3 className="text-lg font-medium text-foreground">Dados da Empresa</h3>
-                      <p className="text-sm text-muted-foreground">Passo 1 de 2</p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-foreground text-sm">CNPJ</Label>
-                        <div className="relative">
-                          <Input
-                            type="text"
-                            placeholder="00.000.000/0000-00"
-                            value={companyData.cnpj}
-                            onChange={(e) => {
-                              const formatted = formatCnpj(e.target.value);
-                              setCompanyData({ ...companyData, cnpj: formatted });
-                              checkCnpj(formatted);
-                            }}
-                            className={cn(
-                              "h-11 pr-10",
-                              cnpjError && "border-destructive",
-                              cnpjValid && "border-emerald-500"
-                            )}
-                          />
-                          {checkingCnpj && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
-                          {cnpjValid && <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />}
-                        </div>
-                        {cnpjError && <p className="text-xs text-destructive">{cnpjError}</p>}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-foreground text-sm">Razão Social</Label>
-                        <Input
-                          type="text"
-                          placeholder="Nome oficial da empresa"
-                          value={companyData.razao_social}
-                          onChange={(e) => setCompanyData({ ...companyData, razao_social: e.target.value })}
-                          className="h-11"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-foreground text-sm">Nome Fantasia (opcional)</Label>
-                        <Input
-                          type="text"
-                          placeholder="Nome comercial"
-                          value={companyData.nome_fantasia}
-                          onChange={(e) => setCompanyData({ ...companyData, nome_fantasia: e.target.value })}
-                          className="h-11"
-                        />
-                      </div>
-                    </div>
-
-                    <Button
-                      onClick={() => setSignupStep(2)}
-                      disabled={!canProceedCompanyStep1}
-                      className="w-full h-11"
-                    >
-                      Continuar
-                    </Button>
-                  </div>
-                )}
-
-                {/* Company Signup - Step 2 */}
-                {signupType === 'company' && signupStep === 2 && (
-                  <form onSubmit={handleCompanySignup} className="space-y-5">
-                    <button
-                      type="button"
-                      onClick={() => setSignupStep(1)}
-                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      Voltar
-                    </button>
-
-                    <div>
-                      <h3 className="text-lg font-medium text-foreground">Dados do Administrador</h3>
-                      <p className="text-sm text-muted-foreground">Passo 2 de 2</p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-foreground text-sm">Seu Nome</Label>
-                        <Input
-                          type="text"
-                          placeholder="Nome completo"
-                          value={companyData.nome}
-                          onChange={(e) => setCompanyData({ ...companyData, nome: e.target.value })}
-                          className="h-11"
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-foreground text-sm">E-mail</Label>
-                        <Input
-                          type="email"
-                          placeholder="seu@email.com"
-                          value={companyData.email}
-                          onChange={(e) => setCompanyData({ ...companyData, email: e.target.value })}
-                          className="h-11"
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-foreground text-sm">Senha</Label>
-                        <div className="relative">
-                          <Input
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder="Mínimo 6 caracteres"
-                            value={companyData.password}
-                            onChange={(e) => setCompanyData({ ...companyData, password: e.target.value })}
-                            className="h-11 pr-11"
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Button type="submit" disabled={isLoading} className="w-full h-11">
-                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Criar Conta'}
-                    </Button>
-                  </form>
-                )}
-
-                {/* Employee Signup - Step 1 */}
-                {signupType === 'employee' && signupStep === 1 && (
-                  <div className="space-y-5">
-                    <button
-                      onClick={() => setSignupType(null)}
-                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      Voltar
-                    </button>
-
-                    <div>
-                      <h3 className="text-lg font-medium text-foreground">Código de Convite</h3>
-                      <p className="text-sm text-muted-foreground">Passo 1 de 2</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-foreground text-sm">Código</Label>
-                      <div className="relative">
-                        <Input
-                          type="text"
-                          placeholder="Digite o código de 8 dígitos"
-                          value={employeeData.inviteCode}
-                          onChange={(e) => {
-                            const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 8);
-                            setEmployeeData({ ...employeeData, inviteCode: value });
-                            checkInviteCode(value);
-                          }}
-                          className={cn(
-                            "h-11 text-center text-lg tracking-widest font-mono",
-                            codeError && "border-destructive",
-                            inviteData && "border-emerald-500"
-                          )}
-                        />
-                        {checkingCode && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
-                        {inviteData && <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500" />}
-                      </div>
-                      {codeError && <p className="text-xs text-destructive">{codeError}</p>}
-                    </div>
-
-                    {inviteData && (
-                      <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                        <p className="text-sm text-emerald-400">
-                          Convite válido para <strong>{inviteData.company_name}</strong>
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Cargo: {inviteData.role}
-                        </p>
-                      </div>
-                    )}
-
-                    <Button
-                      onClick={() => setSignupStep(2)}
-                      disabled={!canProceedEmployeeStep1}
-                      className="w-full h-11"
-                    >
-                      Continuar
-                    </Button>
-                  </div>
-                )}
-
-                {/* Employee Signup - Step 2 */}
-                {signupType === 'employee' && signupStep === 2 && (
-                  <form onSubmit={handleEmployeeSignup} className="space-y-5">
-                    <button
-                      type="button"
-                      onClick={() => setSignupStep(1)}
-                      className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      Voltar
-                    </button>
-
-                    <div>
-                      <h3 className="text-lg font-medium text-foreground">Seus Dados</h3>
-                      <p className="text-sm text-muted-foreground">Passo 2 de 2</p>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-foreground text-sm">Seu Nome</Label>
-                        <Input
-                          type="text"
-                          placeholder="Nome completo"
-                          value={employeeData.nome}
-                          onChange={(e) => setEmployeeData({ ...employeeData, nome: e.target.value })}
-                          className="h-11"
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-foreground text-sm">E-mail</Label>
-                        <Input
-                          type="email"
-                          placeholder="seu@email.com"
-                          value={employeeData.email}
-                          onChange={(e) => setEmployeeData({ ...employeeData, email: e.target.value })}
-                          className="h-11"
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-foreground text-sm">Senha</Label>
-                        <div className="relative">
-                          <Input
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder="Mínimo 6 caracteres"
-                            value={employeeData.password}
-                            onChange={(e) => setEmployeeData({ ...employeeData, password: e.target.value })}
-                            className="h-11 pr-11"
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Button type="submit" disabled={isLoading} className="w-full h-11">
-                      {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Criar Conta'}
-                    </Button>
-                  </form>
-                )}
+                <CardTitle className="text-2xl font-bold">
+                  {mode === 'login' ? 'Bem-vindo de volta' : 'Criar conta'}
+                </CardTitle>
+                <CardDescription className="text-muted-foreground mt-2">
+                  {mode === 'login' 
+                    ? 'Entre com suas credenciais para acessar' 
+                    : 'Preencha os dados para começar'
+                  }
+                </CardDescription>
+              </motion.div>
+            </CardHeader>
+            
+            <CardContent className="pt-6">
+              {/* Mode Tabs */}
+              <div className="flex gap-1 p-1 bg-secondary/50 rounded-xl mb-6">
+                <button
+                  onClick={() => { setMode('login'); resetSignup(); }}
+                  className={cn(
+                    "flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-300",
+                    mode === 'login' 
+                      ? "bg-background text-foreground shadow-md" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Entrar
+                </button>
+                <button
+                  onClick={() => { setMode('signup'); resetSignup(); }}
+                  className={cn(
+                    "flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-300",
+                    mode === 'signup' 
+                      ? "bg-background text-foreground shadow-md" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Criar Conta
+                </button>
               </div>
-            )}
-          </div>
-        </div>
+
+              <AnimatePresence mode="wait">
+                {/* Login Form */}
+                {mode === 'login' && (
+                  <motion.form 
+                    key="login"
+                    onSubmit={handleLogin} 
+                    className="space-y-5"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="space-y-2">
+                      <Label className="text-foreground text-sm font-medium">E-mail</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="email"
+                          placeholder="seu@email.com"
+                          value={loginData.email}
+                          onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                          className="h-12 pl-10 bg-secondary/30 border-border/50 focus:border-primary/50"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-foreground text-sm font-medium">Senha</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
+                          value={loginData.password}
+                          onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                          className="h-12 pl-10 pr-12 bg-secondary/30 border-border/50 focus:border-primary/50"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <Button type="submit" disabled={isLoading} className="w-full h-12 text-base font-medium">
+                      {isLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <>
+                          Entrar
+                          <ArrowRight className="h-4 w-4 ml-2" />
+                        </>
+                      )}
+                    </Button>
+                  </motion.form>
+                )}
+
+                {/* Signup Flow */}
+                {mode === 'signup' && (
+                  <motion.div
+                    key="signup"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <AnimatePresence mode="wait">
+                      {/* Type Selection */}
+                      {signupType === null && (
+                        <motion.div 
+                          key="type-select"
+                          className="space-y-4"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                        >
+                          <p className="text-sm text-muted-foreground text-center mb-6">
+                            Como deseja se cadastrar?
+                          </p>
+
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => setSignupType('company')}
+                            className="w-full p-4 rounded-xl border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 text-left group card-hover"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-emerald-500/20 group-hover:from-primary/30 group-hover:to-emerald-500/30 transition-colors">
+                                <Building2 className="h-6 w-6 text-primary" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-semibold text-foreground">Sou uma Empresa</p>
+                                <p className="text-sm text-muted-foreground">Cadastrar minha empresa</p>
+                              </div>
+                              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                            </div>
+                          </motion.button>
+
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => setSignupType('employee')}
+                            className="w-full p-4 rounded-xl border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 text-left group card-hover"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 group-hover:from-blue-500/30 group-hover:to-cyan-500/30 transition-colors">
+                                <Users className="h-6 w-6 text-blue-500" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-semibold text-foreground">Tenho um Convite</p>
+                                <p className="text-sm text-muted-foreground">Usar código de convite</p>
+                              </div>
+                              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+                            </div>
+                          </motion.button>
+                        </motion.div>
+                      )}
+
+                      {/* Company Signup - Step 1 */}
+                      {signupType === 'company' && signupStep === 1 && (
+                        <motion.div 
+                          key="company-step1"
+                          className="space-y-5"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                        >
+                          <button
+                            onClick={() => setSignupType(null)}
+                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+                          >
+                            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                            Voltar
+                          </button>
+
+                          <div>
+                            <h3 className="text-lg font-semibold text-foreground">Dados da Empresa</h3>
+                            <p className="text-sm text-muted-foreground">Passo 1 de 2</p>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label className="text-foreground text-sm font-medium">CNPJ</Label>
+                              <div className="relative">
+                                <Input
+                                  type="text"
+                                  placeholder="00.000.000/0000-00"
+                                  value={companyData.cnpj}
+                                  onChange={(e) => {
+                                    const formatted = formatCnpj(e.target.value);
+                                    setCompanyData({ ...companyData, cnpj: formatted });
+                                    checkCnpj(formatted);
+                                  }}
+                                  className={cn(
+                                    "h-12 pr-10 bg-secondary/30 border-border/50",
+                                    cnpjError && "border-destructive focus:border-destructive",
+                                    cnpjValid && "border-primary focus:border-primary"
+                                  )}
+                                />
+                                {checkingCnpj && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+                                {cnpjValid && <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />}
+                              </div>
+                              {cnpjError && <p className="text-xs text-destructive">{cnpjError}</p>}
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-foreground text-sm font-medium">Razão Social</Label>
+                              <Input
+                                type="text"
+                                placeholder="Nome oficial da empresa"
+                                value={companyData.razao_social}
+                                onChange={(e) => setCompanyData({ ...companyData, razao_social: e.target.value })}
+                                className="h-12 bg-secondary/30 border-border/50"
+                              />
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-foreground text-sm font-medium">Nome Fantasia (opcional)</Label>
+                              <Input
+                                type="text"
+                                placeholder="Nome comercial"
+                                value={companyData.nome_fantasia}
+                                onChange={(e) => setCompanyData({ ...companyData, nome_fantasia: e.target.value })}
+                                className="h-12 bg-secondary/30 border-border/50"
+                              />
+                            </div>
+                          </div>
+
+                          <Button
+                            onClick={() => setSignupStep(2)}
+                            disabled={!canProceedCompanyStep1}
+                            className="w-full h-12 text-base font-medium"
+                          >
+                            Continuar
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                          </Button>
+                        </motion.div>
+                      )}
+
+                      {/* Company Signup - Step 2 */}
+                      {signupType === 'company' && signupStep === 2 && (
+                        <motion.form 
+                          key="company-step2"
+                          onSubmit={handleCompanySignup} 
+                          className="space-y-5"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setSignupStep(1)}
+                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+                          >
+                            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                            Voltar
+                          </button>
+
+                          <div>
+                            <h3 className="text-lg font-semibold text-foreground">Dados do Administrador</h3>
+                            <p className="text-sm text-muted-foreground">Passo 2 de 2</p>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label className="text-foreground text-sm font-medium">Seu Nome</Label>
+                              <div className="relative">
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  type="text"
+                                  placeholder="Nome completo"
+                                  value={companyData.nome}
+                                  onChange={(e) => setCompanyData({ ...companyData, nome: e.target.value })}
+                                  className="h-12 pl-10 bg-secondary/30 border-border/50"
+                                  required
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-foreground text-sm font-medium">E-mail</Label>
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  type="email"
+                                  placeholder="seu@email.com"
+                                  value={companyData.email}
+                                  onChange={(e) => setCompanyData({ ...companyData, email: e.target.value })}
+                                  className="h-12 pl-10 bg-secondary/30 border-border/50"
+                                  required
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-foreground text-sm font-medium">Senha</Label>
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  type={showPassword ? 'text' : 'password'}
+                                  placeholder="Mínimo 6 caracteres"
+                                  value={companyData.password}
+                                  onChange={(e) => setCompanyData({ ...companyData, password: e.target.value })}
+                                  className="h-12 pl-10 pr-12 bg-secondary/30 border-border/50"
+                                  required
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <Button type="submit" disabled={isLoading} className="w-full h-12 text-base font-medium">
+                            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Criar Conta'}
+                          </Button>
+                        </motion.form>
+                      )}
+
+                      {/* Employee Signup - Step 1 */}
+                      {signupType === 'employee' && signupStep === 1 && (
+                        <motion.div 
+                          key="employee-step1"
+                          className="space-y-5"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                        >
+                          <button
+                            onClick={() => setSignupType(null)}
+                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+                          >
+                            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                            Voltar
+                          </button>
+
+                          <div>
+                            <h3 className="text-lg font-semibold text-foreground">Código de Convite</h3>
+                            <p className="text-sm text-muted-foreground">Passo 1 de 2</p>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-foreground text-sm font-medium">Código</Label>
+                            <div className="relative">
+                              <Input
+                                type="text"
+                                placeholder="XXXXXXXX"
+                                value={employeeData.inviteCode}
+                                onChange={(e) => {
+                                  const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 8);
+                                  setEmployeeData({ ...employeeData, inviteCode: value });
+                                  checkInviteCode(value);
+                                }}
+                                className={cn(
+                                  "h-12 text-center text-xl tracking-[0.5em] font-mono bg-secondary/30 border-border/50",
+                                  codeError && "border-destructive focus:border-destructive",
+                                  inviteData && "border-primary focus:border-primary"
+                                )}
+                              />
+                              {checkingCode && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+                              {inviteData && <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />}
+                            </div>
+                            {codeError && <p className="text-xs text-destructive">{codeError}</p>}
+                          </div>
+
+                          {inviteData && (
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="p-4 rounded-xl bg-primary/10 border border-primary/20"
+                            >
+                              <p className="text-sm text-primary font-medium">
+                                Convite válido para <strong>{inviteData.company_name}</strong>
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Cargo: {inviteData.role}
+                              </p>
+                            </motion.div>
+                          )}
+
+                          <Button
+                            onClick={() => setSignupStep(2)}
+                            disabled={!canProceedEmployeeStep1}
+                            className="w-full h-12 text-base font-medium"
+                          >
+                            Continuar
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                          </Button>
+                        </motion.div>
+                      )}
+
+                      {/* Employee Signup - Step 2 */}
+                      {signupType === 'employee' && signupStep === 2 && (
+                        <motion.form 
+                          key="employee-step2"
+                          onSubmit={handleEmployeeSignup} 
+                          className="space-y-5"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setSignupStep(1)}
+                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+                          >
+                            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                            Voltar
+                          </button>
+
+                          <div>
+                            <h3 className="text-lg font-semibold text-foreground">Seus Dados</h3>
+                            <p className="text-sm text-muted-foreground">Passo 2 de 2</p>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label className="text-foreground text-sm font-medium">Seu Nome</Label>
+                              <div className="relative">
+                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  type="text"
+                                  placeholder="Nome completo"
+                                  value={employeeData.nome}
+                                  onChange={(e) => setEmployeeData({ ...employeeData, nome: e.target.value })}
+                                  className="h-12 pl-10 bg-secondary/30 border-border/50"
+                                  required
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-foreground text-sm font-medium">E-mail</Label>
+                              <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  type="email"
+                                  placeholder="seu@email.com"
+                                  value={employeeData.email}
+                                  onChange={(e) => setEmployeeData({ ...employeeData, email: e.target.value })}
+                                  className="h-12 pl-10 bg-secondary/30 border-border/50"
+                                  required
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label className="text-foreground text-sm font-medium">Senha</Label>
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  type={showPassword ? 'text' : 'password'}
+                                  placeholder="Mínimo 6 caracteres"
+                                  value={employeeData.password}
+                                  onChange={(e) => setEmployeeData({ ...employeeData, password: e.target.value })}
+                                  className="h-12 pl-10 pr-12 bg-secondary/30 border-border/50"
+                                  required
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <Button type="submit" disabled={isLoading} className="w-full h-12 text-base font-medium">
+                            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Criar Conta'}
+                          </Button>
+                        </motion.form>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     </div>
   );

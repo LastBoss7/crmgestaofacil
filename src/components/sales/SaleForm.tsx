@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, Building2, Phone, MapPin, User, Users, FileText, DollarSign } from 'lucide-react';
+import { Calendar, Building2, Phone, MapPin, User, Users, FileText, DollarSign, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -116,9 +116,47 @@ const initialFormData: FormData = {
 export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   const [form, setForm] = useState<FormData>(initialFormData);
   const [loading, setLoading] = useState(false);
+  const [loadingCep, setLoadingCep] = useState(false);
 
   const updateForm = (field: keyof FormData, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const fetchAddressByCep = async (cep: string) => {
+    const cleanCep = cep.replace(/\D/g, '');
+    if (cleanCep.length !== 8) return;
+
+    setLoadingCep(true);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const data = await response.json();
+      
+      if (data.erro) {
+        toast.error('CEP não encontrado');
+        return;
+      }
+
+      setForm(prev => ({
+        ...prev,
+        endereco_rua: data.logradouro || prev.endereco_rua,
+        endereco_bairro: data.bairro || prev.endereco_bairro,
+        endereco_cidade: data.localidade || prev.endereco_cidade,
+      }));
+      toast.success('Endereço preenchido automaticamente');
+    } catch (error) {
+      console.error('Erro ao buscar CEP:', error);
+      toast.error('Erro ao buscar CEP');
+    } finally {
+      setLoadingCep(false);
+    }
+  };
+
+  const handleCepChange = (value: string) => {
+    updateForm('endereco_cep', value);
+    const cleanCep = value.replace(/\D/g, '');
+    if (cleanCep.length === 8) {
+      fetchAddressByCep(cleanCep);
+    }
   };
 
   // Calculate total when values change
@@ -376,12 +414,17 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
           </div>
           <div className="space-y-2">
             <Label htmlFor="cep">CEP</Label>
-            <Input
-              id="cep"
-              placeholder="00000-000"
-              value={form.endereco_cep}
-              onChange={(e) => updateForm('endereco_cep', e.target.value)}
-            />
+            <div className="relative">
+              <Input
+                id="cep"
+                placeholder="00000-000"
+                value={form.endereco_cep}
+                onChange={(e) => handleCepChange(e.target.value)}
+              />
+              {loadingCep && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
           </div>
         </div>
       </div>

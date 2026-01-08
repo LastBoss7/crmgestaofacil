@@ -12,6 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Sale, SaleStatus, SALE_STATUS_LABELS } from '@/types/database';
 import { CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
@@ -30,6 +40,10 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
     motivo_pendencia: sale.motivo_pendencia || '',
   });
   const [loading, setLoading] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    action: 'APROVADA' | 'CANCELADA' | null;
+  }>({ open: false, action: null });
 
   const canApprove = isCEO || isBackoffice;
   const isOwner = sale.seller_id === user?.id;
@@ -119,7 +133,7 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
             variant="default"
             size="sm"
             className="gap-2 bg-green-600 hover:bg-green-700"
-            onClick={() => handleQuickAction('APROVADA')}
+            onClick={() => setConfirmDialog({ open: true, action: 'APROVADA' })}
             disabled={loading}
           >
             <CheckCircle className="h-4 w-4" />
@@ -141,13 +155,44 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
             variant="outline"
             size="sm"
             className="gap-2 border-red-500/50 text-red-500 hover:bg-red-500/10"
-            onClick={() => handleQuickAction('CANCELADA')}
+            onClick={() => setConfirmDialog({ open: true, action: 'CANCELADA' })}
             disabled={loading}
           >
             <XCircle className="h-4 w-4" />
             Cancelar
           </Button>
         </div>
+
+        <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ open, action: null })}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {confirmDialog.action === 'APROVADA' ? 'Aprovar Venda' : 'Cancelar Venda'}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {confirmDialog.action === 'APROVADA'
+                  ? 'Tem certeza que deseja aprovar esta venda? Esta ação não poderá ser desfeita facilmente.'
+                  : 'Tem certeza que deseja cancelar esta venda? Esta ação não poderá ser desfeita facilmente.'}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Voltar</AlertDialogCancel>
+              <AlertDialogAction
+                className={confirmDialog.action === 'APROVADA' 
+                  ? 'bg-green-600 hover:bg-green-700' 
+                  : 'bg-destructive hover:bg-destructive/90'}
+                onClick={() => {
+                  if (confirmDialog.action) {
+                    handleQuickAction(confirmDialog.action);
+                  }
+                  setConfirmDialog({ open: false, action: null });
+                }}
+              >
+                {confirmDialog.action === 'APROVADA' ? 'Sim, Aprovar' : 'Sim, Cancelar'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {statusUpdate.status === 'PENDENCIA' && (
           <div className="space-y-3 p-4 rounded-lg border border-orange-500/30 bg-orange-500/10">

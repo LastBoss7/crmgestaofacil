@@ -40,22 +40,24 @@ export const SalesMonitor = () => {
 
   const fetchStats = async () => {
     const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    // Get today's date in local timezone (YYYY-MM-DD format)
+    const todayDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
 
-    // Fetch today's sales
+    // Fetch today's sales using data_venda (which is a DATE field, not timestamp)
     const { data: todaySales, error: todayError } = await supabase
       .from('sales')
-      .select('id, valor_mensal, status, created_at')
-      .gte('created_at', startOfDay);
+      .select('id, valor_mensal, status, created_at, data_venda')
+      .eq('data_venda', todayDate);
 
     if (!todayError && todaySales) {
       const todayValue = todaySales.reduce((sum, s) => sum + Number(s.valor_mensal), 0);
-      const thisHourSales = todaySales.filter(s => s.created_at >= oneHourAgo);
+      // Filter sales created in the last hour for "this hour" metric
+      const thisHourSales = todaySales.filter(s => s.created_at && s.created_at >= oneHourAgo);
       const pendingSales = todaySales.filter(s => s.status === 'PENDENCIA' || s.status === 'AGUARDANDO_AUDITORIA');
       
-      // Calculate average per hour
-      const hoursElapsed = Math.max(1, (now.getHours() + 1));
+      // Calculate average per hour based on current hour of the day
+      const hoursElapsed = Math.max(1, now.getHours() + 1);
       const avgPerHour = todaySales.length / hoursElapsed;
 
       setStats({
@@ -67,10 +69,11 @@ export const SalesMonitor = () => {
       });
     }
 
-    // Fetch recent sales with seller info
+    // Fetch recent sales with seller info - only from today
     const { data: recentData } = await supabase
       .from('sales')
-      .select('id, razao_social, nome_fantasia, valor_mensal, status, created_at, seller_id')
+      .select('id, razao_social, nome_fantasia, valor_mensal, status, created_at, seller_id, data_venda')
+      .eq('data_venda', todayDate)
       .order('created_at', { ascending: false })
       .limit(10);
 

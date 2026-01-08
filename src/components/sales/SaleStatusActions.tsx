@@ -201,11 +201,11 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
     );
   }
 
-  // CEO full control select
-  if (isCEO) {
+  // CEO/Backoffice full control select
+  if (isCEO || isBackoffice) {
     return (
       <div className="space-y-4 border-t pt-4">
-        <h3 className="font-semibold text-sm">Alterar Status (CEO)</h3>
+        <h3 className="font-semibold text-sm">Alterar Status</h3>
         <div className="space-y-3">
           <Select
             value={statusUpdate.status}

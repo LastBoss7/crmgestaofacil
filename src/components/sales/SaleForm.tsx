@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, Building2, Phone, MapPin, User, Users, FileText, DollarSign, Loader2 } from 'lucide-react';
+import { Calendar, Building2, Phone, MapPin, User, Users, FileText, DollarSign, Loader2, Upload, X, File } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -123,6 +123,9 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   const [loadingCnpj, setLoadingCnpj] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({});
+  const [documents, setDocuments] = useState<File[]>([]);
+  const [uploadingDocs, setUploadingDocs] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const validateField = (field: keyof FormData, value: string): string | undefined => {
     switch (field) {
@@ -272,6 +275,57 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
     (parseFloat(form.movel_valor) || 0)
   ).toFixed(2);
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    
+    const validFiles: File[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!validTypes.includes(file.type)) {
+        toast.error(`Arquivo "${file.name}" não é suportado. Use PDF ou imagens.`);
+        continue;
+      }
+      if (file.size > maxSize) {
+        toast.error(`Arquivo "${file.name}" excede 10MB.`);
+        continue;
+      }
+      validFiles.push(file);
+    }
+    
+    setDocuments(prev => [...prev, ...validFiles]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeDocument = (index: number) => {
+    setDocuments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadDocuments = async (saleId: string): Promise<string[]> => {
+    const urls: string[] = [];
+    
+    for (const file of documents) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${saleId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      
+      const { error } = await supabase.storage
+        .from('sale-documents')
+        .upload(fileName, file);
+      
+      if (error) {
+        console.error('Error uploading document:', error);
+        toast.error(`Erro ao enviar ${file.name}`);
+      } else {
+        urls.push(fileName);
+      }
+    }
+    
+    return urls;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -307,7 +361,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.from('sales').insert({
+      const { data: saleData, error } = await supabase.from('sales').insert({
         seller_id: userId,
         data_venda: form.data_venda || null,
         equipe: form.equipe || null,
@@ -347,9 +401,23 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         produtos: form.produtos || null,
         observacoes_vendedor: form.observacoes_vendedor || null,
         status: 'NOVA',
-      });
+      }).select('id').single();
 
       if (error) throw error;
+
+      // Upload documents if any
+      if (documents.length > 0 && saleData?.id) {
+        setUploadingDocs(true);
+        const docUrls = await uploadDocuments(saleData.id);
+        
+        if (docUrls.length > 0) {
+          await supabase
+            .from('sales')
+            .update({ documentos: docUrls } as any)
+            .eq('id', saleData.id);
+        }
+        setUploadingDocs(false);
+      }
 
       toast.success('Venda cadastrada com sucesso!');
       onSuccess();
@@ -358,6 +426,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
       toast.error('Erro ao cadastrar venda');
     } finally {
       setLoading(false);
+      setUploadingDocs(false);
     }
   };
 
@@ -838,16 +907,78 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         </div>
       </div>
 
+      <Separator />
+
+      {/* Documentos */}
+      <div>
+        <SectionHeader icon={Upload} title="Documentos (Opcional)" />
+        <p className="text-sm text-muted-foreground mb-4">
+          Anexe documentos relacionados à venda (PDF, imagens). Máximo 10MB por arquivo.
+        </p>
+        <div className="space-y-4">
+          <div 
+            className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+            <p className="text-sm text-muted-foreground">
+              Clique para selecionar arquivos ou arraste aqui
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              PDF, JPG, PNG, WebP
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+          </div>
+
+          {documents.length > 0 && (
+            <div className="space-y-2">
+              {documents.map((file, index) => (
+                <div 
+                  key={index}
+                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border"
+                >
+                  <div className="flex items-center gap-3">
+                    <File className="h-5 w-5 text-primary" />
+                    <div>
+                      <p className="text-sm font-medium truncate max-w-[200px]">{file.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeDocument(index)}
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Actions */}
       <div className="flex justify-end gap-2 pt-4 border-t">
         <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? (
+        <Button type="submit" disabled={loading || uploadingDocs}>
+          {loading || uploadingDocs ? (
             <span className="flex items-center gap-2">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              Salvando...
+              {uploadingDocs ? 'Enviando documentos...' : 'Salvando...'}
             </span>
           ) : (
             'Cadastrar Venda'

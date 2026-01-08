@@ -130,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isCEO = role === 'CEO';
   const isBackoffice = role === 'BACKOFFICE';
   const isSeller = role === 'SELLER';
-  const canManageUsers = isCEO;
+  const canManageUsers = isCEO || isBackoffice;
   const canManageSaleStatus = isCEO || isBackoffice;
 
   return (

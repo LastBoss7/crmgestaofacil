@@ -32,6 +32,7 @@ export interface Sale {
   status: SaleStatus;
   observacoes_vendedor: string | null;
   motivo_pendencia: string | null;
+  documentos?: string[] | null;
   created_at: string;
   updated_at: string;
   // Joined data

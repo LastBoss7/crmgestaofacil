@@ -5,7 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
-import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText } from 'lucide-react';
+import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SaleComments } from '@/components/sales/SaleComments';
@@ -353,6 +353,52 @@ const Sales = () => {
                   <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
                     <Label className="text-orange-700">Motivo da Pendência</Label>
                     <p className="text-orange-800">{selectedSale.motivo_pendencia}</p>
+                  </div>
+                )}
+
+                {/* Documents Section */}
+                {selectedSale.documentos && selectedSale.documentos.length > 0 && (
+                  <div className="space-y-3">
+                    <Label className="text-muted-foreground">Documentos Anexados</Label>
+                    <div className="grid gap-2">
+                      {selectedSale.documentos.map((docUrl, index) => {
+                        const fileName = docUrl.split('/').pop() || `Documento ${index + 1}`;
+                        const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName);
+                        const isPdf = /\.pdf$/i.test(fileName);
+                        
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between rounded-lg border bg-muted/30 p-3"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              {isImage ? (
+                                <ImageIcon className="h-5 w-5 text-blue-500 shrink-0" />
+                              ) : isPdf ? (
+                                <FileText className="h-5 w-5 text-red-500 shrink-0" />
+                              ) : (
+                                <FileIcon className="h-5 w-5 text-muted-foreground shrink-0" />
+                              )}
+                              <span className="text-sm truncate">{fileName}</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-2 shrink-0"
+                              onClick={() => {
+                                const { data } = supabase.storage
+                                  .from('sale-documents')
+                                  .getPublicUrl(docUrl);
+                                window.open(data.publicUrl, '_blank');
+                              }}
+                            >
+                              <Download className="h-4 w-4" />
+                              Baixar
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
 

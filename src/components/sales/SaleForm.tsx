@@ -9,6 +9,7 @@ import { Calendar, Building2, Phone, MapPin, User, Users, FileText, DollarSign, 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { maskCPF, maskCNPJ, maskCEP, maskPhone } from '@/lib/masks';
 
 const saleSchema = z.object({
   cnpj_cliente: z.string().trim().min(14, 'CNPJ inválido'),
@@ -208,8 +209,9 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   };
 
   const handleCnpjChange = (value: string) => {
-    updateForm('cnpj_cliente', value);
-    const cleanCnpj = value.replace(/\D/g, '');
+    const maskedValue = maskCNPJ(value);
+    updateForm('cnpj_cliente', maskedValue);
+    const cleanCnpj = maskedValue.replace(/\D/g, '');
     if (cleanCnpj.length === 14) {
       fetchCompanyByCnpj(cleanCnpj);
     }
@@ -245,11 +247,22 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   };
 
   const handleCepChange = (value: string) => {
-    updateForm('endereco_cep', value);
-    const cleanCep = value.replace(/\D/g, '');
+    const maskedValue = maskCEP(value);
+    updateForm('endereco_cep', maskedValue);
+    const cleanCep = maskedValue.replace(/\D/g, '');
     if (cleanCep.length === 8) {
       fetchAddressByCep(cleanCep);
     }
+  };
+
+  const handlePhoneChange = (field: 'telefone_1' | 'telefone_2' | 'telefone_portabilidade', value: string) => {
+    const maskedValue = maskPhone(value);
+    updateForm(field, maskedValue);
+  };
+
+  const handleCpfChange = (field: 'proprietario_cpf' | 'gestor_cpf' | 'cedente_cpf', value: string) => {
+    const maskedValue = maskCPF(value);
+    updateForm(field, maskedValue);
   };
 
   // Calculate total when values change
@@ -474,7 +487,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
               id="tel1"
               placeholder="(00) 00000-0000"
               value={form.telefone_1}
-              onChange={(e) => updateForm('telefone_1', e.target.value)}
+              onChange={(e) => handlePhoneChange('telefone_1', e.target.value)}
               onBlur={() => handleBlur('telefone_1')}
               className={errors.telefone_1 ? 'border-destructive focus-visible:ring-destructive' : ''}
               required
@@ -487,7 +500,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
               id="tel2"
               placeholder="(00) 00000-0000"
               value={form.telefone_2}
-              onChange={(e) => updateForm('telefone_2', e.target.value)}
+              onChange={(e) => handlePhoneChange('telefone_2', e.target.value)}
               onBlur={() => handleBlur('telefone_2')}
               className={errors.telefone_2 ? 'border-destructive focus-visible:ring-destructive' : ''}
               required
@@ -500,7 +513,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
               id="telport"
               placeholder="(00) 00000-0000 - CLARO"
               value={form.telefone_portabilidade}
-              onChange={(e) => updateForm('telefone_portabilidade', e.target.value)}
+              onChange={(e) => handlePhoneChange('telefone_portabilidade', e.target.value)}
             />
           </div>
         </div>
@@ -586,7 +599,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
               id="prop_cpf"
               placeholder="000.000.000-00"
               value={form.proprietario_cpf}
-              onChange={(e) => updateForm('proprietario_cpf', e.target.value)}
+              onChange={(e) => handleCpfChange('proprietario_cpf', e.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -643,7 +656,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
               id="gest_cpf"
               placeholder="000.000.000-00"
               value={form.gestor_cpf}
-              onChange={(e) => updateForm('gestor_cpf', e.target.value)}
+              onChange={(e) => handleCpfChange('gestor_cpf', e.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -700,7 +713,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
               id="ced_cpf"
               placeholder="000.000.000-00"
               value={form.cedente_cpf}
-              onChange={(e) => updateForm('cedente_cpf', e.target.value)}
+              onChange={(e) => handleCpfChange('cedente_cpf', e.target.value)}
             />
           </div>
           <div className="space-y-2">

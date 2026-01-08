@@ -2,101 +2,94 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Premium Clean Design System - Elegant & Minimal */
-
 @layer base {
   :root {
-    /* Clean Neutral Background */
-    --background: 220 14% 10%;
-    --foreground: 0 0% 98%;
-
-    --card: 220 16% 12%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 220 16% 13%;
-    --popover-foreground: 0 0% 98%;
-
-    /* Primary - Clean Blue */
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
-
-    /* Secondary */
-    --secondary: 220 14% 16%;
-    --secondary-foreground: 0 0% 90%;
-
-    --muted: 220 14% 18%;
-    --muted-foreground: 220 10% 50%;
-
-    /* Accent - Soft Teal */
-    --accent: 173 58% 50%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 220 16% 18%;
-    --input: 220 16% 14%;
-    --ring: 217 91% 60%;
-
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 355.7 100% 97.3%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 142 76% 36%;
     --radius: 0.75rem;
-
-    /* Status Colors - Clean Pastels */
+    
+    /* Status Colors */
     --status-nova: 217 91% 60%;
     --status-analise: 45 93% 58%;
     --status-pendencia: 25 95% 53%;
     --status-aprovada: 142 71% 45%;
     --status-instalada: 173 58% 50%;
     --status-cancelada: 0 72% 51%;
+    
+    /* Sidebar */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 142 76% 36%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 142 76% 36%;
+  }
 
-    /* Sidebar - Elegant Dark */
-    --sidebar-background: 220 18% 8%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 217 91% 60%;
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 142 76% 36%;
+    
+    /* Status Colors Dark */
+    --status-nova: 217 91% 60%;
+    --status-analise: 45 93% 58%;
+    --status-pendencia: 25 95% 53%;
+    --status-aprovada: 142 71% 45%;
+    --status-instalada: 173 58% 50%;
+    --status-cancelada: 0 72% 51%;
+    
+    /* Sidebar Dark */
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 142 76% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 16% 14%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 220 16% 14%;
-    --sidebar-ring: 217 91% 60%;
-
-    /* Clean Shadows */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 142 76% 36%;
   }
 
-  .light {
-    --background: 0 0% 100%;
-    --foreground: 220 14% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 220 14% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 14% 10%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 14% 10%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 14% 40%;
-    --accent: 173 58% 50%;
-    --accent-foreground: 0 0% 100%;
-    --border: 220 14% 90%;
-    --input: 220 14% 96%;
-    --ring: 217 91% 60%;
-    --sidebar-background: 220 14% 98%;
-    --sidebar-foreground: 220 14% 10%;
-    --sidebar-border: 220 14% 92%;
-  }
-}
-
-@layer base {
   * {
     @apply border-border;
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    @apply bg-background text-foreground font-sans antialiased;
   }
   
   /* Elegant Scrollbar */
@@ -110,108 +103,140 @@
   }
   
   ::-webkit-scrollbar-thumb {
-    background: hsl(220 14% 25%);
+    background: hsl(var(--muted-foreground) / 0.3);
     border-radius: 3px;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(220 14% 35%);
+    background: hsl(var(--muted-foreground) / 0.5);
   }
 }
 
+/* ========== UTILITY CLASSES ========== */
+
 @layer utilities {
-  /* Status Badge Colors - Clean */
-  .status-nova {
-    @apply bg-blue-500/10 text-blue-400 border-blue-500/20;
-  }
-  
-  .status-em_analise {
-    @apply bg-amber-500/10 text-amber-400 border-amber-500/20;
-  }
-  
-  .status-pendencia {
-    @apply bg-orange-500/10 text-orange-400 border-orange-500/20;
-  }
-  
-  .status-aprovada {
-    @apply bg-emerald-500/10 text-emerald-400 border-emerald-500/20;
-  }
-  
-  .status-instalada {
-    @apply bg-teal-500/10 text-teal-400 border-teal-500/20;
-  }
-  
-  .status-cancelada {
-    @apply bg-red-500/10 text-red-400 border-red-500/20;
+  /* Glass Effect */
+  .glass {
+    @apply backdrop-blur-md bg-white/80 border border-white/20;
   }
 
-  /* Glass effect - Clean */
-  .glass {
+  .glass-card {
+    @apply backdrop-blur-sm bg-white/95 shadow-lg border border-white/50;
+  }
+  
+  .dark .glass {
     @apply backdrop-blur-xl bg-white/[0.02] border border-white/[0.06];
   }
   
-  .glass-strong {
+  .dark .glass-card {
     @apply backdrop-blur-2xl bg-white/[0.04] border border-white/[0.08];
   }
 
-  /* Fade animations */
+  /* Gradient Text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent;
+  }
+
+  /* Cards com Hover */
+  .card-hover {
+    @apply transition-all duration-200 ease-out hover:shadow-md hover:-translate-y-0.5 hover:border-primary/20;
+  }
+
+  /* Animations */
   .animate-fade-in {
-    animation: fadeIn 0.3s ease-out forwards;
+    animation: fade-in 0.5s ease-out forwards;
   }
 
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .animate-slide-up {
+    animation: slide-up 0.6s ease-out forwards;
   }
-
+  
   .animate-slide-in {
-    animation: slideIn 0.3s ease-out forwards;
-  }
-
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateX(-16px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
+    animation: slide-in 0.3s ease-out forwards;
   }
   
   .animate-scale-in {
-    animation: scaleIn 0.2s ease-out forwards;
+    animation: scale-in 0.2s ease-out forwards;
   }
-  
-  @keyframes scaleIn {
-    from {
-      opacity: 0;
-      transform: scale(0.96);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
-  }
+
+  /* Stagger delays */
+  .stagger-1 { animation-delay: 0.1s; }
+  .stagger-2 { animation-delay: 0.2s; }
+  .stagger-3 { animation-delay: 0.3s; }
+  .stagger-4 { animation-delay: 0.4s; }
+  .stagger-5 { animation-delay: 0.5s; }
   
   /* Hover lift effect */
   .hover-lift {
-    @apply transition-all duration-200 ease-out;
+    @apply transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg;
   }
   
-  .hover-lift:hover {
-    @apply -translate-y-0.5;
-    box-shadow: var(--shadow-lg);
+  /* Status Badge Colors */
+  .status-nova {
+    @apply bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20;
   }
   
-  /* Text gradient */
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-teal-400;
+  .status-em_analise {
+    @apply bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20;
+  }
+  
+  .status-pendencia {
+    @apply bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20;
+  }
+  
+  .status-aprovada {
+    @apply bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20;
+  }
+  
+  .status-instalada {
+    @apply bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20;
+  }
+  
+  .status-cancelada {
+    @apply bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20;
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }

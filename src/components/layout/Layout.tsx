@@ -2,13 +2,21 @@ import { ReactNode } from 'react';
 import Sidebar from './Sidebar';
 import { StatusSelector } from '@/components/operator/StatusSelector';
 import { useAuth } from '@/hooks/useAuth';
+import { usePauseAlerts } from '@/hooks/usePauseAlerts';
 
 interface LayoutProps {
   children: ReactNode;
 }
 
 const Layout = ({ children }: LayoutProps) => {
-  const { isSeller } = useAuth();
+  const { isSeller, isCEO, isBackoffice } = useAuth();
+  
+  // Enable pause alerts for managers
+  usePauseAlerts({
+    maxPauseMinutes: 15,
+    maxLunchMinutes: 60,
+    checkIntervalMs: 60000, // Check every minute
+  });
   
   return (
     <div className="flex h-screen overflow-hidden bg-background">

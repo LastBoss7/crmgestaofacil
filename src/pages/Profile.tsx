@@ -180,8 +180,8 @@ const Profile = () => {
         </div>
 
         {/* Avatar Section */}
-        <Card className="bg-card border-border overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-pink-500/5" />
+        <Card className="relative bg-card border-border overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-pink-500/5 pointer-events-none" />
           <CardContent className="relative p-8">
             <div className="flex flex-col sm:flex-row items-center gap-6">
               {/* Avatar */}
@@ -235,8 +235,8 @@ const Profile = () => {
         </Card>
 
         {/* Profile Form */}
-        <Card className="bg-card border-border overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5" />
+        <Card className="relative bg-card border-border overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 pointer-events-none" />
           <CardHeader className="relative border-b border-border">
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl border border-blue-500/20">

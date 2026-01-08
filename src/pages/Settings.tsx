@@ -132,72 +132,72 @@ const Settings = () => {
         {/* Header */}
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl blur-xl opacity-50" />
-            <div className="relative p-4 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl">
-              <Crown className="h-8 w-8 text-white" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary to-pink-600 rounded-2xl blur-xl opacity-50" />
+            <div className="relative p-4 bg-gradient-to-br from-primary to-pink-600 rounded-2xl">
+              <Crown className="h-8 w-8 text-primary-foreground" />
             </div>
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">Configurações</h1>
-            <p className="text-white/50">Gerencie sua empresa e preferências do sistema</p>
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">Configurações</h1>
+            <p className="text-muted-foreground">Gerencie sua empresa e preferências do sistema</p>
           </div>
         </div>
 
         {/* Company Settings */}
-        <Card className="bg-white/[0.02] border-white/[0.06] backdrop-blur-xl overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-purple-500/5" />
-          <CardHeader className="relative border-b border-white/[0.06]">
+        <Card className="bg-card border-border overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-pink-500/5" />
+          <CardHeader className="relative border-b border-border">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-xl border border-violet-500/20">
-                <Building2 className="h-5 w-5 text-violet-400" />
+              <div className="p-2.5 bg-gradient-to-br from-primary/20 to-pink-500/20 rounded-xl border border-primary/20">
+                <Building2 className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-white">Dados da Empresa</CardTitle>
-                <CardDescription className="text-white/40">Informações do seu negócio</CardDescription>
+                <CardTitle className="text-foreground">Dados da Empresa</CardTitle>
+                <CardDescription className="text-muted-foreground">Informações do seu negócio</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="relative p-6 space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="cnpj" className="text-white/70">CNPJ</Label>
+                <Label htmlFor="cnpj" className="text-muted-foreground">CNPJ</Label>
                 <div className="relative">
                   <Input
                     id="cnpj"
                     value={company?.cnpj || ''}
                     disabled
-                    className="bg-white/[0.02] border-white/[0.08] text-white/50 pl-10"
+                    className="bg-muted/50 border-border text-muted-foreground pl-10"
                   />
-                  <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                  <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 </div>
-                <p className="text-xs text-white/30">O CNPJ não pode ser alterado</p>
+                <p className="text-xs text-muted-foreground">O CNPJ não pode ser alterado</p>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="razao" className="text-white/70">Razão Social</Label>
+                <Label htmlFor="razao" className="text-muted-foreground">Razão Social</Label>
                 <div className="relative">
                   <Input
                     id="razao"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
-                    className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/30 pl-10 focus:border-violet-500/50 focus:ring-violet-500/20"
+                    className="bg-muted/30 border-border text-foreground placeholder:text-muted-foreground pl-10 focus:border-primary/50 focus:ring-primary/20"
                     placeholder="Nome legal da empresa"
                   />
-                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 </div>
               </div>
               
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="fantasia" className="text-white/70">Nome Fantasia</Label>
+                <Label htmlFor="fantasia" className="text-muted-foreground">Nome Fantasia</Label>
                 <div className="relative">
                   <Input
                     id="fantasia"
                     value={tradeName}
                     onChange={(e) => setTradeName(e.target.value)}
-                    className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/30 pl-10 focus:border-violet-500/50 focus:ring-violet-500/20"
+                    className="bg-muted/30 border-border text-foreground placeholder:text-muted-foreground pl-10 focus:border-primary/50 focus:ring-primary/20"
                     placeholder="Nome comercial da empresa"
                   />
-                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 </div>
               </div>
             </div>
@@ -206,7 +206,7 @@ const Settings = () => {
               <Button 
                 onClick={handleSaveCompany}
                 disabled={saving}
-                className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white gap-2 shadow-lg shadow-violet-500/25"
+                className="bg-gradient-to-r from-primary to-pink-600 hover:from-primary/90 hover:to-pink-700 text-primary-foreground gap-2 shadow-lg shadow-primary/25"
               >
                 {saving ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -220,42 +220,42 @@ const Settings = () => {
         </Card>
 
         {/* Profile Settings */}
-        <Card className="bg-white/[0.02] border-white/[0.06] backdrop-blur-xl overflow-hidden">
+        <Card className="bg-card border-border overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5" />
-          <CardHeader className="relative border-b border-white/[0.06]">
+          <CardHeader className="relative border-b border-border">
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-xl border border-amber-500/20">
-                <User className="h-5 w-5 text-amber-400" />
+                <User className="h-5 w-5 text-amber-500" />
               </div>
               <div>
-                <CardTitle className="text-white">Perfil do CEO</CardTitle>
-                <CardDescription className="text-white/40">Suas informações pessoais</CardDescription>
+                <CardTitle className="text-foreground">Perfil do CEO</CardTitle>
+                <CardDescription className="text-muted-foreground">Suas informações pessoais</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="relative p-6 space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-white/70">Nome</Label>
+                <Label className="text-muted-foreground">Nome</Label>
                 <div className="relative">
                   <Input
                     value={profile?.nome || ''}
                     disabled
-                    className="bg-white/[0.02] border-white/[0.08] text-white/50 pl-10"
+                    className="bg-muted/50 border-border text-muted-foreground pl-10"
                   />
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label className="text-white/70">E-mail</Label>
+                <Label className="text-muted-foreground">E-mail</Label>
                 <div className="relative">
                   <Input
                     value={profile?.email || ''}
                     disabled
-                    className="bg-white/[0.02] border-white/[0.08] text-white/50 pl-10"
+                    className="bg-muted/50 border-border text-muted-foreground pl-10"
                   />
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 </div>
               </div>
             </div>
@@ -263,63 +263,63 @@ const Settings = () => {
         </Card>
 
         {/* Notifications */}
-        <Card className="bg-white/[0.02] border-white/[0.06] backdrop-blur-xl overflow-hidden">
+        <Card className="bg-card border-border overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5" />
-          <CardHeader className="relative border-b border-white/[0.06]">
+          <CardHeader className="relative border-b border-border">
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-gradient-to-br from-blue-500/20 to-cyan-500/20 rounded-xl border border-blue-500/20">
-                <Bell className="h-5 w-5 text-blue-400" />
+                <Bell className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <CardTitle className="text-white">Notificações</CardTitle>
-                <CardDescription className="text-white/40">Configure como receber alertas</CardDescription>
+                <CardTitle className="text-foreground">Notificações</CardTitle>
+                <CardDescription className="text-muted-foreground">Configure como receber alertas</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="relative p-6 space-y-6">
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border">
                 <div className="flex items-center gap-3">
-                  <Mail className="h-5 w-5 text-white/40" />
+                  <Mail className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium text-white">Notificações por E-mail</p>
-                    <p className="text-xs text-white/40">Receba atualizações no seu e-mail</p>
+                    <p className="text-sm font-medium text-foreground">Notificações por E-mail</p>
+                    <p className="text-xs text-muted-foreground">Receba atualizações no seu e-mail</p>
                   </div>
                 </div>
                 <Switch
                   checked={emailNotifications}
                   onCheckedChange={setEmailNotifications}
-                  className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-violet-500 data-[state=checked]:to-purple-600"
+                  className="data-[state=checked]:bg-primary"
                 />
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border">
                 <div className="flex items-center gap-3">
-                  <Bell className="h-5 w-5 text-white/40" />
+                  <Bell className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium text-white">Notificações Push</p>
-                    <p className="text-xs text-white/40">Alertas em tempo real no navegador</p>
+                    <p className="text-sm font-medium text-foreground">Notificações Push</p>
+                    <p className="text-xs text-muted-foreground">Alertas em tempo real no navegador</p>
                   </div>
                 </div>
                 <Switch
                   checked={pushNotifications}
                   onCheckedChange={setPushNotifications}
-                  className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-violet-500 data-[state=checked]:to-purple-600"
+                  className="data-[state=checked]:bg-primary"
                 />
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border">
                 <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-white/40" />
+                  <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium text-white">Sons de Alerta</p>
-                    <p className="text-xs text-white/40">Tocar som ao receber notificações</p>
+                    <p className="text-sm font-medium text-foreground">Sons de Alerta</p>
+                    <p className="text-xs text-muted-foreground">Tocar som ao receber notificações</p>
                   </div>
                 </div>
                 <Switch
                   checked={soundAlerts}
                   onCheckedChange={setSoundAlerts}
-                  className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-violet-500 data-[state=checked]:to-purple-600"
+                  className="data-[state=checked]:bg-primary"
                 />
               </div>
             </div>
@@ -327,32 +327,32 @@ const Settings = () => {
         </Card>
 
         {/* Appearance */}
-        <Card className="bg-white/[0.02] border-white/[0.06] backdrop-blur-xl overflow-hidden">
+        <Card className="bg-card border-border overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-rose-500/5" />
-          <CardHeader className="relative border-b border-white/[0.06]">
+          <CardHeader className="relative border-b border-border">
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-gradient-to-br from-pink-500/20 to-rose-500/20 rounded-xl border border-pink-500/20">
-                <Palette className="h-5 w-5 text-pink-400" />
+                <Palette className="h-5 w-5 text-pink-500" />
               </div>
               <div>
-                <CardTitle className="text-white">Aparência</CardTitle>
-                <CardDescription className="text-white/40">Personalize a interface</CardDescription>
+                <CardTitle className="text-foreground">Aparência</CardTitle>
+                <CardDescription className="text-muted-foreground">Personalize a interface</CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="relative p-6">
-            <div className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border border-border">
               <div className="flex items-center gap-3">
-                <Palette className="h-5 w-5 text-white/40" />
+                <Palette className="h-5 w-5 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium text-white">Modo Escuro</p>
-                  <p className="text-xs text-white/40">Interface com tema escuro premium</p>
+                  <p className="text-sm font-medium text-foreground">Modo Escuro</p>
+                  <p className="text-xs text-muted-foreground">Interface com tema escuro premium</p>
                 </div>
               </div>
               <Switch
                 checked={darkMode}
                 onCheckedChange={setDarkMode}
-                className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-violet-500 data-[state=checked]:to-purple-600"
+                className="data-[state=checked]:bg-primary"
               />
             </div>
           </CardContent>

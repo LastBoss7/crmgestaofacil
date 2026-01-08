@@ -18,6 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePresence } from '@/hooks/usePresence';
 import { OnlineUsersDrawer } from '@/components/presence/OnlineUsersDrawer';
+import logo from '@/assets/logo.png';
 
 interface SalesStats {
   total: number;
@@ -176,7 +177,16 @@ const Sidebar = () => {
   return (
     <TooltipProvider delayDuration={0}>
       <div className="flex flex-col items-center w-14 lg:w-16 h-screen py-4 bg-card rounded-2xl lg:rounded-3xl shadow-sm border border-border m-2">
-        {/* Logo / New Sale Button */}
+        {/* Logo */}
+        <Link to="/dashboard" className="mb-2">
+          <img 
+            src={logo} 
+            alt="Logo" 
+            className="w-10 h-10 lg:w-11 lg:h-11 object-contain hover:scale-105 transition-transform"
+          />
+        </Link>
+
+        {/* New Sale Button */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Link

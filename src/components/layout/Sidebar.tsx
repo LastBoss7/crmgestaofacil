@@ -16,6 +16,7 @@ import { useState, useEffect } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { usePresence } from '@/hooks/usePresence';
 
 interface SalesStats {
   total: number;
@@ -47,6 +48,8 @@ const Sidebar = () => {
     canManageUsers,
     isCEO,
   } = useAuth();
+  
+  const { isOnline, onlineCount } = usePresence();
 
   // Fetch real sales stats from database
   useEffect(() => {
@@ -220,8 +223,15 @@ const Sidebar = () => {
                   {profile?.nome?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
-              {/* Online Status Indicator */}
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 lg:w-3 lg:h-3 bg-emerald-500 border-2 border-card rounded-full animate-pulse" />
+              {/* Online Status Indicator - Real-time */}
+              <span 
+                className={cn(
+                  "absolute bottom-0 right-0 w-2.5 h-2.5 lg:w-3 lg:h-3 border-2 border-card rounded-full transition-colors",
+                  isOnline 
+                    ? "bg-emerald-500 animate-pulse" 
+                    : "bg-muted-foreground"
+                )} 
+              />
             </div>
           </TooltipTrigger>
           <TooltipContent side="right" className="bg-card text-card-foreground border-border">
@@ -229,9 +239,22 @@ const Sidebar = () => {
               <span className="font-semibold text-foreground">{profile?.nome || 'Usuário'}</span>
               <span className="text-xs text-muted-foreground">{role ? ROLE_LABELS[role] : 'Carregando...'}</span>
               <div className="flex items-center gap-1.5 mt-1">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-                <span className="text-xs text-emerald-500">Online</span>
+                <span className={cn(
+                  "w-2 h-2 rounded-full",
+                  isOnline ? "bg-emerald-500" : "bg-muted-foreground"
+                )} />
+                <span className={cn(
+                  "text-xs",
+                  isOnline ? "text-emerald-500" : "text-muted-foreground"
+                )}>
+                  {isOnline ? 'Online' : 'Conectando...'}
+                </span>
               </div>
+              {onlineCount > 1 && (
+                <span className="text-xs text-muted-foreground mt-1">
+                  {onlineCount} usuários online
+                </span>
+              )}
             </div>
           </TooltipContent>
         </Tooltip>

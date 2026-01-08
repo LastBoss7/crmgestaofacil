@@ -15,6 +15,7 @@ import { ROLE_LABELS } from '@/types/database';
 import { useState, useEffect } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface SalesStats {
   total: number;
@@ -205,6 +206,35 @@ const Sidebar = () => {
             <NavItem key={item.name} item={item} />
           ))}
         </nav>
+
+        {/* Divider */}
+        <div className="w-6 h-px bg-border my-3" />
+
+        {/* User Avatar with Online Status */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="relative group cursor-pointer">
+              <Avatar className="w-9 h-9 lg:w-10 lg:h-10 ring-2 ring-border group-hover:ring-primary/50 transition-all duration-200">
+                <AvatarImage src={profile?.avatar_url || ''} alt={profile?.nome || 'Usuário'} />
+                <AvatarFallback className="bg-primary/10 text-primary text-xs lg:text-sm font-medium">
+                  {profile?.nome?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              {/* Online Status Indicator */}
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 lg:w-3 lg:h-3 bg-emerald-500 border-2 border-card rounded-full animate-pulse" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="bg-card text-card-foreground border-border">
+            <div className="flex flex-col gap-1">
+              <span className="font-semibold text-foreground">{profile?.nome || 'Usuário'}</span>
+              <span className="text-xs text-muted-foreground">{role ? ROLE_LABELS[role] : 'Carregando...'}</span>
+              <div className="flex items-center gap-1.5 mt-1">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full" />
+                <span className="text-xs text-emerald-500">Online</span>
+              </div>
+            </div>
+          </TooltipContent>
+        </Tooltip>
 
         {/* Divider */}
         <div className="w-6 h-px bg-border my-3" />

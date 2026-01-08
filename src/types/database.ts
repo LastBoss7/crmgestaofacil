@@ -10,6 +10,7 @@ export interface Profile {
   created_at: string;
   avatar_url?: string | null;
   company_id?: string | null;
+  team_id?: string | null;
 }
 
 export interface UserRole {
@@ -17,6 +18,19 @@ export interface UserRole {
   user_id: string;
   role: AppRole;
   created_at: string;
+}
+
+export interface Team {
+  id: string;
+  name: string;
+  description?: string | null;
+  supervisor_id: string;
+  company_id: string;
+  created_at: string;
+  updated_at: string;
+  // Joined data
+  supervisor?: Profile;
+  members?: Profile[];
 }
 
 export interface Sale {

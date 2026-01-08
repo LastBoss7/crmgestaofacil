@@ -15,6 +15,7 @@ import Users from "./pages/Users";
 import SaleHistory from "./pages/SaleHistory";
 import SellerDetails from "./pages/SellerDetails";
 import TeamInvites from "./pages/TeamInvites";
+import Teams from "./pages/Teams";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -103,6 +104,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <TeamInvites />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/equipes"
+        element={
+          <ProtectedRoute>
+            <Teams />
           </ProtectedRoute>
         }
       />

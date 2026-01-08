@@ -37,6 +37,7 @@ interface SalesStats {
 const Sidebar = () => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [companyName, setCompanyName] = useState<string | null>(null);
   const [salesStats, setSalesStats] = useState<SalesStats>({
     total: 0,
     novas: 0,
@@ -54,6 +55,40 @@ const Sidebar = () => {
     canManageUsers,
     isCEO,
   } = useAuth();
+
+  // Fetch company name
+  useEffect(() => {
+    const fetchCompany = async () => {
+      if (!user) return;
+      
+      // Try to get company where user is owner
+      const { data: ownedCompany } = await supabase
+        .from('companies')
+        .select('nome_fantasia, razao_social')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+      
+      if (ownedCompany) {
+        setCompanyName(ownedCompany.nome_fantasia || ownedCompany.razao_social);
+        return;
+      }
+      
+      // Or get company from profile
+      if (profile?.company_id) {
+        const { data: company } = await supabase
+          .from('companies')
+          .select('nome_fantasia, razao_social')
+          .eq('id', profile.company_id)
+          .maybeSingle();
+        
+        if (company) {
+          setCompanyName(company.nome_fantasia || company.razao_social);
+        }
+      }
+    };
+    
+    fetchCompany();
+  }, [user, profile?.company_id]);
 
   // Fetch real sales stats from database
   useEffect(() => {
@@ -308,6 +343,7 @@ const Sidebar = () => {
               </TooltipTrigger>
               <TooltipContent side="right" className="bg-slate-800 text-white border-slate-700">
                 <p className="font-medium">{profile?.nome || 'Usuário'}</p>
+                {companyName && <p className="text-xs text-violet-400">{companyName}</p>}
                 <p className="text-xs text-slate-400">{getRoleLabel()}</p>
               </TooltipContent>
             </Tooltip>
@@ -321,6 +357,9 @@ const Sidebar = () => {
                 <p className="text-sm font-medium text-white truncate">
                   {profile?.nome || 'Usuário'}
                 </p>
+                {companyName && (
+                  <p className="text-xs text-violet-400 truncate">{companyName}</p>
+                )}
               </div>
               <button 
                 onClick={() => setCollapsed(!collapsed)}

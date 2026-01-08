@@ -97,7 +97,7 @@ export const usePresence = (channelContext?: string) => {
           await channel.track({
             nome: profile.nome,
             avatar_url: profile.avatar_url,
-            role: role,
+            role: role || undefined,
             online_at: new Date().toISOString(),
             is_typing: false,
             typing_in: null,
@@ -111,7 +111,7 @@ export const usePresence = (channelContext?: string) => {
       channelRef.current = null;
       setIsOnline(false);
     };
-  }, [user, profile, role]);
+  }, [user, profile]);
 
   const setTyping = useCallback(async (isTyping: boolean, context?: string) => {
     if (!channelRef.current || !profile) return;

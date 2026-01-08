@@ -113,13 +113,62 @@ const initialFormData: FormData = {
   observacoes_vendedor: '',
 };
 
+type FieldErrors = Partial<Record<keyof FormData, string>>;
+
 export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   const [form, setForm] = useState<FormData>(initialFormData);
   const [loading, setLoading] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [touched, setTouched] = useState<Partial<Record<keyof FormData, boolean>>>({});
+
+  const validateField = (field: keyof FormData, value: string): string | undefined => {
+    switch (field) {
+      case 'cnpj_cliente':
+        const cleanCnpj = value.replace(/\D/g, '');
+        if (!cleanCnpj) return 'CNPJ é obrigatório';
+        if (cleanCnpj.length !== 14) return 'CNPJ deve ter 14 dígitos';
+        return undefined;
+      case 'razao_social':
+        if (!value.trim()) return 'Razão Social é obrigatória';
+        if (value.trim().length < 2) return 'Razão Social deve ter pelo menos 2 caracteres';
+        return undefined;
+      case 'telefone_1':
+        const cleanTel1 = value.replace(/\D/g, '');
+        if (!cleanTel1) return 'Telefone 1 é obrigatório';
+        if (cleanTel1.length < 10) return 'Telefone deve ter pelo menos 10 dígitos';
+        return undefined;
+      case 'telefone_2':
+        const cleanTel2 = value.replace(/\D/g, '');
+        if (!cleanTel2) return 'Telefone 2 é obrigatório';
+        if (cleanTel2.length < 10) return 'Telefone deve ter pelo menos 10 dígitos';
+        return undefined;
+      case 'email':
+        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'E-mail inválido';
+        return undefined;
+      case 'valor_mensal':
+        if (!value || parseFloat(value) <= 0) return 'Valor mensal é obrigatório';
+        return undefined;
+      default:
+        return undefined;
+    }
+  };
+
   const updateForm = (field: keyof FormData, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
+    
+    // Validate on change if field was already touched
+    if (touched[field]) {
+      const error = validateField(field, value);
+      setErrors(prev => ({ ...prev, [field]: error }));
+    }
+  };
+
+  const handleBlur = (field: keyof FormData) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    const error = validateField(field, form[field]);
+    setErrors(prev => ({ ...prev, [field]: error }));
   };
 
   const fetchCompanyByCnpj = async (cnpj: string) => {
@@ -212,14 +261,37 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    
+    // Validate all required fields
+    const requiredFields: (keyof FormData)[] = ['cnpj_cliente', 'razao_social', 'telefone_1', 'telefone_2'];
+    const newErrors: FieldErrors = {};
+    let hasErrors = false;
 
-    const validationResult = saleSchema.safeParse(form);
-    if (!validationResult.success) {
-      toast.error(validationResult.error.errors[0].message);
-      setLoading(false);
+    requiredFields.forEach(field => {
+      const error = validateField(field, form[field]);
+      if (error) {
+        newErrors[field] = error;
+        hasErrors = true;
+      }
+    });
+
+    // Also validate email if provided
+    if (form.email) {
+      const emailError = validateField('email', form.email);
+      if (emailError) {
+        newErrors.email = emailError;
+        hasErrors = true;
+      }
+    }
+
+    if (hasErrors) {
+      setErrors(newErrors);
+      setTouched(requiredFields.reduce((acc, field) => ({ ...acc, [field]: true }), {}));
+      toast.error('Por favor, corrija os erros no formulário');
       return;
     }
+
+    setLoading(true);
 
     try {
       const { error } = await supabase.from('sales').insert({
@@ -334,29 +406,35 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         <SectionHeader icon={Building2} title="Dados da Empresa" />
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="cnpj">CNPJ *</Label>
+            <Label htmlFor="cnpj" className={errors.cnpj_cliente ? 'text-destructive' : ''}>CNPJ *</Label>
             <div className="relative">
               <Input
                 id="cnpj"
                 placeholder="00.000.000/0000-00"
                 value={form.cnpj_cliente}
                 onChange={(e) => handleCnpjChange(e.target.value)}
+                onBlur={() => handleBlur('cnpj_cliente')}
+                className={errors.cnpj_cliente ? 'border-destructive focus-visible:ring-destructive' : ''}
                 required
               />
               {loadingCnpj && (
                 <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
               )}
             </div>
+            {errors.cnpj_cliente && <p className="text-sm text-destructive">{errors.cnpj_cliente}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="razao">Razão Social *</Label>
+            <Label htmlFor="razao" className={errors.razao_social ? 'text-destructive' : ''}>Razão Social *</Label>
             <Input
               id="razao"
               placeholder="Nome da empresa"
               value={form.razao_social}
               onChange={(e) => updateForm('razao_social', e.target.value)}
+              onBlur={() => handleBlur('razao_social')}
+              className={errors.razao_social ? 'border-destructive focus-visible:ring-destructive' : ''}
               required
             />
+            {errors.razao_social && <p className="text-sm text-destructive">{errors.razao_social}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="fantasia">Nome Fantasia</Label>
@@ -368,14 +446,17 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
+            <Label htmlFor="email" className={errors.email ? 'text-destructive' : ''}>E-mail</Label>
             <Input
               id="email"
               type="email"
               placeholder="empresa@email.com"
               value={form.email}
               onChange={(e) => updateForm('email', e.target.value)}
+              onBlur={() => handleBlur('email')}
+              className={errors.email ? 'border-destructive focus-visible:ring-destructive' : ''}
             />
+            {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
           </div>
         </div>
       </div>
@@ -388,24 +469,30 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         <p className="text-sm text-muted-foreground mb-4">Obrigatório preencher 2 números</p>
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="tel1">Telefone 1 *</Label>
+            <Label htmlFor="tel1" className={errors.telefone_1 ? 'text-destructive' : ''}>Telefone 1 *</Label>
             <Input
               id="tel1"
               placeholder="(00) 00000-0000"
               value={form.telefone_1}
               onChange={(e) => updateForm('telefone_1', e.target.value)}
+              onBlur={() => handleBlur('telefone_1')}
+              className={errors.telefone_1 ? 'border-destructive focus-visible:ring-destructive' : ''}
               required
             />
+            {errors.telefone_1 && <p className="text-sm text-destructive">{errors.telefone_1}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="tel2">Telefone 2 *</Label>
+            <Label htmlFor="tel2" className={errors.telefone_2 ? 'text-destructive' : ''}>Telefone 2 *</Label>
             <Input
               id="tel2"
               placeholder="(00) 00000-0000"
               value={form.telefone_2}
               onChange={(e) => updateForm('telefone_2', e.target.value)}
+              onBlur={() => handleBlur('telefone_2')}
+              className={errors.telefone_2 ? 'border-destructive focus-visible:ring-destructive' : ''}
               required
             />
+            {errors.telefone_2 && <p className="text-sm text-destructive">{errors.telefone_2}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="telport">Telefone Portabilidade + Operadora</Label>

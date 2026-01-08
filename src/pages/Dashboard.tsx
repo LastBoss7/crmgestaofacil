@@ -28,6 +28,7 @@ import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
 import { useSalesNotifications } from '@/hooks/useSalesNotifications';
 import { CallCenterMetrics } from '@/components/dashboard/CallCenterMetrics';
 import { SellerRanking } from '@/components/dashboard/SellerRanking';
+import { ComparativeMetrics } from '@/components/dashboard/ComparativeMetrics';
 import { motion } from 'framer-motion';
 
 const STATUS_BADGE_STYLES: Record<SaleStatus, { bg: string; text: string; label: string }> = {
@@ -166,21 +167,29 @@ const Dashboard = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="metrics" className="w-full">
-          <TabsList className="grid w-full max-w-2xl grid-cols-3">
+        <Tabs defaultValue="comparative" className="w-full">
+          <TabsList className="grid w-full max-w-3xl grid-cols-4">
+            <TabsTrigger value="comparative" className="gap-2">
+              <TrendingUp className="h-4 w-4" />
+              <span className="hidden sm:inline">Comparativo</span>
+            </TabsTrigger>
             <TabsTrigger value="metrics" className="gap-2">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Métricas</span> Call Center
             </TabsTrigger>
             <TabsTrigger value="ranking" className="gap-2">
               <Trophy className="h-4 w-4" />
-              Ranking Vendedores
+              <span className="hidden sm:inline">Ranking</span>
             </TabsTrigger>
             <TabsTrigger value="clients" className="gap-2">
               <Users className="h-4 w-4" />
-              Clientes
+              <span className="hidden sm:inline">Clientes</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="comparative" className="mt-6">
+            <ComparativeMetrics />
+          </TabsContent>
 
           <TabsContent value="metrics" className="mt-6">
             <CallCenterMetrics sales={allSales} />

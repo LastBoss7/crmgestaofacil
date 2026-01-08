@@ -50,6 +50,17 @@ const PRIORITY_OPTIONS = [
   { value: 'urgent', label: 'Urgente', color: 'bg-destructive' },
 ];
 
+const EXPIRATION_OPTIONS = [
+  { value: 'none', label: 'Não expira' },
+  { value: '1h', label: '1 hora' },
+  { value: '2h', label: '2 horas' },
+  { value: '4h', label: '4 horas' },
+  { value: '8h', label: '8 horas' },
+  { value: '15h', label: '15 horas' },
+  { value: '24h', label: '24 horas' },
+  { value: '48h', label: '48 horas' },
+];
+
 export function BroadcastManager() {
   const { profile, isCEO, isBackoffice } = useAuth();
   const [open, setOpen] = useState(false);
@@ -61,6 +72,7 @@ export function BroadcastManager() {
     message: '',
     priority: 'normal',
     team_id: 'all',
+    expiration: 'none',
   });
 
   useEffect(() => {
@@ -100,6 +112,15 @@ export function BroadcastManager() {
 
     setLoading(true);
 
+    // Calculate expiration date
+    let expiresAt: string | null = null;
+    if (formData.expiration !== 'none') {
+      const hours = parseInt(formData.expiration.replace('h', ''));
+      const expDate = new Date();
+      expDate.setHours(expDate.getHours() + hours);
+      expiresAt = expDate.toISOString();
+    }
+
     const { error } = await supabase
       .from('broadcasts')
       .insert({
@@ -110,6 +131,7 @@ export function BroadcastManager() {
         title: formData.title,
         message: formData.message,
         priority: formData.priority,
+        expires_at: expiresAt,
       });
 
     if (error) {
@@ -117,7 +139,7 @@ export function BroadcastManager() {
       toast.error('Erro ao enviar aviso');
     } else {
       toast.success('Aviso enviado para a equipe!');
-      setFormData({ title: '', message: '', priority: 'normal', team_id: 'all' });
+      setFormData({ title: '', message: '', priority: 'normal', team_id: 'all', expiration: 'none' });
       setOpen(false);
       fetchBroadcasts();
     }
@@ -257,6 +279,25 @@ export function BroadcastManager() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Expiração</Label>
+                <Select
+                  value={formData.expiration}
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, expiration: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EXPIRATION_OPTIONS.map(opt => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="flex justify-end gap-2 pt-2">

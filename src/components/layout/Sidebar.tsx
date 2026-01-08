@@ -127,34 +127,25 @@ const Sidebar = () => {
         to={item.href}
         onClick={() => handleClick(item.name)}
         className={cn(
-          'group relative flex flex-col items-center justify-center gap-0.5 w-full py-2 px-1 rounded-xl transition-all duration-200',
+          'group relative flex flex-col items-center justify-center w-10 h-10 rounded-lg transition-all duration-200',
           active 
             ? 'bg-primary/10 text-primary' 
             : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
-          isClicked && 'scale-95',
-          'hover:scale-[1.02] active:scale-95'
+          isClicked && 'scale-95'
         )}
       >
         <div className="relative">
           <Icon className={cn(
-            'w-5 h-5 transition-all duration-200',
-            active && 'text-primary',
-            'group-hover:scale-110'
+            'w-4 h-4 transition-all duration-200',
+            active && 'text-primary'
           )} strokeWidth={1.5} />
           
           {item.badge && item.badge > 0 && (
-            <span className="absolute -top-1 -right-1.5 min-w-[16px] h-[16px] flex items-center justify-center text-[9px] font-medium bg-primary text-white rounded-full px-0.5">
+            <span className="absolute -top-1 -right-2 min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-medium bg-primary text-white rounded-full px-0.5">
               {item.badge > 99 ? '99+' : item.badge}
             </span>
           )}
         </div>
-        
-        <span className={cn(
-          "text-[9px] font-medium transition-all duration-200 text-center leading-tight",
-          active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-        )}>
-          {item.name}
-        </span>
       </Link>
     );
   };
@@ -165,8 +156,7 @@ const Sidebar = () => {
     onClick, 
     href,
     active,
-    variant = 'default',
-    showLabel = true
+    variant = 'default'
   }: { 
     icon: typeof LayoutDashboard; 
     label: string; 
@@ -174,124 +164,146 @@ const Sidebar = () => {
     href?: string;
     active?: boolean;
     variant?: 'default' | 'danger' | 'primary';
-    showLabel?: boolean;
   }) => {
     const content = (
       <div
         className={cn(
-          'group flex flex-col items-center justify-center gap-0.5 w-full py-2 px-1 rounded-xl transition-all duration-200 cursor-pointer',
-          'hover:scale-[1.02] active:scale-95',
+          'group flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 cursor-pointer',
           variant === 'danger' && 'hover:bg-destructive/10 hover:text-destructive',
-          variant === 'primary' && 'bg-gradient-to-br from-violet-500 to-purple-600 text-white hover:from-violet-400 hover:to-purple-500 shadow-sm shadow-purple-500/20 hover:shadow-md hover:shadow-purple-500/30',
+          variant === 'primary' && 'bg-gradient-to-br from-violet-500 to-purple-600 text-white hover:from-violet-400 hover:to-purple-500 shadow-sm',
           variant === 'default' && (active 
             ? 'bg-primary/10 text-primary' 
             : 'text-muted-foreground hover:text-foreground hover:bg-muted/50')
         )}
         onClick={onClick}
       >
-        <Icon className={cn(
-          "w-5 h-5 transition-all duration-200",
-          "group-hover:scale-110"
-        )} strokeWidth={1.5} />
-        {showLabel && (
-          <span className={cn(
-            "text-[9px] font-medium transition-all duration-200 text-center leading-tight",
-            variant === 'primary' && "text-white/90",
-            variant === 'danger' && "group-hover:text-destructive",
-            variant === 'default' && (active ? "text-primary" : "text-muted-foreground group-hover:text-foreground")
-          )}>
-            {label}
-          </span>
-        )}
+        <Icon className="w-4 h-4" strokeWidth={1.5} />
       </div>
     );
 
-    return href ? <Link to={href}>{content}</Link> : content;
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {href ? <Link to={href}>{content}</Link> : content}
+        </TooltipTrigger>
+        <TooltipContent side="right" sideOffset={8} className="text-xs font-medium">
+          {label}
+        </TooltipContent>
+      </Tooltip>
+    );
   };
 
   return (
-    <aside className="flex flex-col items-center w-16 py-3 px-1 bg-card/80 backdrop-blur-xl border-r border-border/50">
-      {/* Logo */}
-      <Link to="/dashboard" className="mb-2 transition-all duration-200 hover:scale-105 active:scale-95">
-        <img 
-          src={logo} 
-          alt="Logo" 
-          className="w-8 h-8 object-contain opacity-90 hover:opacity-100 transition-opacity"
-        />
-      </Link>
+    <TooltipProvider delayDuration={100}>
+      <aside className="flex flex-col items-center w-14 min-h-screen py-2 bg-card/80 backdrop-blur-xl border-r border-border/50 overflow-y-auto">
+        {/* Logo */}
+        <Link to="/dashboard" className="mb-2 shrink-0">
+          <img 
+            src={logo} 
+            alt="Logo" 
+            className="w-7 h-7 object-contain opacity-90 hover:opacity-100 transition-opacity"
+          />
+        </Link>
 
-      {/* New Sale Button */}
-      <div className="w-full mb-2">
-        <IconButton icon={Plus} label="Nova" href="/vendas" variant="primary" />
-      </div>
+        {/* New Sale Button */}
+        <div className="mb-2 shrink-0">
+          <IconButton icon={Plus} label="Nova Venda" href="/vendas" variant="primary" />
+        </div>
 
-      {/* Thin Divider */}
-      <div className="w-8 h-px bg-border/60 mb-2" />
+        {/* Divider */}
+        <div className="w-6 h-px bg-border/50 mb-2 shrink-0" />
 
-      {/* Main Navigation */}
-      <nav className="flex-1 flex flex-col items-center w-full gap-0.5">
-        {mainNavigation.map((item) => (
-          <NavItem key={item.name} item={item} />
-        ))}
+        {/* Main Navigation */}
+        <nav className="flex flex-col items-center gap-1 shrink-0">
+          {mainNavigation.map((item) => (
+            <Tooltip key={item.name}>
+              <TooltipTrigger asChild>
+                <div><NavItem item={item} /></div>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={8} className="text-xs font-medium">
+                {item.name}
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </nav>
         
         {managementNavigation.length > 0 && (
-          <div className="w-8 h-px bg-border/60 my-1.5" />
+          <>
+            <div className="w-6 h-px bg-border/50 my-2 shrink-0" />
+            <nav className="flex flex-col items-center gap-1 shrink-0">
+              {managementNavigation.map((item) => (
+                <Tooltip key={item.name}>
+                  <TooltipTrigger asChild>
+                    <div><NavItem item={item} /></div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={8} className="text-xs font-medium">
+                    {item.name}
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </nav>
+          </>
         )}
-        
-        {managementNavigation.map((item) => (
-          <NavItem key={item.name} item={item} />
-        ))}
 
         {/* Spacer */}
-        <div className="flex-1" />
+        <div className="flex-1 min-h-4" />
 
         {/* Secondary Actions */}
-        <div className="flex flex-col items-center w-full gap-0.5 mt-2">
+        <div className="flex flex-col items-center gap-1 shrink-0">
           <IconButton icon={Search} label="Buscar" onClick={() => {}} />
-          <IconButton icon={Bell} label="Alertas" onClick={() => {}} />
+          <IconButton icon={Bell} label="Notificações" onClick={() => {}} />
         </div>
-      </nav>
 
-      {/* Thin Divider */}
-      <div className="w-8 h-px bg-border/60 my-1.5" />
+        {/* Divider */}
+        <div className="w-6 h-px bg-border/50 my-2 shrink-0" />
 
-      {/* Profile */}
-      <IconButton 
-        icon={UserCircle} 
-        label="Perfil" 
-        href="/perfil" 
-        active={isActive('/perfil')}
-      />
-
-      {/* User Avatar with Online Status */}
-      <OnlineUsersDrawer>
-        <div className="relative group cursor-pointer mt-1.5 transition-all duration-200 hover:scale-105 active:scale-95">
-          <Avatar className="w-8 h-8 ring-1 ring-border/50 group-hover:ring-primary/30 transition-all duration-200">
-            <AvatarImage src={profile?.avatar_url || ''} alt={profile?.nome || 'Usuário'} />
-            <AvatarFallback className="bg-muted text-muted-foreground text-[10px] font-medium">
-              {profile?.nome?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
-            </AvatarFallback>
-          </Avatar>
-          <span 
-            className={cn(
-              "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 border-2 border-card rounded-full transition-colors",
-              isOnline ? "bg-emerald-500" : "bg-muted-foreground"
-            )} 
+        {/* Profile */}
+        <div className="shrink-0">
+          <IconButton 
+            icon={UserCircle} 
+            label="Meu Perfil" 
+            href="/perfil" 
+            active={isActive('/perfil')}
           />
-          {onlineCount > 1 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-medium bg-primary text-white rounded-full px-0.5">
-              {onlineCount}
-            </span>
-          )}
         </div>
-      </OnlineUsersDrawer>
 
-      {/* Thin Divider */}
-      <div className="w-8 h-px bg-border/60 my-1.5" />
+        {/* User Avatar */}
+        <OnlineUsersDrawer>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="relative cursor-pointer mt-1 shrink-0">
+                <Avatar className="w-7 h-7 ring-1 ring-border/50 hover:ring-primary/30 transition-all">
+                  <AvatarImage src={profile?.avatar_url || ''} alt={profile?.nome || 'Usuário'} />
+                  <AvatarFallback className="bg-muted text-muted-foreground text-[9px] font-medium">
+                    {profile?.nome?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <span 
+                  className={cn(
+                    "absolute -bottom-0.5 -right-0.5 w-2 h-2 border border-card rounded-full",
+                    isOnline ? "bg-emerald-500" : "bg-muted-foreground"
+                  )} 
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8} className="text-xs">
+              <div className="flex flex-col gap-0.5">
+                <span className="font-medium">{profile?.nome || 'Usuário'}</span>
+                <span className="text-muted-foreground">{role ? ROLE_LABELS[role] : ''}</span>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </OnlineUsersDrawer>
 
-      {/* Logout */}
-      <IconButton icon={LogOut} label="Sair" onClick={signOut} variant="danger" />
-    </aside>
+        {/* Divider */}
+        <div className="w-6 h-px bg-border/50 my-2 shrink-0" />
+
+        {/* Logout */}
+        <div className="shrink-0">
+          <IconButton icon={LogOut} label="Sair" onClick={signOut} variant="danger" />
+        </div>
+      </aside>
+    </TooltipProvider>
   );
 };
 

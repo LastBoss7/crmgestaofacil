@@ -280,29 +280,26 @@ export const ComparativeMetrics = () => {
           </Badge>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {/* Sales Count */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Card className="overflow-hidden">
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Vendas</p>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-500/10 flex-shrink-0">
+                    <ShoppingCart className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-muted-foreground">Vendas</p>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold">{todayStats.sales}</span>
-                      <span className="text-sm text-muted-foreground">vs {yesterdayStats.sales}</span>
+                      <span className="text-xl font-bold">{todayStats.sales}</span>
+                      <span className="text-xs text-muted-foreground">vs {yesterdayStats.sales}</span>
                     </div>
                   </div>
-                  <div className="p-2 rounded-lg bg-blue-500/10">
-                    <ShoppingCart className="h-5 w-5 text-blue-500" />
-                  </div>
-                </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <TrendIndicator change={dayVsDayChange.sales} />
-                  <span className="text-xs text-muted-foreground">comparado a ontem</span>
+                  <TrendIndicator change={dayVsDayChange.sales} size="sm" />
                 </div>
               </CardContent>
             </Card>
@@ -314,23 +311,18 @@ export const ComparativeMetrics = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <Card className="overflow-hidden">
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Valor Total</p>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-bold">{formatCurrency(todayStats.value)}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">vs {formatCurrency(yesterdayStats.value)}</span>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-emerald-500/10 flex-shrink-0">
+                    <DollarSign className="h-4 w-4 text-emerald-500" />
                   </div>
-                  <div className="p-2 rounded-lg bg-emerald-500/10">
-                    <DollarSign className="h-5 w-5 text-emerald-500" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-muted-foreground">Valor Total</p>
+                    <p className="text-lg font-bold truncate">{formatCurrency(todayStats.value)}</p>
+                    <span className="text-[10px] text-muted-foreground">vs {formatCurrency(yesterdayStats.value)}</span>
                   </div>
-                </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <TrendIndicator change={dayVsDayChange.value} />
-                  <span className="text-xs text-muted-foreground">comparado a ontem</span>
+                  <TrendIndicator change={dayVsDayChange.value} size="sm" />
                 </div>
               </CardContent>
             </Card>
@@ -342,23 +334,20 @@ export const ComparativeMetrics = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card className="overflow-hidden">
-              <CardContent className="pt-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Aprovadas</p>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-violet-500/10 flex-shrink-0">
+                    <Target className="h-4 w-4 text-violet-500" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-muted-foreground">Aprovadas</p>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold">{todayStats.approved}</span>
-                      <span className="text-sm text-muted-foreground">vs {yesterdayStats.approved}</span>
+                      <span className="text-xl font-bold">{todayStats.approved}</span>
+                      <span className="text-xs text-muted-foreground">vs {yesterdayStats.approved}</span>
                     </div>
                   </div>
-                  <div className="p-2 rounded-lg bg-violet-500/10">
-                    <Target className="h-5 w-5 text-violet-500" />
-                  </div>
-                </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <TrendIndicator change={dayVsDayChange.approved} />
-                  <span className="text-xs text-muted-foreground">comparado a ontem</span>
+                  <TrendIndicator change={dayVsDayChange.approved} size="sm" />
                 </div>
               </CardContent>
             </Card>

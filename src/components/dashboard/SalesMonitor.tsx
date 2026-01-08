@@ -283,78 +283,78 @@ export const SalesMonitor = () => {
       )}
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  {isViewingToday ? 'Vendas Hoje' : 'Total de Vendas'}
-                </p>
-                <p className="text-3xl font-bold">{stats.total}</p>
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+        <Card className="border-blue-500/20">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-500/10 flex-shrink-0">
+                <TrendingUp className="h-4 w-4 text-blue-500" />
               </div>
-              <div className="p-3 rounded-full bg-blue-500/20">
-                <TrendingUp className="h-6 w-6 text-blue-400" />
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground truncate">
+                  {isViewingToday ? 'Vendas Hoje' : 'Total'}
+                </p>
+                <p className="text-xl font-bold truncate">{stats.total}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  {isViewingToday ? 'Valor Total Hoje' : 'Valor Total'}
-                </p>
-                <p className="text-2xl font-bold">{formatCurrency(stats.totalValue)}</p>
+        <Card className="border-emerald-500/20">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-500/10 flex-shrink-0">
+                <Activity className="h-4 w-4 text-emerald-500" />
               </div>
-              <div className="p-3 rounded-full bg-green-500/20">
-                <Activity className="h-6 w-6 text-green-400" />
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground truncate">
+                  {isViewingToday ? 'Valor Hoje' : 'Valor'}
+                </p>
+                <p className="text-lg font-bold truncate">{formatCurrency(stats.totalValue)}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {isViewingToday && (
-          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Última Hora</p>
-                  <p className="text-3xl font-bold">{stats.thisHour}</p>
+          <Card className="border-violet-500/20">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-violet-500/10 flex-shrink-0">
+                  <Clock className="h-4 w-4 text-violet-500" />
                 </div>
-                <div className="p-3 rounded-full bg-purple-500/20">
-                  <Clock className="h-6 w-6 text-purple-400" />
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground truncate">Última Hora</p>
+                  <p className="text-xl font-bold truncate">{stats.thisHour}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         )}
 
-        <Card className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border-orange-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Pendentes</p>
-                <p className="text-3xl font-bold">{stats.pending}</p>
+        <Card className="border-orange-500/20">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-orange-500/10 flex-shrink-0">
+                <AlertTriangle className="h-4 w-4 text-orange-500" />
               </div>
-              <div className="p-3 rounded-full bg-orange-500/20">
-                <AlertTriangle className="h-6 w-6 text-orange-400" />
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground truncate">Pendentes</p>
+                <p className="text-xl font-bold truncate">{stats.pending}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-cyan-500/10 to-cyan-600/5 border-cyan-500/20">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Média/Hora</p>
-                <p className="text-3xl font-bold">{stats.avgPerHour}</p>
+        <Card className="border-cyan-500/20">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-cyan-500/10 flex-shrink-0">
+                <Zap className="h-4 w-4 text-cyan-500" />
               </div>
-              <div className="p-3 rounded-full bg-cyan-500/20">
-                <Zap className="h-6 w-6 text-cyan-400" />
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground truncate">Média/Hora</p>
+                <p className="text-xl font-bold truncate">{stats.avgPerHour}</p>
               </div>
             </div>
           </CardContent>

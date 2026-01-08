@@ -43,29 +43,52 @@ export function StatCard({
   variant = 'default'
 }: StatCardProps) {
   const styles = variantStyles[variant];
-  return <div className={cn('group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-card to-card/50 p-6 transition-all duration-300 hover:border-white/[0.1] hover:shadow-lg', className)}>
+  return (
+    <div className={cn(
+      'group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:border-primary/20 hover:shadow-md',
+      className
+    )}>
       {/* Glow effect */}
-      <div className={cn("absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-30 transition-opacity duration-500", `bg-gradient-to-br ${styles.icon}`)} />
+      <div className={cn(
+        "absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500",
+        `bg-gradient-to-br ${styles.icon}`
+      )} />
       
-      <div className="relative flex items-start justify-between">
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-white/50 uppercase tracking-wider">
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0 space-y-2">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             {title}
           </p>
-          <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold text-white tracking-tight">
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <p className="text-2xl font-bold text-foreground tracking-tight truncate">
               {value}
             </p>
-            {trend && trendValue && <span className={cn('text-sm font-medium', trend === 'up' && 'text-emerald-400', trend === 'down' && 'text-red-400', trend === 'neutral' && 'text-white/40')}>
+            {trend && trendValue && (
+              <span className={cn(
+                'text-xs font-medium',
+                trend === 'up' && 'text-emerald-500',
+                trend === 'down' && 'text-red-500',
+                trend === 'neutral' && 'text-muted-foreground'
+              )}>
                 {trend === 'up' && '↑'}
                 {trend === 'down' && '↓'}
                 {trendValue}
-              </span>}
+              </span>
+            )}
           </div>
-          {description && <p className="text-sm text-white/40">{description}</p>}
+          {description && <p className="text-xs text-muted-foreground truncate">{description}</p>}
         </div>
         
-        
+        {Icon && (
+          <div className={cn(
+            "flex-shrink-0 p-2.5 rounded-lg bg-gradient-to-br",
+            styles.icon,
+            "text-white"
+          )}>
+            <Icon className="h-4 w-4" />
+          </div>
+        )}
       </div>
-    </div>;
+    </div>
+  );
 }

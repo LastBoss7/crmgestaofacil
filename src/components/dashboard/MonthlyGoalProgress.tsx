@@ -253,16 +253,16 @@ export const MonthlyGoalProgress = () => {
             <CardContent className="space-y-4">
               {/* Current Progress */}
               <div>
-                <div className="flex items-baseline justify-between mb-2">
-                  <span className="text-3xl font-bold">{data.currentSales}</span>
-                  <span className="text-muted-foreground">de {data.totalGoalSales} vendas</span>
+                <div className="flex items-baseline justify-between mb-2 gap-2">
+                  <span className="text-2xl font-bold">{data.currentSales}</span>
+                  <span className="text-xs text-muted-foreground">de {data.totalGoalSales}</span>
                 </div>
                 <Progress 
                   value={calculations.salesProgress} 
-                  className="h-3"
+                  className="h-2"
                 />
-                <div className="flex justify-between mt-1 text-xs text-muted-foreground">
-                  <span>{calculations.salesProgress.toFixed(0)}% concluído</span>
+                <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
+                  <span>{calculations.salesProgress.toFixed(0)}%</span>
                   <span>Faltam {calculations.salesNeeded}</span>
                 </div>
               </div>
@@ -336,16 +336,16 @@ export const MonthlyGoalProgress = () => {
             <CardContent className="space-y-4">
               {/* Current Progress */}
               <div>
-                <div className="flex items-baseline justify-between mb-2">
-                  <span className="text-2xl font-bold">{formatCurrencyShort(data.currentValue)}</span>
-                  <span className="text-muted-foreground">de {formatCurrencyShort(data.totalGoalValue)}</span>
+                <div className="flex items-baseline justify-between mb-2 gap-2">
+                  <span className="text-xl font-bold truncate">{formatCurrencyShort(data.currentValue)}</span>
+                  <span className="text-xs text-muted-foreground flex-shrink-0">de {formatCurrencyShort(data.totalGoalValue)}</span>
                 </div>
                 <Progress 
                   value={calculations.valueProgress} 
-                  className="h-3"
+                  className="h-2"
                 />
-                <div className="flex justify-between mt-1 text-xs text-muted-foreground">
-                  <span>{calculations.valueProgress.toFixed(0)}% concluído</span>
+                <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
+                  <span>{calculations.valueProgress.toFixed(0)}%</span>
                   <span>Faltam {formatCurrencyShort(calculations.valueNeeded)}</span>
                 </div>
               </div>

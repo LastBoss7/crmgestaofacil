@@ -15,6 +15,7 @@ import {
   Eye,
   BarChart3,
   Users,
+  Trophy,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ import { cn } from '@/lib/utils';
 import { FloatingChatButton } from '@/components/chat/FloatingChatButton';
 import { useSalesNotifications } from '@/hooks/useSalesNotifications';
 import { CallCenterMetrics } from '@/components/dashboard/CallCenterMetrics';
+import { SellerRanking } from '@/components/dashboard/SellerRanking';
 import { motion } from 'framer-motion';
 
 const STATUS_BADGE_STYLES: Record<SaleStatus, { bg: string; text: string; label: string }> = {
@@ -165,10 +167,14 @@ const Dashboard = () => {
         </div>
 
         <Tabs defaultValue="metrics" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
             <TabsTrigger value="metrics" className="gap-2">
               <BarChart3 className="h-4 w-4" />
-              Métricas Call Center
+              <span className="hidden sm:inline">Métricas</span> Call Center
+            </TabsTrigger>
+            <TabsTrigger value="ranking" className="gap-2">
+              <Trophy className="h-4 w-4" />
+              Ranking Vendedores
             </TabsTrigger>
             <TabsTrigger value="clients" className="gap-2">
               <Users className="h-4 w-4" />
@@ -178,6 +184,10 @@ const Dashboard = () => {
 
           <TabsContent value="metrics" className="mt-6">
             <CallCenterMetrics sales={allSales} />
+          </TabsContent>
+
+          <TabsContent value="ranking" className="mt-6">
+            <SellerRanking sales={allSales} sellers={sellers} />
           </TabsContent>
 
           <TabsContent value="clients" className="mt-6">

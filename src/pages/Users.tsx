@@ -4,7 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, AppRole, ROLE_LABELS, UserRole } from '@/types/database';
-import { Plus, Search, UserCheck, UserX, Shield } from 'lucide-react';
+import { Plus, Search, UserCheck, UserX, Shield, UserPlus } from 'lucide-react';
+import { CreateUserDialog } from '@/components/users/CreateUserDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -40,12 +41,13 @@ interface UserWithRole extends Profile {
 
 const Users = () => {
   const navigate = useNavigate();
-  const { canManageUsers, loading: authLoading } = useAuth();
+  const { canManageUsers, loading: authLoading, isCEO, isBackoffice } = useAuth();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newRole, setNewRole] = useState<AppRole | ''>('');
 
   useEffect(() => {
@@ -179,6 +181,10 @@ const Users = () => {
               Gerencie os usuários e suas permissões
             </p>
           </div>
+          <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
+            <UserPlus className="h-4 w-4" />
+            Novo Usuário
+          </Button>
         </div>
 
         {/* Search */}
@@ -340,6 +346,13 @@ const Users = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Create User Dialog */}
+        <CreateUserDialog
+          open={isCreateOpen}
+          onOpenChange={setIsCreateOpen}
+          onUserCreated={fetchUsers}
+        />
       </div>
     </Layout>
   );

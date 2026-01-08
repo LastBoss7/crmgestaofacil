@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Building2, Users, ArrowRight, Check, Eye, EyeOff, ArrowLeft, Mail, Lock, User } from 'lucide-react';
+import { Loader2, Building2, ArrowRight, Check, Eye, EyeOff, ArrowLeft, Mail, Lock, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
@@ -27,23 +27,7 @@ const companySignupSchema = z.object({
   nome_fantasia: z.string().trim().max(255, 'Nome fantasia muito longo').optional(),
 });
 
-const employeeSignupSchema = z.object({
-  nome: z.string().trim().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100, 'Nome muito longo'),
-  email: z.string().trim().email('E-mail inválido'),
-  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
-  inviteCode: z.string().trim().min(8, 'Código de convite inválido'),
-});
-
-interface InviteData {
-  id: string;
-  company_id: string;
-  role: string;
-  email: string | null;
-  company_name?: string;
-}
-
 type AuthMode = 'login' | 'signup';
-type SignupType = 'company' | 'employee' | null;
 type SignupStep = 1 | 2;
 
 const fadeInUp = {
@@ -66,17 +50,12 @@ const Auth = () => {
   const { user, signIn, loading: authLoading } = useAuth();
   
   const [mode, setMode] = useState<AuthMode>('login');
-  const [signupType, setSignupType] = useState<SignupType>(null);
   const [signupStep, setSignupStep] = useState<SignupStep>(1);
   const [isLoading, setIsLoading] = useState(false);
   const [checkingCnpj, setCheckingCnpj] = useState(false);
   const [cnpjError, setCnpjError] = useState<string | null>(null);
   const [cnpjValid, setCnpjValid] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
-  const [checkingCode, setCheckingCode] = useState(false);
-  const [codeError, setCodeError] = useState<string | null>(null);
-  const [inviteData, setInviteData] = useState<InviteData | null>(null);
   
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [companyData, setCompanyData] = useState({ 
@@ -86,12 +65,6 @@ const Auth = () => {
     cnpj: '',
     razao_social: '',
     nome_fantasia: ''
-  });
-  const [employeeData, setEmployeeData] = useState({ 
-    nome: '', 
-    email: '', 
-    password: '',
-    inviteCode: ''
   });
 
   useEffect(() => {
@@ -128,43 +101,6 @@ const Auth = () => {
       setCnpjError(null);
       setCnpjValid(true);
     }
-  };
-
-  const checkInviteCode = async (code: string) => {
-    if (code.length < 8) {
-      setCodeError(null);
-      setInviteData(null);
-      return;
-    }
-
-    setCheckingCode(true);
-    const { data, error } = await supabase
-      .from('team_invites')
-      .select('id, company_id, role, email')
-      .eq('invite_code', code)
-      .is('used_at', null)
-      .gt('expires_at', new Date().toISOString())
-      .single();
-
-    if (error || !data) {
-      setCodeError('Código inválido ou expirado');
-      setInviteData(null);
-      setCheckingCode(false);
-      return;
-    }
-
-    const { data: companyInfo } = await supabase
-      .from('companies')
-      .select('nome_fantasia, razao_social')
-      .eq('id', data.company_id)
-      .single();
-
-    setInviteData({
-      ...data,
-      company_name: companyInfo?.nome_fantasia || companyInfo?.razao_social || 'Empresa'
-    });
-    setCodeError(null);
-    setCheckingCode(false);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -262,83 +198,15 @@ const Auth = () => {
     navigate('/dashboard');
   };
 
-  const handleEmployeeSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!inviteData) {
-      toast.error('Código de convite inválido');
-      return;
-    }
-
-    const result = employeeSignupSchema.safeParse(employeeData);
-    if (!result.success) {
-      toast.error(result.error.errors[0].message);
-      return;
-    }
-
-    if (inviteData.email && inviteData.email !== employeeData.email) {
-      toast.error('Este convite é exclusivo para outro e-mail');
-      return;
-    }
-
-    setIsLoading(true);
-
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: employeeData.email,
-      password: employeeData.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: { nome: employeeData.nome }
-      }
-    });
-
-    if (authError || !authData.user) {
-      setIsLoading(false);
-      if (authError?.message.includes('already registered')) {
-        toast.error('Este e-mail já está cadastrado');
-      } else {
-        toast.error('Erro ao criar conta. Tente novamente.');
-      }
-      return;
-    }
-
-    await supabase
-      .from('profiles')
-      .update({ company_id: inviteData.company_id })
-      .eq('id', authData.user.id);
-
-    await supabase
-      .from('user_roles')
-      .insert({
-        user_id: authData.user.id,
-        role: inviteData.role as 'CEO' | 'BACKOFFICE' | 'SELLER'
-      });
-
-    await supabase
-      .from('team_invites')
-      .update({ used_at: new Date().toISOString(), used_by: authData.user.id })
-      .eq('id', inviteData.id);
-
-    setIsLoading(false);
-    toast.success('Conta criada com sucesso!');
-    navigate('/dashboard');
-  };
-
-  const canProceedCompanyStep1 = companyData.cnpj.replace(/\D/g, '').length >= 14 && 
-                                  cnpjValid && 
-                                  companyData.razao_social.length >= 2;
-
-  const canProceedEmployeeStep1 = inviteData !== null && !codeError;
+  const canProceedStep1 = companyData.cnpj.replace(/\D/g, '').length >= 14 && 
+                          cnpjValid && 
+                          companyData.razao_social.length >= 2;
 
   const resetSignup = () => {
-    setSignupType(null);
     setSignupStep(1);
     setCompanyData({ nome: '', email: '', password: '', cnpj: '', razao_social: '', nome_fantasia: '' });
-    setEmployeeData({ nome: '', email: '', password: '', inviteCode: '' });
-    setInviteData(null);
     setCnpjError(null);
     setCnpjValid(false);
-    setCodeError(null);
   };
 
   if (authLoading) {
@@ -409,7 +277,7 @@ const Auth = () => {
             { value: '500+', label: 'Empresas' },
             { value: '10k+', label: 'Vendas' },
             { value: '98%', label: 'Satisfação' },
-          ].map((stat, index) => (
+          ].map((stat) => (
             <motion.div 
               key={stat.label}
               variants={fadeInUp}
@@ -449,12 +317,12 @@ const Auth = () => {
                 transition={{ duration: 0.3 }}
               >
                 <CardTitle className="text-2xl font-bold">
-                  {mode === 'login' ? 'Bem-vindo de volta' : 'Criar conta'}
+                  {mode === 'login' ? 'Bem-vindo de volta' : 'Cadastrar Empresa'}
                 </CardTitle>
                 <CardDescription className="text-muted-foreground mt-2">
                   {mode === 'login' 
                     ? 'Entre com suas credenciais para acessar' 
-                    : 'Preencha os dados para começar'
+                    : 'Cadastre sua empresa para começar'
                   }
                 </CardDescription>
               </motion.div>
@@ -483,7 +351,7 @@ const Auth = () => {
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  Criar Conta
+                  Criar Empresa
                 </button>
               </div>
 
@@ -549,7 +417,7 @@ const Auth = () => {
                   </motion.form>
                 )}
 
-                {/* Signup Flow */}
+                {/* Company Signup Flow */}
                 {mode === 'signup' && (
                   <motion.div
                     key="signup"
@@ -559,77 +427,23 @@ const Auth = () => {
                     transition={{ duration: 0.3 }}
                   >
                     <AnimatePresence mode="wait">
-                      {/* Type Selection */}
-                      {signupType === null && (
+                      {/* Step 1 - Company Data */}
+                      {signupStep === 1 && (
                         <motion.div 
-                          key="type-select"
-                          className="space-y-4"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                        >
-                          <p className="text-sm text-muted-foreground text-center mb-6">
-                            Como deseja se cadastrar?
-                          </p>
-
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => setSignupType('company')}
-                            className="w-full p-4 rounded-xl border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 text-left group card-hover"
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-emerald-500/20 group-hover:from-primary/30 group-hover:to-emerald-500/30 transition-colors">
-                                <Building2 className="h-6 w-6 text-primary" />
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-semibold text-foreground">Sou uma Empresa</p>
-                                <p className="text-sm text-muted-foreground">Cadastrar minha empresa</p>
-                              </div>
-                              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                            </div>
-                          </motion.button>
-
-                          <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => setSignupType('employee')}
-                            className="w-full p-4 rounded-xl border border-border/50 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 text-left group card-hover"
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 group-hover:from-blue-500/30 group-hover:to-cyan-500/30 transition-colors">
-                                <Users className="h-6 w-6 text-blue-500" />
-                              </div>
-                              <div className="flex-1">
-                                <p className="font-semibold text-foreground">Tenho um Convite</p>
-                                <p className="text-sm text-muted-foreground">Usar código de convite</p>
-                              </div>
-                              <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
-                            </div>
-                          </motion.button>
-                        </motion.div>
-                      )}
-
-                      {/* Company Signup - Step 1 */}
-                      {signupType === 'company' && signupStep === 1 && (
-                        <motion.div 
-                          key="company-step1"
+                          key="step1"
                           className="space-y-5"
                           initial={{ opacity: 0, x: 20 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: -20 }}
                         >
-                          <button
-                            onClick={() => setSignupType(null)}
-                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
-                          >
-                            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-                            Voltar
-                          </button>
-
-                          <div>
-                            <h3 className="text-lg font-semibold text-foreground">Dados da Empresa</h3>
-                            <p className="text-sm text-muted-foreground">Passo 1 de 2</p>
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-emerald-500/20">
+                              <Building2 className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-foreground">Dados da Empresa</h3>
+                              <p className="text-sm text-muted-foreground">Passo 1 de 2</p>
+                            </div>
                           </div>
 
                           <div className="space-y-4">
@@ -682,7 +496,7 @@ const Auth = () => {
 
                           <Button
                             onClick={() => setSignupStep(2)}
-                            disabled={!canProceedCompanyStep1}
+                            disabled={!canProceedStep1}
                             className="w-full h-12 text-base font-medium"
                           >
                             Continuar
@@ -691,10 +505,10 @@ const Auth = () => {
                         </motion.div>
                       )}
 
-                      {/* Company Signup - Step 2 */}
-                      {signupType === 'company' && signupStep === 2 && (
+                      {/* Step 2 - Admin Data */}
+                      {signupStep === 2 && (
                         <motion.form 
-                          key="company-step2"
+                          key="step2"
                           onSubmit={handleCompanySignup} 
                           className="space-y-5"
                           initial={{ opacity: 0, x: 20 }}
@@ -755,162 +569,6 @@ const Auth = () => {
                                   placeholder="Mínimo 6 caracteres"
                                   value={companyData.password}
                                   onChange={(e) => setCompanyData({ ...companyData, password: e.target.value })}
-                                  className="h-12 pl-10 pr-12 bg-secondary/30 border-border/50"
-                                  required
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => setShowPassword(!showPassword)}
-                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-
-                          <Button type="submit" disabled={isLoading} className="w-full h-12 text-base font-medium">
-                            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Criar Conta'}
-                          </Button>
-                        </motion.form>
-                      )}
-
-                      {/* Employee Signup - Step 1 */}
-                      {signupType === 'employee' && signupStep === 1 && (
-                        <motion.div 
-                          key="employee-step1"
-                          className="space-y-5"
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
-                        >
-                          <button
-                            onClick={() => setSignupType(null)}
-                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
-                          >
-                            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-                            Voltar
-                          </button>
-
-                          <div>
-                            <h3 className="text-lg font-semibold text-foreground">Código de Convite</h3>
-                            <p className="text-sm text-muted-foreground">Passo 1 de 2</p>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Label className="text-foreground text-sm font-medium">Código</Label>
-                            <div className="relative">
-                              <Input
-                                type="text"
-                                placeholder="XXXXXXXX"
-                                value={employeeData.inviteCode}
-                                onChange={(e) => {
-                                  const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 8);
-                                  setEmployeeData({ ...employeeData, inviteCode: value });
-                                  checkInviteCode(value);
-                                }}
-                                className={cn(
-                                  "h-12 text-center text-xl tracking-[0.5em] font-mono bg-secondary/30 border-border/50",
-                                  codeError && "border-destructive focus:border-destructive",
-                                  inviteData && "border-primary focus:border-primary"
-                                )}
-                              />
-                              {checkingCode && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
-                              {inviteData && <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />}
-                            </div>
-                            {codeError && <p className="text-xs text-destructive">{codeError}</p>}
-                          </div>
-
-                          {inviteData && (
-                            <motion.div 
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className="p-4 rounded-xl bg-primary/10 border border-primary/20"
-                            >
-                              <p className="text-sm text-primary font-medium">
-                                Convite válido para <strong>{inviteData.company_name}</strong>
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Cargo: {inviteData.role}
-                              </p>
-                            </motion.div>
-                          )}
-
-                          <Button
-                            onClick={() => setSignupStep(2)}
-                            disabled={!canProceedEmployeeStep1}
-                            className="w-full h-12 text-base font-medium"
-                          >
-                            Continuar
-                            <ArrowRight className="h-4 w-4 ml-2" />
-                          </Button>
-                        </motion.div>
-                      )}
-
-                      {/* Employee Signup - Step 2 */}
-                      {signupType === 'employee' && signupStep === 2 && (
-                        <motion.form 
-                          key="employee-step2"
-                          onSubmit={handleEmployeeSignup} 
-                          className="space-y-5"
-                          initial={{ opacity: 0, x: 20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => setSignupStep(1)}
-                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
-                          >
-                            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-                            Voltar
-                          </button>
-
-                          <div>
-                            <h3 className="text-lg font-semibold text-foreground">Seus Dados</h3>
-                            <p className="text-sm text-muted-foreground">Passo 2 de 2</p>
-                          </div>
-
-                          <div className="space-y-4">
-                            <div className="space-y-2">
-                              <Label className="text-foreground text-sm font-medium">Seu Nome</Label>
-                              <div className="relative">
-                                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                  type="text"
-                                  placeholder="Nome completo"
-                                  value={employeeData.nome}
-                                  onChange={(e) => setEmployeeData({ ...employeeData, nome: e.target.value })}
-                                  className="h-12 pl-10 bg-secondary/30 border-border/50"
-                                  required
-                                />
-                              </div>
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label className="text-foreground text-sm font-medium">E-mail</Label>
-                              <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                  type="email"
-                                  placeholder="seu@email.com"
-                                  value={employeeData.email}
-                                  onChange={(e) => setEmployeeData({ ...employeeData, email: e.target.value })}
-                                  className="h-12 pl-10 bg-secondary/30 border-border/50"
-                                  required
-                                />
-                              </div>
-                            </div>
-
-                            <div className="space-y-2">
-                              <Label className="text-foreground text-sm font-medium">Senha</Label>
-                              <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                  type={showPassword ? 'text' : 'password'}
-                                  placeholder="Mínimo 6 caracteres"
-                                  value={employeeData.password}
-                                  onChange={(e) => setEmployeeData({ ...employeeData, password: e.target.value })}
                                   className="h-12 pl-10 pr-12 bg-secondary/30 border-border/50"
                                   required
                                 />

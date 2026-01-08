@@ -1,0 +1,321 @@
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { AppRole, ROLE_LABELS } from '@/types/database';
+import { toast } from 'sonner';
+import { Loader2, Eye, EyeOff, UserPlus } from 'lucide-react';
+import { z } from 'zod';
+
+const createUserSchema = z.object({
+  nome: z.string().trim().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100, 'Nome muito longo'),
+  sobrenome: z.string().trim().min(2, 'Sobrenome deve ter no mínimo 2 caracteres').max(100, 'Sobrenome muito longo'),
+  email: z.string().trim().email('E-mail inválido').max(255, 'E-mail muito longo'),
+  password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres').max(50, 'Senha muito longa'),
+  role: z.enum(['CEO', 'BACKOFFICE', 'SELLER']),
+});
+
+interface CreateUserDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onUserCreated: () => void;
+}
+
+export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUserDialogProps) => {
+  const { profile, isCEO } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    nome: '',
+    sobrenome: '',
+    email: '',
+    password: '',
+    role: 'SELLER' as AppRole,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const fullName = `${formData.nome} ${formData.sobrenome}`.trim();
+    
+    const result = createUserSchema.safeParse({
+      ...formData,
+      nome: formData.nome,
+      sobrenome: formData.sobrenome,
+    });
+    
+    if (!result.success) {
+      toast.error(result.error.errors[0].message);
+      return;
+    }
+
+    if (!profile?.company_id) {
+      toast.error('Você precisa estar vinculado a uma empresa');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Create user in auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: { nome: fullName }
+        }
+      });
+
+      if (authError) {
+        if (authError.message.includes('already registered')) {
+          toast.error('Este e-mail já está cadastrado');
+        } else {
+          toast.error('Erro ao criar usuário: ' + authError.message);
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      if (!authData.user) {
+        toast.error('Erro ao criar usuário');
+        setIsLoading(false);
+        return;
+      }
+
+      // Update profile with company_id
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ 
+          company_id: profile.company_id,
+          nome: fullName 
+        })
+        .eq('id', authData.user.id);
+
+      if (profileError) {
+        console.error('Error updating profile:', profileError);
+      }
+
+      // Insert user role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({ 
+          user_id: authData.user.id, 
+          role: formData.role 
+        });
+
+      if (roleError) {
+        console.error('Error inserting role:', roleError);
+        toast.error('Usuário criado, mas erro ao definir função');
+      }
+
+      toast.success(`Usuário ${fullName} criado com sucesso!`);
+      
+      // Reset form
+      setFormData({
+        nome: '',
+        sobrenome: '',
+        email: '',
+        password: '',
+        role: 'SELLER',
+      });
+      
+      onOpenChange(false);
+      onUserCreated();
+    } catch (error) {
+      console.error('Error creating user:', error);
+      toast.error('Erro ao criar usuário');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let password = '';
+    for (let i = 0; i < 10; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setFormData(prev => ({ ...prev, password }));
+    setShowPassword(true);
+    toast.success('Senha gerada! Anote antes de salvar.');
+  };
+
+  // Backoffice can only create SELLER
+  const availableRoles: AppRole[] = isCEO 
+    ? ['CEO', 'BACKOFFICE', 'SELLER'] 
+    : ['SELLER'];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <UserPlus className="h-5 w-5" />
+            Cadastrar Novo Usuário
+          </DialogTitle>
+          <DialogDescription>
+            Crie uma conta para um novo membro da equipe
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="nome">Nome</Label>
+              <Input
+                id="nome"
+                placeholder="João"
+                value={formData.nome}
+                onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                disabled={isLoading}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sobrenome">Sobrenome</Label>
+              <Input
+                id="sobrenome"
+                placeholder="Silva"
+                value={formData.sobrenome}
+                onChange={(e) => setFormData(prev => ({ ...prev, sobrenome: e.target.value }))}
+                disabled={isLoading}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">E-mail</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="joao.silva@empresa.com"
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              disabled={isLoading}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Senha</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0 text-xs text-primary hover:text-primary/80"
+                onClick={generatePassword}
+              >
+                Gerar senha
+              </Button>
+            </div>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Mínimo 6 caracteres"
+                value={formData.password}
+                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                disabled={isLoading}
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="role">Função</Label>
+            <Select 
+              value={formData.role} 
+              onValueChange={(v) => setFormData(prev => ({ ...prev, role: v as AppRole }))}
+              disabled={isLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a função" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableRoles.map((role) => (
+                  <SelectItem key={role} value={role}>
+                    {ROLE_LABELS[role]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="rounded-lg border bg-muted/50 p-3 space-y-1">
+            <p className="text-xs font-medium text-muted-foreground">Permissões da função:</p>
+            <ul className="text-xs text-muted-foreground space-y-0.5">
+              {formData.role === 'CEO' && (
+                <>
+                  <li>• Acesso total ao sistema</li>
+                  <li>• Gerenciar usuários e funções</li>
+                  <li>• Ver e editar todas as vendas</li>
+                </>
+              )}
+              {formData.role === 'BACKOFFICE' && (
+                <>
+                  <li>• Ver todas as vendas</li>
+                  <li>• Alterar status de vendas</li>
+                  <li>• Cadastrar novos vendedores</li>
+                </>
+              )}
+              {formData.role === 'SELLER' && (
+                <>
+                  <li>• Cadastrar novas vendas</li>
+                  <li>• Ver apenas suas próprias vendas</li>
+                  <li>• Acompanhar status das vendas</li>
+                </>
+              )}
+            </ul>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Criando...
+                </>
+              ) : (
+                'Criar Usuário'
+              )}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};

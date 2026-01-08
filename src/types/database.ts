@@ -9,6 +9,7 @@ export interface Profile {
   active: boolean;
   created_at: string;
   avatar_url?: string | null;
+  company_id?: string | null;
 }
 
 export interface UserRole {

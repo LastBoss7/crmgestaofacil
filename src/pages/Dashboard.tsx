@@ -29,6 +29,7 @@ import { useSalesNotifications } from '@/hooks/useSalesNotifications';
 import { CallCenterMetrics } from '@/components/dashboard/CallCenterMetrics';
 import { SellerRanking } from '@/components/dashboard/SellerRanking';
 import { ComparativeMetrics } from '@/components/dashboard/ComparativeMetrics';
+import { MonthlyGoalProgress } from '@/components/dashboard/MonthlyGoalProgress';
 import { motion } from 'framer-motion';
 
 const STATUS_BADGE_STYLES: Record<SaleStatus, { bg: string; text: string; label: string }> = {
@@ -187,7 +188,8 @@ const Dashboard = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="comparative" className="mt-6">
+          <TabsContent value="comparative" className="mt-6 space-y-8">
+            <MonthlyGoalProgress />
             <ComparativeMetrics />
           </TabsContent>
 

@@ -17,6 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePresence } from '@/hooks/usePresence';
+import { OnlineUsersDrawer } from '@/components/presence/OnlineUsersDrawer';
 
 interface SalesStats {
   total: number;
@@ -214,57 +215,66 @@ const Sidebar = () => {
         <div className="w-6 h-px bg-border my-3" />
 
         {/* User Avatar with Online Status */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="relative group cursor-pointer">
-              <Avatar className="w-9 h-9 lg:w-10 lg:h-10 ring-2 ring-border group-hover:ring-primary/50 transition-all duration-200">
-                <AvatarImage src={profile?.avatar_url || ''} alt={profile?.nome || 'Usuário'} />
-                <AvatarFallback className="bg-primary/10 text-primary text-xs lg:text-sm font-medium">
-                  {profile?.nome?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              {/* Online Status Indicator - Real-time */}
-              <span 
-                className={cn(
-                  "absolute bottom-0 right-0 w-2.5 h-2.5 lg:w-3 lg:h-3 border-2 border-card rounded-full transition-colors",
-                  isOnline 
-                    ? "bg-emerald-500 animate-pulse" 
-                    : "bg-muted-foreground"
-                )} 
-              />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="right" className="bg-card text-card-foreground border-border">
-            <div className="flex flex-col gap-1">
-              <span className="font-semibold text-foreground">{profile?.nome || 'Usuário'}</span>
-              <span className="text-xs text-muted-foreground">{role ? ROLE_LABELS[role] : 'Carregando...'}</span>
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className={cn(
-                  "w-2 h-2 rounded-full",
-                  isOnline ? "bg-emerald-500" : "bg-muted-foreground"
-                )} />
-                <span className={cn(
-                  "text-xs",
-                  isOnline ? "text-emerald-500" : "text-muted-foreground"
-                )}>
-                  {isOnline ? 'Online' : 'Conectando...'}
-                </span>
+        {/* User Avatar with Online Status - Opens Drawer */}
+        <OnlineUsersDrawer>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="relative group cursor-pointer">
+                <Avatar className="w-9 h-9 lg:w-10 lg:h-10 ring-2 ring-border group-hover:ring-primary/50 transition-all duration-200">
+                  <AvatarImage src={profile?.avatar_url || ''} alt={profile?.nome || 'Usuário'} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs lg:text-sm font-medium">
+                    {profile?.nome?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                {/* Online Status Indicator - Real-time */}
+                <span 
+                  className={cn(
+                    "absolute bottom-0 right-0 w-2.5 h-2.5 lg:w-3 lg:h-3 border-2 border-card rounded-full transition-colors",
+                    isOnline 
+                      ? "bg-emerald-500 animate-pulse" 
+                      : "bg-muted-foreground"
+                  )} 
+                />
+                {/* Online count badge */}
+                {onlineCount > 1 && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] flex items-center justify-center text-[9px] font-semibold bg-primary text-primary-foreground rounded-full px-1">
+                    {onlineCount}
+                  </span>
+                )}
               </div>
-              {isOnline && (
-                <div className="flex items-center gap-1.5 mt-1 pt-1 border-t border-border/50">
-                  <span className="text-xs text-muted-foreground">
-                    ⏱️ Na plataforma há {sessionDuration}
+            </TooltipTrigger>
+            <TooltipContent side="right" className="bg-card text-card-foreground border-border">
+              <div className="flex flex-col gap-1">
+                <span className="font-semibold text-foreground">{profile?.nome || 'Usuário'}</span>
+                <span className="text-xs text-muted-foreground">{role ? ROLE_LABELS[role] : 'Carregando...'}</span>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className={cn(
+                    "w-2 h-2 rounded-full",
+                    isOnline ? "bg-emerald-500" : "bg-muted-foreground"
+                  )} />
+                  <span className={cn(
+                    "text-xs",
+                    isOnline ? "text-emerald-500" : "text-muted-foreground"
+                  )}>
+                    {isOnline ? 'Online' : 'Conectando...'}
                   </span>
                 </div>
-              )}
-              {onlineCount > 1 && (
-                <span className="text-xs text-muted-foreground mt-1">
-                  {onlineCount} usuários online
-                </span>
-              )}
-            </div>
-          </TooltipContent>
-        </Tooltip>
+                {isOnline && (
+                  <div className="flex items-center gap-1.5 mt-1 pt-1 border-t border-border/50">
+                    <span className="text-xs text-muted-foreground">
+                      ⏱️ Na plataforma há {sessionDuration}
+                    </span>
+                  </div>
+                )}
+                {onlineCount > 1 && (
+                  <span className="text-xs text-primary mt-1">
+                    Clique para ver {onlineCount} usuários online
+                  </span>
+                )}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </OnlineUsersDrawer>
 
         {/* Divider */}
         <div className="w-6 h-px bg-border my-3" />

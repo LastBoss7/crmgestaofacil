@@ -130,6 +130,7 @@ export type Database = {
           email: string
           id: string
           nome: string
+          team_id: string | null
         }
         Insert: {
           active?: boolean | null
@@ -139,6 +140,7 @@ export type Database = {
           email: string
           id: string
           nome: string
+          team_id?: string | null
         }
         Update: {
           active?: boolean | null
@@ -148,6 +150,7 @@ export type Database = {
           email?: string
           id?: string
           nome?: string
+          team_id?: string | null
         }
         Relationships: [
           {
@@ -155,6 +158,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]
@@ -503,6 +513,36 @@ export type Database = {
           },
         ]
       }
+      teams: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          supervisor_id: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          supervisor_id: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          supervisor_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -534,11 +574,16 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_user_team: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_team_supervisor: {
+        Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
     }

@@ -240,52 +240,145 @@ export type Database = {
       }
       sales: {
         Row: {
+          bl_valor: number | null
+          cedente_cpf: string | null
+          cedente_mae: string | null
+          cedente_nascimento: string | null
+          cedente_nome: string | null
+          cedente_rg: string | null
           cnpj_cliente: string
           contato_responsavel: string | null
           created_at: string | null
+          data_venda: string | null
+          email: string | null
+          endereco_bairro: string | null
+          endereco_cep: string | null
+          endereco_cidade: string | null
+          endereco_numero: string | null
+          endereco_rua: string | null
+          equipe: string | null
+          gestor_cpf: string | null
+          gestor_mae: string | null
+          gestor_nascimento: string | null
+          gestor_nome: string | null
+          gestor_rg: string | null
           id: string
           motivo_pendencia: string | null
+          movel_valor: number | null
           nome_fantasia: string | null
           observacoes_vendedor: string | null
+          plano_contratado: string | null
           produtos: string | null
+          proprietario_cpf: string | null
+          proprietario_mae: string | null
+          proprietario_nascimento: string | null
+          proprietario_nome: string | null
+          proprietario_rg: string | null
           razao_social: string
           seller_id: string | null
           status: Database["public"]["Enums"]["sale_status"] | null
+          telefone_1: string | null
+          telefone_2: string | null
+          telefone_portabilidade: string | null
           telefone_responsavel: string | null
+          tipo_negociacao: string | null
           updated_at: string | null
           valor_mensal: number
+          vivo_total_valor: number | null
         }
         Insert: {
+          bl_valor?: number | null
+          cedente_cpf?: string | null
+          cedente_mae?: string | null
+          cedente_nascimento?: string | null
+          cedente_nome?: string | null
+          cedente_rg?: string | null
           cnpj_cliente: string
           contato_responsavel?: string | null
           created_at?: string | null
+          data_venda?: string | null
+          email?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_numero?: string | null
+          endereco_rua?: string | null
+          equipe?: string | null
+          gestor_cpf?: string | null
+          gestor_mae?: string | null
+          gestor_nascimento?: string | null
+          gestor_nome?: string | null
+          gestor_rg?: string | null
           id?: string
           motivo_pendencia?: string | null
+          movel_valor?: number | null
           nome_fantasia?: string | null
           observacoes_vendedor?: string | null
+          plano_contratado?: string | null
           produtos?: string | null
+          proprietario_cpf?: string | null
+          proprietario_mae?: string | null
+          proprietario_nascimento?: string | null
+          proprietario_nome?: string | null
+          proprietario_rg?: string | null
           razao_social: string
           seller_id?: string | null
           status?: Database["public"]["Enums"]["sale_status"] | null
+          telefone_1?: string | null
+          telefone_2?: string | null
+          telefone_portabilidade?: string | null
           telefone_responsavel?: string | null
+          tipo_negociacao?: string | null
           updated_at?: string | null
           valor_mensal?: number
+          vivo_total_valor?: number | null
         }
         Update: {
+          bl_valor?: number | null
+          cedente_cpf?: string | null
+          cedente_mae?: string | null
+          cedente_nascimento?: string | null
+          cedente_nome?: string | null
+          cedente_rg?: string | null
           cnpj_cliente?: string
           contato_responsavel?: string | null
           created_at?: string | null
+          data_venda?: string | null
+          email?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_numero?: string | null
+          endereco_rua?: string | null
+          equipe?: string | null
+          gestor_cpf?: string | null
+          gestor_mae?: string | null
+          gestor_nascimento?: string | null
+          gestor_nome?: string | null
+          gestor_rg?: string | null
           id?: string
           motivo_pendencia?: string | null
+          movel_valor?: number | null
           nome_fantasia?: string | null
           observacoes_vendedor?: string | null
+          plano_contratado?: string | null
           produtos?: string | null
+          proprietario_cpf?: string | null
+          proprietario_mae?: string | null
+          proprietario_nascimento?: string | null
+          proprietario_nome?: string | null
+          proprietario_rg?: string | null
           razao_social?: string
           seller_id?: string | null
           status?: Database["public"]["Enums"]["sale_status"] | null
+          telefone_1?: string | null
+          telefone_2?: string | null
+          telefone_portabilidade?: string | null
           telefone_responsavel?: string | null
+          tipo_negociacao?: string | null
           updated_at?: string | null
           valor_mensal?: number
+          vivo_total_valor?: number | null
         }
         Relationships: []
       }

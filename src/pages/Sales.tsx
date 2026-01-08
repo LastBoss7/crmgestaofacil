@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SaleComments } from '@/components/sales/SaleComments';
 import { SaleStatusActions } from '@/components/sales/SaleStatusActions';
+import { SaleForm } from '@/components/sales/SaleForm';
 import {
   Select,
   SelectContent,
@@ -33,22 +34,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { z } from 'zod';
-
-const saleSchema = z.object({
-  cnpj_cliente: z.string().trim().min(14, 'CNPJ inválido').max(18, 'CNPJ inválido'),
-  razao_social: z.string().trim().min(2, 'Razão social obrigatória').max(255, 'Razão social muito longa'),
-  nome_fantasia: z.string().trim().max(255, 'Nome fantasia muito longo').optional(),
-  contato_responsavel: z.string().trim().max(255, 'Nome muito longo').optional(),
-  telefone_responsavel: z.string().trim().max(20, 'Telefone muito longo').optional(),
-  produtos: z.string().trim().max(1000, 'Descrição muito longa').optional(),
-  valor_mensal: z.number().min(0, 'Valor deve ser positivo'),
-  observacoes_vendedor: z.string().trim().max(2000, 'Observação muito longa').optional(),
-});
 
 interface SaleWithSeller extends Sale {
   seller?: Profile;
@@ -65,18 +53,6 @@ const Sales = () => {
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSeller | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-
-  // Form state for new sale
-  const [newSale, setNewSale] = useState({
-    cnpj_cliente: '',
-    razao_social: '',
-    nome_fantasia: '',
-    contato_responsavel: '',
-    telefone_responsavel: '',
-    produtos: '',
-    valor_mensal: '',
-    observacoes_vendedor: '',
-  });
 
   const fetchSales = async () => {
     if (!user) return;
@@ -114,51 +90,9 @@ const Sales = () => {
     fetchSales();
   }, [user]);
 
-  const handleCreateSale = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const saleData = {
-      ...newSale,
-      valor_mensal: parseFloat(newSale.valor_mensal) || 0,
-    };
-
-    const result = saleSchema.safeParse(saleData);
-    if (!result.success) {
-      toast.error(result.error.errors[0].message);
-      return;
-    }
-
-    const { error } = await supabase.from('sales').insert({
-      seller_id: user?.id,
-      cnpj_cliente: newSale.cnpj_cliente,
-      razao_social: newSale.razao_social,
-      nome_fantasia: newSale.nome_fantasia || null,
-      contato_responsavel: newSale.contato_responsavel || null,
-      telefone_responsavel: newSale.telefone_responsavel || null,
-      produtos: newSale.produtos || null,
-      valor_mensal: parseFloat(newSale.valor_mensal) || 0,
-      observacoes_vendedor: newSale.observacoes_vendedor || null,
-      status: 'NOVA',
-    });
-
-    if (error) {
-      toast.error('Erro ao criar venda');
-      console.error(error);
-    } else {
-      toast.success('Venda cadastrada com sucesso!');
-      setIsNewSaleOpen(false);
-      setNewSale({
-        cnpj_cliente: '',
-        razao_social: '',
-        nome_fantasia: '',
-        contato_responsavel: '',
-        telefone_responsavel: '',
-        produtos: '',
-        valor_mensal: '',
-        observacoes_vendedor: '',
-      });
-      fetchSales();
-    }
+  const handleSaleCreated = () => {
+    setIsNewSaleOpen(false);
+    fetchSales();
   };
 
 
@@ -206,100 +140,20 @@ const Sales = () => {
                 Nova Venda
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Cadastrar Nova Venda</DialogTitle>
                 <DialogDescription>
-                  Preencha os dados do cliente e da venda
+                  Preencha todos os dados necessários para a contratação
                 </DialogDescription>
               </DialogHeader>
-              <form onSubmit={handleCreateSale} className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="cnpj">CNPJ *</Label>
-                    <Input
-                      id="cnpj"
-                      placeholder="00.000.000/0000-00"
-                      value={newSale.cnpj_cliente}
-                      onChange={(e) => setNewSale({ ...newSale, cnpj_cliente: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="razao">Razão Social *</Label>
-                    <Input
-                      id="razao"
-                      placeholder="Nome da empresa"
-                      value={newSale.razao_social}
-                      onChange={(e) => setNewSale({ ...newSale, razao_social: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="fantasia">Nome Fantasia</Label>
-                    <Input
-                      id="fantasia"
-                      placeholder="Nome fantasia"
-                      value={newSale.nome_fantasia}
-                      onChange={(e) => setNewSale({ ...newSale, nome_fantasia: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="contato">Contato Responsável</Label>
-                    <Input
-                      id="contato"
-                      placeholder="Nome do responsável"
-                      value={newSale.contato_responsavel}
-                      onChange={(e) => setNewSale({ ...newSale, contato_responsavel: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="telefone">Telefone</Label>
-                    <Input
-                      id="telefone"
-                      placeholder="(00) 00000-0000"
-                      value={newSale.telefone_responsavel}
-                      onChange={(e) => setNewSale({ ...newSale, telefone_responsavel: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="valor">Valor Mensal *</Label>
-                    <Input
-                      id="valor"
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={newSale.valor_mensal}
-                      onChange={(e) => setNewSale({ ...newSale, valor_mensal: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="produtos">Produtos/Serviços</Label>
-                  <Textarea
-                    id="produtos"
-                    placeholder="Ex: Vivo Fibra 300MB + 2 Linhas Móveis"
-                    value={newSale.produtos}
-                    onChange={(e) => setNewSale({ ...newSale, produtos: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="obs">Observações</Label>
-                  <Textarea
-                    id="obs"
-                    placeholder="Observações adicionais..."
-                    value={newSale.observacoes_vendedor}
-                    onChange={(e) => setNewSale({ ...newSale, observacoes_vendedor: e.target.value })}
-                  />
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="outline" onClick={() => setIsNewSaleOpen(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit">Cadastrar Venda</Button>
-                </div>
-              </form>
+              {user && (
+                <SaleForm
+                  userId={user.id}
+                  onSuccess={handleSaleCreated}
+                  onCancel={() => setIsNewSaleOpen(false)}
+                />
+              )}
             </DialogContent>
           </Dialog>
         </div>

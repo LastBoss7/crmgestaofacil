@@ -14,7 +14,8 @@ import {
   Bell,
   Search,
   MessageSquare,
-  BarChart3
+  BarChart3,
+  Activity
 } from 'lucide-react';
 import { ROLE_LABELS } from '@/types/database';
 import { useState, useEffect } from 'react';
@@ -113,6 +114,7 @@ const Sidebar = () => {
     ...(canManageUsers ? [{ name: 'Usuários', href: '/usuarios', icon: Users2 }] : []),
     ...(isCEO || isBackoffice ? [{ name: 'Equipes', href: '/equipes', icon: Users2 }] : []),
     ...(isBackoffice ? [{ name: 'Minha Equipe', href: '/minha-equipe', icon: BarChart3 }] : []),
+    ...(isCEO || isBackoffice ? [{ name: 'Monitoramento', href: '/monitoramento', icon: Activity }] : []),
     ...(isCEO ? [{ name: 'Monitor Chats', href: '/monitor-chats', icon: MessageSquare }] : []),
     ...(isCEO ? [{ name: 'Convites', href: '/equipe/convites', icon: UserPlus2 }] : []),
     ...(isCEO ? [{ name: 'Configurações', href: '/configuracoes', icon: Cog }] : []),

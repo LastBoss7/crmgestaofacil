@@ -105,7 +105,7 @@ const Sales = () => {
       
       const { error: updateError } = await supabase
         .from('sales')
-        .update({ documentos: allDocs })
+        .update({ documentos: allDocs } as any)
         .eq('id', selectedSale.id);
       
       if (updateError) throw updateError;

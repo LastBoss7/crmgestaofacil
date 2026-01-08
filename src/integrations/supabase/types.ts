@@ -250,6 +250,7 @@ export type Database = {
           contato_responsavel: string | null
           created_at: string | null
           data_venda: string | null
+          documentos: string[] | null
           email: string | null
           endereco_bairro: string | null
           endereco_cep: string | null
@@ -297,6 +298,7 @@ export type Database = {
           contato_responsavel?: string | null
           created_at?: string | null
           data_venda?: string | null
+          documentos?: string[] | null
           email?: string | null
           endereco_bairro?: string | null
           endereco_cep?: string | null
@@ -344,6 +346,7 @@ export type Database = {
           contato_responsavel?: string | null
           created_at?: string | null
           data_venda?: string | null
+          documentos?: string[] | null
           email?: string | null
           endereco_bairro?: string | null
           endereco_cep?: string | null

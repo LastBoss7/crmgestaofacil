@@ -22,7 +22,7 @@ interface TeamWithDetails extends Team {
 }
 
 export default function Teams() {
-  const { user, isCEO, profile } = useAuth();
+  const { user, isCEO, isBackoffice, profile } = useAuth();
   const navigate = useNavigate();
   const [teams, setTeams] = useState<TeamWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,14 +40,16 @@ export default function Teams() {
   const [backofficeUsers, setBackofficeUsers] = useState<(Profile & { role?: AppRole })[]>([]);
   const [sellerUsers, setSellerUsers] = useState<(Profile & { role?: AppRole })[]>([]);
 
+  const canAccessPage = isCEO || isBackoffice;
+
   useEffect(() => {
-    if (!isCEO) {
+    if (!canAccessPage) {
       navigate('/dashboard');
       return;
     }
     fetchTeams();
     fetchUsers();
-  }, [isCEO, navigate]);
+  }, [canAccessPage, navigate]);
 
   const fetchTeams = async () => {
     try {
@@ -261,9 +263,19 @@ export default function Teams() {
       .slice(0, 2);
   };
 
-  const availableSellers = sellerUsers.filter(
-    seller => !seller.team_id || seller.team_id === selectedTeam?.id
-  );
+  // For supervisors, only show sellers without a team (they can only add to their own team)
+  const availableSellers = sellerUsers.filter(seller => {
+    if (isCEO) {
+      return !seller.team_id || seller.team_id === selectedTeam?.id;
+    }
+    // Supervisors can only see sellers without a team
+    return !seller.team_id;
+  });
+
+  // Check if user can manage a specific team
+  const canManageTeam = (team: TeamWithDetails) => {
+    return isCEO || team.supervisor_id === user?.id;
+  };
 
   if (loading) {
     return (
@@ -281,15 +293,18 @@ export default function Teams() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Equipes</h1>
-            <p className="text-muted-foreground">Gerencie as equipes e seus membros</p>
+            <p className="text-muted-foreground">
+              {isCEO ? 'Gerencie as equipes e seus membros' : 'Gerencie os membros da sua equipe'}
+            </p>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Equipe
-              </Button>
-            </DialogTrigger>
+          {isCEO && (
+            <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Equipe
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>{editingTeam ? 'Editar Equipe' : 'Nova Equipe'}</DialogTitle>
@@ -342,6 +357,7 @@ export default function Teams() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+        )}
         </div>
 
         {teams.length === 0 ? (
@@ -350,12 +366,14 @@ export default function Teams() {
               <Users className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">Nenhuma equipe cadastrada</h3>
               <p className="text-muted-foreground text-center mb-4">
-                Crie sua primeira equipe para organizar seus vendedores
+                {isCEO ? 'Crie sua primeira equipe para organizar seus vendedores' : 'Você não possui uma equipe atribuída'}
               </p>
-              <Button onClick={() => setDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Equipe
-              </Button>
+              {isCEO && (
+                <Button onClick={() => setDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Criar Equipe
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -373,14 +391,16 @@ export default function Teams() {
                         <CardDescription className="mt-1">{team.description}</CardDescription>
                       )}
                     </div>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(team)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(team.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
+                    {isCEO && (
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(team)}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(team.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -400,16 +420,17 @@ export default function Teams() {
                     </Badge>
                   </div>
 
-                  {/* Members */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm font-medium text-muted-foreground">
                         Membros ({team.members?.length || 0})
                       </p>
-                      <Button variant="outline" size="sm" onClick={() => openMembersDialog(team)}>
-                        <UserPlus className="h-3 w-3 mr-1" />
-                        Gerenciar
-                      </Button>
+                      {canManageTeam(team) && (
+                        <Button variant="outline" size="sm" onClick={() => openMembersDialog(team)}>
+                          <UserPlus className="h-3 w-3 mr-1" />
+                          Gerenciar
+                        </Button>
+                      )}
                     </div>
                     {team.members && team.members.length > 0 ? (
                       <div className="space-y-2">

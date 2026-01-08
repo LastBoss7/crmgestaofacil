@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/layout/Layout';
@@ -6,6 +6,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
 import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X } from 'lucide-react';
+import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SaleComments } from '@/components/sales/SaleComments';
@@ -63,6 +64,10 @@ const Sales = () => {
   const [newDocuments, setNewDocuments] = useState<File[]>([]);
   const [isUploadingDocs, setIsUploadingDocs] = useState(false);
   const docInputRef = useRef<HTMLInputElement>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   const handleDocumentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -164,16 +169,40 @@ const Sales = () => {
   };
 
 
-  const filteredSales = sales.filter((sale) => {
-    const matchesSearch =
-      sale.razao_social.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sale.cnpj_cliente.includes(searchTerm) ||
-      (sale.nome_fantasia?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
-    
-    const matchesStatus = statusFilter === 'ALL' || sale.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+  const filteredSales = useMemo(() => {
+    return sales.filter((sale) => {
+      const matchesSearch =
+        sale.razao_social.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        sale.cnpj_cliente.includes(searchTerm) ||
+        (sale.nome_fantasia?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+      
+      const matchesStatus = statusFilter === 'ALL' || sale.status === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [sales, searchTerm, statusFilter]);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.max(1, Math.ceil(filteredSales.length / pageSize));
+  const paginatedSales = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredSales.slice(startIndex, startIndex + pageSize);
+  }, [filteredSales, currentPage, pageSize]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -315,7 +344,7 @@ const Sales = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredSales.map((sale) => (
+                    {paginatedSales.map((sale) => (
                       <TableRow key={sale.id}>
                         <TableCell>
                           <div>
@@ -357,6 +386,16 @@ const Sales = () => {
                   </TableBody>
                 </Table>
               </div>
+            )}
+            {!loading && filteredSales.length > 0 && (
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageSize={pageSize}
+                totalItems={filteredSales.length}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+              />
             )}
           </CardContent>
         </Card>

@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { 
@@ -13,8 +13,6 @@ import {
   UserCircle,
   Bell,
   Search,
-  HelpCircle,
-  Sparkles,
   MessageSquare,
   BarChart3
 } from 'lucide-react';
@@ -25,6 +23,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePresence } from '@/hooks/usePresence';
 import { OnlineUsersDrawer } from '@/components/presence/OnlineUsersDrawer';
+import { useNotifications } from '@/hooks/useNotifications';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 import logo from '@/assets/logo.png';
 
 interface SalesStats {
@@ -40,6 +42,7 @@ interface SalesStats {
 
 const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [salesStats, setSalesStats] = useState<SalesStats>({
     total: 0,
     preAnalise: 0,
@@ -61,6 +64,7 @@ const Sidebar = () => {
     isBackoffice,
   } = useAuth();
   
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const { isOnline, onlineCount, sessionDuration } = usePresence();
 
   useEffect(() => {
@@ -256,8 +260,82 @@ const Sidebar = () => {
 
         {/* Secondary Actions */}
         <div className="flex flex-col items-center gap-1 shrink-0">
-          <IconButton icon={Search} label="Buscar" onClick={() => {}} />
-          <IconButton icon={Bell} label="Notificações" onClick={() => {}} />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div
+                className="group flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                onClick={() => navigate('/vendas?search=true')}
+              >
+                <Search className="w-4 h-4" strokeWidth={1.5} />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8} className="text-xs font-medium">
+              Buscar vendas
+            </TooltipContent>
+          </Tooltip>
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <div className="relative">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className="group flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    >
+                      <Bell className="w-4 h-4" strokeWidth={1.5} />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-medium bg-primary text-white rounded-full px-0.5">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" sideOffset={8} className="text-xs font-medium">
+                    Notificações {unreadCount > 0 && `(${unreadCount})`}
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </PopoverTrigger>
+            <PopoverContent side="right" sideOffset={12} className="w-80 p-0">
+              <div className="p-3 border-b">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold">Notificações</h4>
+                  {unreadCount > 0 && (
+                    <Button variant="ghost" size="sm" onClick={markAllAsRead} className="text-xs h-7">
+                      Marcar todas como lidas
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <ScrollArea className="max-h-[300px]">
+                {notifications.length === 0 ? (
+                  <div className="p-6 text-center text-sm text-muted-foreground">
+                    Nenhuma notificação
+                  </div>
+                ) : (
+                  <div className="p-2 space-y-1">
+                    {notifications.slice(0, 10).map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={cn(
+                          "p-2 rounded-lg cursor-pointer transition-colors text-sm",
+                          notification.read ? "hover:bg-muted/50" : "bg-primary/5 hover:bg-primary/10"
+                        )}
+                        onClick={() => markAsRead(notification.id)}
+                      >
+                        <p className={cn("font-medium text-xs", !notification.read && "text-primary")}>
+                          {notification.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                          {notification.message}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Divider */}

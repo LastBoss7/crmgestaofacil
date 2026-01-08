@@ -385,6 +385,39 @@ export type Database = {
         }
         Relationships: []
       }
+      seller_goals: {
+        Row: {
+          created_at: string
+          id: string
+          month: number
+          seller_id: string
+          target_sales: number
+          target_value: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month: number
+          seller_id: string
+          target_sales?: number
+          target_value?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month?: number
+          seller_id?: string
+          target_sales?: number
+          target_value?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       team_invites: {
         Row: {
           company_id: string

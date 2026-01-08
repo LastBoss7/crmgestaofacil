@@ -57,6 +57,7 @@ const Sidebar = () => {
     signOut,
     canManageUsers,
     isCEO,
+    isBackoffice,
   } = useAuth();
   
   const { isOnline, onlineCount, sessionDuration } = usePresence();
@@ -105,7 +106,7 @@ const Sidebar = () => {
 
   const managementNavigation = [
     ...(canManageUsers ? [{ name: 'Usuários', href: '/usuarios', icon: Users2 }] : []),
-    ...(isCEO ? [{ name: 'Equipes', href: '/equipes', icon: Users2 }] : []),
+    ...(isCEO || isBackoffice ? [{ name: 'Equipes', href: '/equipes', icon: Users2 }] : []),
     ...(isCEO ? [{ name: 'Monitor Chats', href: '/monitor-chats', icon: MessageSquare }] : []),
     ...(isCEO ? [{ name: 'Convites', href: '/equipe/convites', icon: UserPlus2 }] : []),
     ...(isCEO ? [{ name: 'Configurações', href: '/configuracoes', icon: Cog }] : []),

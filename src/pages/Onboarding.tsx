@@ -6,20 +6,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { 
   Building2, 
   Users, 
-  UserPlus, 
   CheckCircle2, 
   ArrowRight, 
   ArrowLeft,
   Loader2,
   Rocket,
-  Copy,
-  Mail,
   Sparkles
 } from 'lucide-react';
 import logo from '@/assets/logo.png';
@@ -52,12 +49,6 @@ const steps: OnboardingStep[] = [
   },
   {
     id: 4,
-    title: 'Convidar Membros',
-    description: 'Convide os primeiros membros para sua equipe',
-    icon: <UserPlus className="h-8 w-8" />,
-  },
-  {
-    id: 5,
     title: 'Tudo Pronto!',
     description: 'Sua empresa está configurada',
     icon: <CheckCircle2 className="h-8 w-8" />,
@@ -76,12 +67,7 @@ const Onboarding = () => {
     name: '',
     description: '',
   });
-  const [inviteData, setInviteData] = useState({
-    email: '',
-    role: 'SELLER' as 'SELLER' | 'BACKOFFICE',
-  });
   const [createdTeamId, setCreatedTeamId] = useState<string | null>(null);
-  const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [company, setCompany] = useState<any>(null);
 
   useEffect(() => {
@@ -175,47 +161,7 @@ const Onboarding = () => {
     handleNext();
   };
 
-  const handleCreateInvite = async () => {
-    if (!profile?.company_id || !user) return;
-    
-    setIsLoading(true);
-    
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-    
-    const { data, error } = await supabase
-      .from('team_invites')
-      .insert({
-        company_id: profile.company_id,
-        invite_code: code,
-        email: inviteData.email || null,
-        role: inviteData.role,
-        invited_by: user.id,
-        expires_at: expiresAt.toISOString(),
-      })
-      .select()
-      .single();
-
-    setIsLoading(false);
-    
-    if (error) {
-      toast.error('Erro ao criar convite');
-      return;
-    }
-    
-    setInviteCode(data.invite_code);
-    toast.success('Convite criado!');
-  };
-
-  const copyInviteLink = () => {
-    const link = `${window.location.origin}/auth?invite=${inviteCode}`;
-    navigator.clipboard.writeText(link);
-    toast.success('Link copiado!');
-  };
-
   const handleFinish = async () => {
-    // Mark onboarding as complete (could store in company metadata)
     navigate('/dashboard');
     toast.success('Bem-vindo ao seu CRM!');
   };
@@ -247,7 +193,7 @@ const Onboarding = () => {
                 {' '}em apenas alguns passos.
               </p>
             </div>
-            <div className="grid grid-cols-3 gap-4 pt-4">
+            <div className="grid grid-cols-2 gap-4 pt-4">
               <div className="text-center p-4 bg-muted/50 rounded-lg">
                 <Building2 className="h-8 w-8 mx-auto mb-2 text-primary" />
                 <p className="text-sm font-medium">Perfil</p>
@@ -255,10 +201,6 @@ const Onboarding = () => {
               <div className="text-center p-4 bg-muted/50 rounded-lg">
                 <Users className="h-8 w-8 mx-auto mb-2 text-primary" />
                 <p className="text-sm font-medium">Equipe</p>
-              </div>
-              <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <UserPlus className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <p className="text-sm font-medium">Convites</p>
               </div>
             </div>
             <Button onClick={handleNext} className="w-full" size="lg">
@@ -392,113 +334,6 @@ const Onboarding = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="space-y-6"
-          >
-            <div className="space-y-2 text-center">
-              <div className="flex justify-center mb-4">
-                <div className="p-3 bg-primary/10 rounded-full">
-                  <UserPlus className="h-8 w-8 text-primary" />
-                </div>
-              </div>
-              <h2 className="text-xl font-bold">Convidar Membros</h2>
-              <p className="text-muted-foreground text-sm">
-                Convide sua equipe para o CRM
-              </p>
-            </div>
-
-            {!inviteCode ? (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="invite_email">E-mail do Convidado (opcional)</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="invite_email"
-                      type="email"
-                      placeholder="email@exemplo.com"
-                      className="pl-10"
-                      value={inviteData.email}
-                      onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Função</Label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button
-                      type="button"
-                      variant={inviteData.role === 'SELLER' ? 'default' : 'outline'}
-                      onClick={() => setInviteData({ ...inviteData, role: 'SELLER' })}
-                      className="h-auto py-3"
-                    >
-                      <div className="text-center">
-                        <p className="font-medium">Vendedor</p>
-                        <p className="text-xs opacity-70">Registra vendas</p>
-                      </div>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={inviteData.role === 'BACKOFFICE' ? 'default' : 'outline'}
-                      onClick={() => setInviteData({ ...inviteData, role: 'BACKOFFICE' })}
-                      className="h-auto py-3"
-                    >
-                      <div className="text-center">
-                        <p className="font-medium">Backoffice</p>
-                        <p className="text-xs opacity-70">Gerencia equipe</p>
-                      </div>
-                    </Button>
-                  </div>
-                </div>
-                <Button 
-                  onClick={handleCreateInvite} 
-                  className="w-full" 
-                  disabled={isLoading}
-                >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Gerar Convite'}
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-center">
-                  <CheckCircle2 className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                  <p className="font-medium text-green-800 dark:text-green-200">Convite Criado!</p>
-                  <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                    Código: <span className="font-mono font-bold">{inviteCode}</span>
-                  </p>
-                </div>
-                <Button onClick={copyInviteLink} variant="outline" className="w-full">
-                  <Copy className="mr-2 h-4 w-4" />
-                  Copiar Link de Convite
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => setInviteCode(null)} 
-                  className="w-full text-muted-foreground"
-                >
-                  Criar outro convite
-                </Button>
-              </div>
-            )}
-
-            <div className="flex gap-3 pt-2">
-              <Button variant="outline" onClick={handleBack} className="flex-1">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Voltar
-              </Button>
-              <Button onClick={handleNext} className="flex-1">
-                Continuar
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </motion.div>
-        );
-
-      case 5:
-        return (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
             className="text-center space-y-6"
           >
             <div className="flex justify-center">
@@ -511,6 +346,9 @@ const Onboarding = () => {
               <p className="text-muted-foreground">
                 Sua empresa está configurada e pronta para usar o CRM.
               </p>
+              <p className="text-sm text-muted-foreground">
+                Para adicionar membros à sua equipe, acesse Usuários e crie novos usuários.
+              </p>
             </div>
             
             <div className="grid gap-3 pt-4">
@@ -520,15 +358,6 @@ const Onboarding = () => {
                   <div>
                     <p className="font-medium text-sm">Equipe criada</p>
                     <p className="text-xs text-muted-foreground">{teamData.name}</p>
-                  </div>
-                </div>
-              )}
-              {inviteCode && (
-                <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg text-left">
-                  <UserPlus className="h-5 w-5 text-primary shrink-0" />
-                  <div>
-                    <p className="font-medium text-sm">Convite gerado</p>
-                    <p className="text-xs text-muted-foreground">Código: {inviteCode}</p>
                   </div>
                 </div>
               )}

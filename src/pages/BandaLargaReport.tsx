@@ -22,8 +22,19 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   User,
-  Users
+  Users,
+  Download,
+  FileSpreadsheet,
+  FileText
 } from 'lucide-react';
+import { exportBandaLargaToExcel, exportBandaLargaToPDF } from '@/lib/export-utils';
+import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { format, isToday, subDays, addDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -248,6 +259,31 @@ const BandaLargaReport = () => {
     }
   };
 
+  const periodLabel = format(selectedMonth, "MMMM 'de' yyyy", { locale: ptBR });
+  const sellerName = selectedSeller !== 'all' 
+    ? sellers.find(s => s.id === selectedSeller)?.nome 
+    : undefined;
+
+  const handleExportExcel = () => {
+    if (stats.length === 0) {
+      toast.error('Não há dados para exportar');
+      return;
+    }
+    const filename = `banda-larga-${format(selectedMonth, 'yyyy-MM')}`;
+    exportBandaLargaToExcel(stats, total, totalValue, periodLabel, sellerName, filename);
+    toast.success('Relatório exportado em Excel!');
+  };
+
+  const handleExportPDF = () => {
+    if (stats.length === 0) {
+      toast.error('Não há dados para exportar');
+      return;
+    }
+    const filename = `banda-larga-${format(selectedMonth, 'yyyy-MM')}`;
+    exportBandaLargaToPDF(stats, total, totalValue, periodLabel, sellerName, filename);
+    toast.success('Relatório exportado em PDF!');
+  };
+
   const isCurrentMonth = format(selectedMonth, 'yyyy-MM') === format(new Date(), 'yyyy-MM');
 
   const CustomTooltip = ({ active, payload }: any) => {
@@ -350,6 +386,26 @@ const BandaLargaReport = () => {
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
+
+            {/* Export Button */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Exportar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportExcel} className="gap-2 cursor-pointer">
+                  <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                  Exportar Excel
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF} className="gap-2 cursor-pointer">
+                  <FileText className="h-4 w-4 text-red-600" />
+                  Exportar PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 

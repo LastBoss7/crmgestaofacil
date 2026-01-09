@@ -51,6 +51,39 @@ export interface Sale {
   documentos?: string[] | null;
   created_at: string;
   updated_at: string;
+  // Extended fields
+  company_id: string | null;
+  equipe: string | null;
+  tipo_negociacao: string | null;
+  email: string | null;
+  telefone_1: string | null;
+  telefone_2: string | null;
+  telefone_portabilidade: string | null;
+  endereco_rua: string | null;
+  endereco_numero: string | null;
+  endereco_bairro: string | null;
+  endereco_cidade: string | null;
+  endereco_cep: string | null;
+  proprietario_nome: string | null;
+  proprietario_cpf: string | null;
+  proprietario_rg: string | null;
+  proprietario_mae: string | null;
+  proprietario_nascimento: string | null;
+  gestor_nome: string | null;
+  gestor_cpf: string | null;
+  gestor_rg: string | null;
+  gestor_mae: string | null;
+  gestor_nascimento: string | null;
+  cedente_nome: string | null;
+  cedente_cpf: string | null;
+  cedente_rg: string | null;
+  cedente_mae: string | null;
+  cedente_nascimento: string | null;
+  plano_contratado: string | null;
+  bl_valor: number | null;
+  vivo_total_valor: number | null;
+  movel_valor: number | null;
+  data_venda: string | null;
   // Joined data
   seller?: Profile;
 }

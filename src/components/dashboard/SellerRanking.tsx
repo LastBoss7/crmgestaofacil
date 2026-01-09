@@ -34,6 +34,7 @@ import {
   Settings,
   Save,
   Eye,
+  LineChart as LineChartIcon,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -46,6 +47,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toast } from 'sonner';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 
 interface SellerRankingProps {
   sales: Sale[];
@@ -222,6 +233,68 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
       .filter(m => m.totalSales > 0 || goals.some(g => g.seller_id === m.id))
       .sort((a, b) => b.totalValue - a.totalValue);
   }, [sales, sellers, goals, currentMonth, currentYear]);
+
+  // Calculate daily revenue data for chart
+  const dailyRevenueData = useMemo(() => {
+    const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+    const dailyData: Record<number, Record<string, number>> = {};
+    
+    // Initialize all days
+    for (let day = 1; day <= daysInMonth; day++) {
+      dailyData[day] = {};
+    }
+    
+    // Filter sales for current month
+    const currentMonthSales = sales.filter(sale => {
+      const saleDate = new Date(sale.created_at);
+      return saleDate.getMonth() + 1 === currentMonth && saleDate.getFullYear() === currentYear;
+    });
+    
+    // Aggregate daily revenue per seller
+    currentMonthSales.forEach(sale => {
+      if (!sale.seller_id) return;
+      const saleDate = new Date(sale.created_at);
+      const day = saleDate.getDate();
+      const seller = sellers.find(s => s.id === sale.seller_id);
+      if (!seller) return;
+      
+      if (!dailyData[day][seller.nome]) {
+        dailyData[day][seller.nome] = 0;
+      }
+      dailyData[day][seller.nome] += Number(sale.valor_mensal);
+    });
+    
+    // Transform to array format for recharts with cumulative values
+    const cumulativeData: Record<string, number> = {};
+    return Object.entries(dailyData)
+      .map(([day, sellerValues]) => {
+        const entry: Record<string, any> = { day: parseInt(day) };
+        
+        // Get top sellers by total value for the chart
+        const topSellers = sellerMetrics.slice(0, 5);
+        
+        topSellers.forEach(seller => {
+          const dailyValue = sellerValues[seller.name] || 0;
+          if (!cumulativeData[seller.name]) {
+            cumulativeData[seller.name] = 0;
+          }
+          cumulativeData[seller.name] += dailyValue;
+          entry[seller.name] = cumulativeData[seller.name];
+        });
+        
+        return entry;
+      })
+      .filter(entry => entry.day <= new Date().getDate() || currentMonth < new Date().getMonth() + 1);
+  }, [sales, sellers, sellerMetrics, currentMonth, currentYear]);
+
+  // Colors for chart lines
+  const chartColors = [
+    'hsl(var(--primary))',
+    'hsl(142, 76%, 36%)', // emerald
+    'hsl(38, 92%, 50%)',  // amber
+    'hsl(262, 83%, 58%)', // violet
+    'hsl(199, 89%, 48%)', // cyan
+  ];
 
   const handleOpenGoalsDialog = () => {
     const initial: Record<string, { sales: number; value: number }> = {};
@@ -564,6 +637,71 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
             </motion.div>
           )}
         </div>
+      )}
+
+      {/* Revenue Evolution Chart */}
+      {sellerMetrics.length > 0 && dailyRevenueData.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+        >
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <LineChartIcon className="h-5 w-5 text-primary" />
+                <CardTitle className="text-lg">Evolução do Faturamento</CardTitle>
+              </div>
+              <CardDescription>
+                Faturamento acumulado por vendedor ao longo do mês (Top 5)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={dailyRevenueData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis 
+                      dataKey="day" 
+                      tick={{ fontSize: 12 }}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `${value}`}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12 }}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => formatCurrency(value)}
+                      width={80}
+                    />
+                    <Tooltip 
+                      formatter={(value: number) => [formatCurrencyFull(value), '']}
+                      labelFormatter={(label) => `Dia ${label}`}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Legend />
+                    {sellerMetrics.slice(0, 5).map((seller, index) => (
+                      <Line
+                        key={seller.id}
+                        type="monotone"
+                        dataKey={seller.name}
+                        stroke={chartColors[index]}
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ r: 4 }}
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
       {/* Full Table */}

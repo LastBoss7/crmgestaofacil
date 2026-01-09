@@ -55,17 +55,17 @@ export function StatCard({
       )} />
       
       <div className="relative flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0 space-y-2">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <div className="flex-1 min-w-0 space-y-1.5">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">
             {title}
           </p>
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <p className="text-2xl font-bold text-foreground tracking-tight truncate">
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl font-bold text-foreground tracking-tight leading-tight truncate max-w-full">
               {value}
             </p>
             {trend && trendValue && (
               <span className={cn(
-                'text-xs font-medium',
+                'text-xs font-medium flex-shrink-0',
                 trend === 'up' && 'text-emerald-500',
                 trend === 'down' && 'text-red-500',
                 trend === 'neutral' && 'text-muted-foreground'

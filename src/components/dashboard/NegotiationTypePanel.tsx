@@ -3,10 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Wifi, Smartphone, Monitor, Package, Layers, BarChart3, PieChart } from 'lucide-react';
+import { Wifi, Smartphone, Monitor, Package, Layers, BarChart3, PieChart, RefreshCw } from 'lucide-react';
 import { format, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface NegotiationStats {
   tipo: string;
@@ -33,6 +34,8 @@ export const NegotiationTypePanel = ({ selectedDate }: NegotiationTypePanelProps
   const [stats, setStats] = useState<NegotiationStats[]>([]);
   const [total, setTotal] = useState(0);
   const [totalValue, setTotalValue] = useState(0);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [dataKey, setDataKey] = useState(0);
 
   const formatDateForQuery = (date: Date) => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -40,6 +43,7 @@ export const NegotiationTypePanel = ({ selectedDate }: NegotiationTypePanelProps
 
   const fetchStats = useCallback(async () => {
     const queryDate = formatDateForQuery(selectedDate);
+    setIsUpdating(true);
 
     const { data, error } = await supabase
       .from('sales')
@@ -73,7 +77,10 @@ export const NegotiationTypePanel = ({ selectedDate }: NegotiationTypePanelProps
       setStats(statsArray);
       setTotal(totalCount);
       setTotalValue(totalVal);
+      setDataKey(prev => prev + 1);
     }
+    
+    setTimeout(() => setIsUpdating(false), 500);
   }, [selectedDate]);
 
   useEffect(() => {
@@ -131,7 +138,11 @@ export const NegotiationTypePanel = ({ selectedDate }: NegotiationTypePanelProps
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-popover border rounded-lg shadow-lg p-3">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-popover border rounded-lg shadow-lg p-3"
+        >
           <p className="font-medium">{data.name}</p>
           <p className="text-sm text-muted-foreground">
             Quantidade: <span className="font-semibold text-foreground">{data.value}</span>
@@ -139,7 +150,7 @@ export const NegotiationTypePanel = ({ selectedDate }: NegotiationTypePanelProps
           <p className="text-sm text-muted-foreground">
             Valor: <span className="font-semibold text-green-500">{formatCurrency(data.monetaryValue)}</span>
           </p>
-        </div>
+        </motion.div>
       );
     }
     return null;
@@ -149,28 +160,82 @@ export const NegotiationTypePanel = ({ selectedDate }: NegotiationTypePanelProps
     return (
       <div className="flex flex-wrap justify-center gap-2 mt-4">
         {payload?.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center gap-1.5 text-xs">
+          <motion.div 
+            key={index} 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+            className="flex items-center gap-1.5 text-xs"
+          >
             <div 
               className="w-3 h-3 rounded-full" 
               style={{ backgroundColor: entry.color }}
             />
             <span className="text-muted-foreground">{entry.value}</span>
-          </div>
+          </motion.div>
         ))}
       </div>
     );
   };
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: { opacity: 1, x: 0 }
+  };
+
+  const numberVariants = {
+    initial: { scale: 1 },
+    pulse: { 
+      scale: [1, 1.1, 1],
+      transition: { duration: 0.3 }
+    }
+  };
+
   return (
-    <Card>
+    <Card className="relative overflow-hidden">
+      {/* Update indicator */}
+      <AnimatePresence>
+        {isUpdating && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute top-2 right-2 z-10"
+          >
+            <RefreshCw className="h-4 w-4 text-primary animate-spin" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <PieChart className="h-5 w-5" />
           Vendas por Tipo
           {isViewingToday && (
-            <Badge variant="secondary" className="ml-2 bg-green-500/10 text-green-500">
-              Tempo Real
-            </Badge>
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            >
+              <Badge variant="secondary" className="ml-2 bg-green-500/10 text-green-500">
+                <span className="relative flex h-2 w-2 mr-1">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                Tempo Real
+              </Badge>
+            </motion.div>
           )}
         </CardTitle>
         <p className="text-sm text-muted-foreground">
@@ -182,22 +247,52 @@ export const NegotiationTypePanel = ({ selectedDate }: NegotiationTypePanelProps
       </CardHeader>
       <CardContent>
         {stats.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center py-8 text-muted-foreground"
+          >
             <BarChart3 className="h-12 w-12 mb-4 opacity-50" />
             <p className="text-sm">Nenhuma venda registrada</p>
-          </div>
+          </motion.div>
         ) : (
           <>
             {/* Summary Cards */}
             <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="bg-muted/50 rounded-lg p-3 text-center">
-                <p className="text-xl font-bold">{total}</p>
+              <motion.div 
+                key={`total-${total}`}
+                variants={numberVariants}
+                initial="initial"
+                animate="pulse"
+                className="bg-muted/50 rounded-lg p-3 text-center"
+              >
+                <motion.p 
+                  key={total}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-xl font-bold"
+                >
+                  {total}
+                </motion.p>
                 <p className="text-xs text-muted-foreground">Total</p>
-              </div>
-              <div className="bg-muted/50 rounded-lg p-3 text-center">
-                <p className="text-lg font-bold text-green-500">{formatCurrency(totalValue)}</p>
+              </motion.div>
+              <motion.div 
+                key={`value-${totalValue}`}
+                variants={numberVariants}
+                initial="initial"
+                animate="pulse"
+                className="bg-muted/50 rounded-lg p-3 text-center"
+              >
+                <motion.p 
+                  key={totalValue}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-lg font-bold text-green-500"
+                >
+                  {formatCurrency(totalValue)}
+                </motion.p>
                 <p className="text-xs text-muted-foreground">Valor</p>
-              </div>
+              </motion.div>
             </div>
 
             {/* Charts with Tabs */}
@@ -214,7 +309,13 @@ export const NegotiationTypePanel = ({ selectedDate }: NegotiationTypePanelProps
               </TabsList>
 
               <TabsContent value="pie" className="mt-0">
-                <div className="h-[280px]">
+                <motion.div 
+                  key={`pie-${dataKey}`}
+                  initial={{ opacity: 0, rotate: -10 }}
+                  animate={{ opacity: 1, rotate: 0 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="h-[280px]"
+                >
                   <ResponsiveContainer width="100%" height="100%">
                     <RechartsPieChart>
                       <Pie
@@ -225,6 +326,9 @@ export const NegotiationTypePanel = ({ selectedDate }: NegotiationTypePanelProps
                         outerRadius={80}
                         paddingAngle={2}
                         dataKey="value"
+                        animationBegin={0}
+                        animationDuration={800}
+                        animationEasing="ease-out"
                       >
                         {chartData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
@@ -234,11 +338,17 @@ export const NegotiationTypePanel = ({ selectedDate }: NegotiationTypePanelProps
                       <Legend content={<CustomLegend />} />
                     </RechartsPieChart>
                   </ResponsiveContainer>
-                </div>
+                </motion.div>
               </TabsContent>
 
               <TabsContent value="bar" className="mt-0">
-                <div className="h-[280px]">
+                <motion.div 
+                  key={`bar-${dataKey}`}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="h-[280px]"
+                >
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={chartData}
@@ -255,41 +365,78 @@ export const NegotiationTypePanel = ({ selectedDate }: NegotiationTypePanelProps
                         tick={{ fontSize: 10 }}
                       />
                       <Tooltip content={<CustomTooltip />} />
-                      <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                      <Bar 
+                        dataKey="value" 
+                        radius={[0, 4, 4, 0]}
+                        animationBegin={0}
+                        animationDuration={800}
+                        animationEasing="ease-out"
+                      >
                         {chartData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
-                </div>
+                </motion.div>
               </TabsContent>
             </Tabs>
 
-            {/* Detailed List */}
-            <div className="mt-4 pt-4 border-t space-y-2">
-              {stats.slice(0, 5).map((stat, index) => (
-                <div key={stat.tipo} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <div 
-                      className="w-2.5 h-2.5 rounded-full" 
-                      style={{ backgroundColor: getTypeColor(stat.tipo, index) }}
-                    />
-                    <span className="text-muted-foreground truncate max-w-[100px]">
-                      {getTypeLabel(stat.tipo)}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="font-mono text-xs h-5">
-                      {stat.count}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {stat.percentage.toFixed(0)}%
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* Detailed List with Animations */}
+            <motion.div 
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              key={`list-${dataKey}`}
+              className="mt-4 pt-4 border-t space-y-2"
+            >
+              <AnimatePresence mode="popLayout">
+                {stats.slice(0, 5).map((stat, index) => (
+                  <motion.div 
+                    key={stat.tipo}
+                    variants={itemVariants}
+                    layout
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <motion.div 
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: index * 0.05 + 0.1, type: "spring" }}
+                        className="w-2.5 h-2.5 rounded-full" 
+                        style={{ backgroundColor: getTypeColor(stat.tipo, index) }}
+                      />
+                      <span className="text-muted-foreground truncate max-w-[100px]">
+                        {getTypeLabel(stat.tipo)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <motion.div
+                        key={`count-${stat.tipo}-${stat.count}`}
+                        initial={{ scale: 1.2, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                      >
+                        <Badge variant="secondary" className="font-mono text-xs h-5">
+                          {stat.count}
+                        </Badge>
+                      </motion.div>
+                      <motion.span 
+                        key={`pct-${stat.tipo}-${stat.percentage}`}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-xs text-muted-foreground"
+                      >
+                        {stat.percentage.toFixed(0)}%
+                      </motion.span>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
           </>
         )}
       </CardContent>

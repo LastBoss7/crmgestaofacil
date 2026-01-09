@@ -29,6 +29,7 @@ import { usePresence } from '@/hooks/usePresence';
 import { OnlineUsersDrawer } from '@/components/presence/OnlineUsersDrawer';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useUnreadFeedbacks } from '@/hooks/useUnreadFeedbacks';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -72,6 +73,7 @@ const Sidebar = () => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const { isOnline, onlineCount, sessionDuration } = usePresence();
   const { isSuperAdmin } = useSuperAdmin();
+  const { unreadCount: unreadFeedbacksCount } = useUnreadFeedbacks();
 
   useEffect(() => {
     const fetchSalesStats = async () => {
@@ -121,7 +123,7 @@ const Sidebar = () => {
     ...(isBackoffice ? [{ name: 'Minha Equipe', href: '/minha-equipe', icon: BarChart3 }] : []),
     ...(isCEO || isBackoffice ? [{ name: 'Monitoramento', href: '/monitoramento', icon: Activity }] : []),
     ...(isCEO || isBackoffice ? [{ name: 'Pausas', href: '/pausas', icon: Clock }] : []),
-    { name: 'Feedbacks', href: '/feedbacks', icon: MessageSquareText },
+    { name: 'Feedbacks', href: '/feedbacks', icon: MessageSquareText, badge: unreadFeedbacksCount > 0 ? unreadFeedbacksCount : undefined },
     ...(isCEO ? [{ name: 'Monitor Chats', href: '/monitor-chats', icon: MessageSquare }] : []),
     ...(isCEO ? [{ name: 'Convites', href: '/equipe/convites', icon: UserPlus2 }] : []),
     ...(isCEO ? [{ name: 'Configurações', href: '/configuracoes', icon: Cog }] : []),

@@ -7,7 +7,10 @@ import {
   CheckCircle2, 
   Calendar, 
   Zap, 
-  XCircle 
+  XCircle,
+  Send,
+  Headphones,
+  Unplug
 } from 'lucide-react';
 
 interface StatusBadgeProps {
@@ -56,6 +59,21 @@ const statusConfig: Record<SaleStatus, {
     className: 'status-cancelada',
     icon: XCircle,
     gradient: 'from-red-500/20 to-red-600/10'
+  },
+  ACEITE_ENVIADO: { 
+    className: 'status-aceite_enviado',
+    icon: Send,
+    gradient: 'from-teal-500/20 to-teal-600/10'
+  },
+  CHAMADO_EM_ABERTO: { 
+    className: 'status-chamado_em_aberto',
+    icon: Headphones,
+    gradient: 'from-indigo-500/20 to-indigo-600/10'
+  },
+  DESCONECTADO: { 
+    className: 'status-desconectado',
+    icon: Unplug,
+    gradient: 'from-gray-500/20 to-gray-600/10'
   },
 };
 

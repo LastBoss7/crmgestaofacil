@@ -52,11 +52,11 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
   const getAvailableStatuses = (): SaleStatus[] => {
     if (isCEO) {
       // CEO pode fazer tudo
-      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA'];
+      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO'];
     }
     if (isBackoffice) {
       // Backoffice analisa, aprova ou devolve
-      return ['AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'CANCELADA'];
+      return ['AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO'];
     }
     if (isSeller && isOwner) {
       // Vendedor só pode colocar em auditoria (submeter para aprovação)

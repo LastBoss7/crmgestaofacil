@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Send, Users } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Send, Users, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePresence } from '@/hooks/usePresence';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Team } from '@/types/database';
 
 interface TeamMessage {
   id: string;
@@ -17,6 +19,7 @@ interface TeamMessage {
   user_role: string;
   message: string;
   created_at: string;
+  team_id: string | null;
 }
 
 interface TeamChatProps {
@@ -29,10 +32,36 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [userAvatars, setUserAvatars] = useState<Record<string, string | null>>({});
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  const { setTyping, getTypingUsers, onlineUsers } = usePresence('team-chat');
-  const typingUsers = getTypingUsers('team-chat').filter(u => u.user_id !== user?.id);
+  const presenceContext = selectedTeamId === 'all' ? 'team-chat' : `team-chat-${selectedTeamId}`;
+  const { setTyping, getTypingUsers } = usePresence(presenceContext);
+  const typingUsers = getTypingUsers(presenceContext).filter(u => u.user_id !== user?.id);
+
+  // Fetch teams
+  useEffect(() => {
+    if (!companyId) return;
+
+    const fetchTeams = async () => {
+      const { data } = await supabase
+        .from('teams')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('name');
+
+      if (data) {
+        setTeams(data as Team[]);
+        // If user has a team, auto-select it
+        if (profile?.team_id) {
+          setSelectedTeamId(profile.team_id);
+        }
+      }
+    };
+
+    fetchTeams();
+  }, [companyId, profile?.team_id]);
 
   // Fetch user avatars
   useEffect(() => {
@@ -59,12 +88,22 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
     if (!companyId) return;
 
     const fetchMessages = async () => {
-      const { data, error } = await supabase
+      setLoading(true);
+      let query = supabase
         .from('team_messages')
         .select('*')
         .eq('company_id', companyId)
         .order('created_at', { ascending: true })
         .limit(100);
+
+      // Filter by team if selected
+      if (selectedTeamId === 'all') {
+        query = query.is('team_id', null);
+      } else {
+        query = query.eq('team_id', selectedTeamId);
+      }
+
+      const { data, error } = await query;
 
       if (!error && data) {
         setMessages(data);
@@ -75,18 +114,30 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
     fetchMessages();
 
     // Subscribe to new messages
+    const channelName = selectedTeamId === 'all' 
+      ? 'team-chat-messages-all'
+      : `team-chat-messages-${selectedTeamId}`;
+    
     const channel = supabase
-      .channel('team-chat-messages')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'team_messages',
-          filter: `company_id=eq.${companyId}`,
+          filter: selectedTeamId === 'all' 
+            ? `company_id=eq.${companyId}`
+            : `team_id=eq.${selectedTeamId}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as TeamMessage]);
+          const newMsg = payload.new as TeamMessage;
+          // Only add if matches current filter
+          if (selectedTeamId === 'all' && newMsg.team_id === null) {
+            setMessages((prev) => [...prev, newMsg]);
+          } else if (selectedTeamId !== 'all' && newMsg.team_id === selectedTeamId) {
+            setMessages((prev) => [...prev, newMsg]);
+          }
         }
       )
       .subscribe();
@@ -94,7 +145,7 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [companyId]);
+  }, [companyId, selectedTeamId]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -105,24 +156,31 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
   const handleInputChange = useCallback((value: string) => {
     setNewMessage(value);
     if (value.trim()) {
-      setTyping(true, 'team-chat');
+      setTyping(true, presenceContext);
     } else {
       setTyping(false);
     }
-  }, [setTyping]);
+  }, [setTyping, presenceContext]);
 
   const handleSend = async () => {
     if (!newMessage.trim() || !companyId || !user || !profile || !role) return;
 
     setTyping(false);
 
-    const { error } = await supabase.from('team_messages').insert({
+    const messageData: any = {
       company_id: companyId,
       user_id: user.id,
       user_name: profile.nome,
       user_role: role,
       message: newMessage.trim(),
-    });
+    };
+
+    // Add team_id if sending to specific team
+    if (selectedTeamId !== 'all') {
+      messageData.team_id = selectedTeamId;
+    }
+
+    const { error } = await supabase.from('team_messages').insert(messageData);
 
     if (error) {
       toast.error('Erro ao enviar mensagem');
@@ -156,6 +214,12 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
     return styles[userRole] || 'bg-muted text-muted-foreground';
   };
 
+  const getSelectedTeamName = () => {
+    if (selectedTeamId === 'all') return 'Toda Empresa';
+    const team = teams.find(t => t.id === selectedTeamId);
+    return team?.name || 'Equipe';
+  };
+
   if (!companyId) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8">
@@ -170,6 +234,41 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Team Selector */}
+      <div className="px-4 py-3 border-b border-border/50 bg-muted/30">
+        <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+          <SelectTrigger className="w-full h-9 bg-background">
+            {selectedTeamId === 'all' ? (
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-primary" />
+                <span>Toda Empresa</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" />
+                <span>{getSelectedTeamName()}</span>
+              </div>
+            )}
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                <span>Toda Empresa</span>
+              </div>
+            </SelectItem>
+            {teams.map((team) => (
+              <SelectItem key={team.id} value={team.id}>
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  <span>{team.name}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <ScrollArea className="flex-1 px-4 py-4" ref={scrollRef}>
         {loading ? (
           <div className="flex items-center justify-center py-12">
@@ -181,7 +280,12 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
               <Users className="h-6 w-6" />
             </div>
             <p className="text-sm font-medium">Nenhuma mensagem</p>
-            <p className="text-xs text-muted-foreground/70">Seja o primeiro a enviar!</p>
+            <p className="text-xs text-muted-foreground/70">
+              {selectedTeamId === 'all' 
+                ? 'Seja o primeiro a enviar para toda empresa!'
+                : `Seja o primeiro a enviar para ${getSelectedTeamName()}!`
+              }
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -296,7 +400,7 @@ export const TeamChat = ({ companyId }: TeamChatProps) => {
           className="flex gap-2"
         >
           <Input
-            placeholder="Escreva uma mensagem..."
+            placeholder={`Mensagem para ${selectedTeamId === 'all' ? 'toda empresa' : getSelectedTeamName()}...`}
             value={newMessage}
             onChange={(e) => handleInputChange(e.target.value)}
             onBlur={() => setTyping(false)}

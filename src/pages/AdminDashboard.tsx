@@ -257,43 +257,49 @@ const AdminDashboard = () => {
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Total Empresas
               </CardTitle>
-              <Building2 className="h-4 w-4 text-primary" />
+              <div className="flex-shrink-0 p-2 rounded-lg bg-gradient-to-br from-primary to-purple-600">
+                <Building2 className="h-4 w-4 text-white" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totals.companies}</div>
-              <p className="text-xs text-muted-foreground mt-1">cadastradas na plataforma</p>
+            <CardContent className="pt-2">
+              <p className="text-2xl font-bold text-foreground truncate">{totals.companies}</p>
+              <p className="text-xs text-muted-foreground mt-1 truncate">cadastradas na plataforma</p>
             </CardContent>
           </Card>
 
           <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Total Usuários
               </CardTitle>
-              <Users className="h-4 w-4 text-emerald-500" />
+              <div className="flex-shrink-0 p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600">
+                <Users className="h-4 w-4 text-white" />
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totals.users}</div>
-              <p className="text-xs text-muted-foreground mt-1">em todas as empresas</p>
+            <CardContent className="pt-2">
+              <p className="text-2xl font-bold text-foreground truncate">{totals.users}</p>
+              <p className="text-xs text-muted-foreground mt-1 truncate">em todas as empresas</p>
             </CardContent>
           </Card>
 
           <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 Códigos de Convite
               </CardTitle>
-              <Ticket className="h-4 w-4 text-purple-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {inviteCodes?.filter(c => !c.used_at && c.is_active).length || 0}
+              <div className="flex-shrink-0 p-2 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600">
+                <Ticket className="h-4 w-4 text-white" />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">disponíveis para uso</p>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <p className="text-2xl font-bold text-foreground truncate">
+                {inviteCodes?.filter(c => !c.used_at && c.is_active).length || 0}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 truncate">disponíveis para uso</p>
             </CardContent>
           </Card>
         </div>
@@ -589,9 +595,11 @@ const AdminDashboard = () => {
 
               <div className="border-t border-border pt-4">
                 <h4 className="font-medium mb-3">Estatísticas</h4>
-                <div className="text-center p-4 rounded-lg bg-secondary/50">
-                  <Users className="h-6 w-6 mx-auto text-primary mb-2" />
-                  <p className="text-3xl font-bold">{selectedCompany.users_count}</p>
+                <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-secondary/50">
+                  <div className="flex-shrink-0 p-2.5 rounded-lg bg-gradient-to-br from-primary to-purple-600 mb-2">
+                    <Users className="h-5 w-5 text-white" />
+                  </div>
+                  <p className="text-3xl font-bold text-foreground">{selectedCompany.users_count}</p>
                   <p className="text-sm text-muted-foreground">Usuários cadastrados</p>
                 </div>
               </div>

@@ -104,6 +104,47 @@ export type Database = {
         }
         Relationships: []
       }
+      company_invite_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          used_at: string | null
+          used_by_company_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          used_at?: string | null
+          used_by_company_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          used_at?: string | null
+          used_by_company_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_invite_codes_used_by_company_id_fkey"
+            columns: ["used_by_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       direct_messages: {
         Row: {
           company_id: string
@@ -795,8 +836,16 @@ export type Database = {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
+      use_company_invite_code: {
+        Args: { company_id: string; invite_code: string }
+        Returns: boolean
+      }
       user_belongs_to_company: {
         Args: { _company_id: string; _user_id: string }
+        Returns: boolean
+      }
+      validate_company_invite_code: {
+        Args: { invite_code: string }
         Returns: boolean
       }
     }

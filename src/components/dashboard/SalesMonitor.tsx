@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,13 +6,16 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Activity, TrendingUp, Clock, Users, Zap, AlertTriangle, CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Activity, TrendingUp, Clock, Users, Zap, AlertTriangle, CalendarIcon, ChevronLeft, ChevronRight, Volume2, VolumeX } from 'lucide-react';
 import { SALE_STATUS_LABELS, SaleStatus } from '@/types/database';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, isToday, subDays, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { NegotiationTypePanel } from './NegotiationTypePanel';
+import { useNotificationSound } from '@/hooks/useNotificationSound';
+import { toast } from 'sonner';
 
 interface RealtimeSale {
   id: string;
@@ -45,6 +48,10 @@ export const SalesMonitor = () => {
   const [isLive, setIsLive] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const previousSalesCount = useRef<number>(0);
+  const isInitialLoad = useRef(true);
+  const { playSound } = useNotificationSound();
 
   const formatDateForQuery = (date: Date) => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -127,13 +134,43 @@ export const SalesMonitor = () => {
         .channel('sales-monitor')
         .on(
           'postgres_changes',
-          { event: '*', schema: 'public', table: 'sales' },
+          { event: 'INSERT', schema: 'public', table: 'sales' },
+          (payload) => {
+            // New sale detected
+            if (soundEnabled && !isInitialLoad.current) {
+              playSound('sale');
+              const newSale = payload.new as any;
+              toast.success('Nova venda registrada!', {
+                description: `${newSale.nome_fantasia || newSale.razao_social}`,
+                duration: 4000,
+              });
+            }
+            fetchStats();
+            setIsLive(true);
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'sales' },
+          () => {
+            fetchStats();
+            setIsLive(true);
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'DELETE', schema: 'public', table: 'sales' },
           () => {
             fetchStats();
             setIsLive(true);
           }
         )
         .subscribe();
+
+      // Mark initial load as complete after first fetch
+      setTimeout(() => {
+        isInitialLoad.current = false;
+      }, 2000);
 
       // Refresh every 30 seconds when viewing today
       const interval = setInterval(fetchStats, 30000);
@@ -143,7 +180,15 @@ export const SalesMonitor = () => {
         clearInterval(interval);
       };
     }
-  }, [fetchStats, selectedDate]);
+  }, [fetchStats, selectedDate, soundEnabled, playSound]);
+
+  // Reset initial load flag when date changes
+  useEffect(() => {
+    isInitialLoad.current = true;
+    setTimeout(() => {
+      isInitialLoad.current = false;
+    }, 2000);
+  }, [selectedDate]);
 
   const handlePreviousDay = () => {
     setSelectedDate(prev => subDays(prev, 1));
@@ -207,6 +252,30 @@ export const SalesMonitor = () => {
               : 'Visualizando histórico'
             }
           </span>
+          
+          {/* Sound toggle */}
+          {isViewingToday && (
+            <div className="flex items-center gap-2 ml-4 pl-4 border-l">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                className={cn(
+                  "h-8 px-2 gap-1.5",
+                  soundEnabled ? "text-green-500" : "text-muted-foreground"
+                )}
+              >
+                {soundEnabled ? (
+                  <Volume2 className="h-4 w-4" />
+                ) : (
+                  <VolumeX className="h-4 w-4" />
+                )}
+                <span className="text-xs hidden sm:inline">
+                  {soundEnabled ? 'Som ativo' : 'Som mudo'}
+                </span>
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Date Filter */}

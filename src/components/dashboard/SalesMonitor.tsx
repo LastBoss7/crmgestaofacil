@@ -182,6 +182,9 @@ export const SalesMonitor = () => {
       INSTALACAO_MARCADA: 'bg-purple-500/20 text-purple-400',
       INSTALADA: 'bg-emerald-500/20 text-emerald-400',
       CANCELADA: 'bg-red-500/20 text-red-400',
+      ACEITE_ENVIADO: 'bg-teal-500/20 text-teal-400',
+      CHAMADO_EM_ABERTO: 'bg-indigo-500/20 text-indigo-400',
+      DESCONECTADO: 'bg-gray-500/20 text-gray-400',
     };
     return colors[status];
   };

@@ -55,6 +55,9 @@ const STATUS_COLORS: Record<SaleStatus, string> = {
   INSTALACAO_MARCADA: '#06B6D4',
   INSTALADA: '#14B8A6',
   CANCELADA: '#EF4444',
+  ACEITE_ENVIADO: '#14B8A6',
+  CHAMADO_EM_ABERTO: '#6366F1',
+  DESCONECTADO: '#6B7280',
 };
 
 const Reports = () => {
@@ -138,7 +141,7 @@ const Reports = () => {
   // Sales by status for pie chart
   const statusData = useMemo(() => {
     const counts: Record<SaleStatus, number> = {
-      PRE_ANALISE: 0, AGUARDANDO_AUDITORIA: 0, PENDENCIA: 0, VENDA_AUDITADA: 0, INSTALACAO_MARCADA: 0, INSTALADA: 0, CANCELADA: 0
+      PRE_ANALISE: 0, AGUARDANDO_AUDITORIA: 0, PENDENCIA: 0, VENDA_AUDITADA: 0, INSTALACAO_MARCADA: 0, INSTALADA: 0, CANCELADA: 0, ACEITE_ENVIADO: 0, CHAMADO_EM_ABERTO: 0, DESCONECTADO: 0
     };
     
     filteredSales.forEach(s => {

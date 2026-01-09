@@ -41,9 +41,12 @@ const STATUS_BADGE_STYLES: Record<SaleStatus, { bg: string; text: string; label:
   INSTALACAO_MARCADA: { bg: 'bg-cyan-50 dark:bg-cyan-500/10', text: 'text-cyan-600 dark:text-cyan-400', label: 'Inst. Marcada' },
   INSTALADA: { bg: 'bg-violet-50 dark:bg-violet-500/10', text: 'text-violet-600 dark:text-violet-400', label: 'Instalada' },
   CANCELADA: { bg: 'bg-gray-50 dark:bg-gray-500/10', text: 'text-gray-500 dark:text-gray-400', label: 'Cancelada' },
+  ACEITE_ENVIADO: { bg: 'bg-teal-50 dark:bg-teal-500/10', text: 'text-teal-600 dark:text-teal-400', label: 'Aceite Enviado' },
+  CHAMADO_EM_ABERTO: { bg: 'bg-indigo-50 dark:bg-indigo-500/10', text: 'text-indigo-600 dark:text-indigo-400', label: 'Chamado Aberto' },
+  DESCONECTADO: { bg: 'bg-slate-50 dark:bg-slate-500/10', text: 'text-slate-600 dark:text-slate-400', label: 'Desconectado' },
 };
 
-const ALL_STATUSES: SaleStatus[] = ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA'];
+const ALL_STATUSES: SaleStatus[] = ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO'];
 
 const Dashboard = () => {
   const navigate = useNavigate();

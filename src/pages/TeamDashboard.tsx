@@ -53,6 +53,9 @@ const STATUS_COLORS: Record<SaleStatus, string> = {
   INSTALACAO_MARCADA: '#06B6D4',
   INSTALADA: '#8B5CF6',
   CANCELADA: '#EF4444',
+  ACEITE_ENVIADO: '#14B8A6',
+  CHAMADO_EM_ABERTO: '#6366F1',
+  DESCONECTADO: '#6B7280',
 };
 
 interface TeamMemberMetrics {

@@ -808,6 +808,9 @@ export type Database = {
         | "INSTALACAO_MARCADA"
         | "INSTALADA"
         | "CANCELADA"
+        | "ACEITE_ENVIADO"
+        | "CHAMADO_EM_ABERTO"
+        | "DESCONECTADO"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -951,6 +954,9 @@ export const Constants = {
         "INSTALACAO_MARCADA",
         "INSTALADA",
         "CANCELADA",
+        "ACEITE_ENVIADO",
+        "CHAMADO_EM_ABERTO",
+        "DESCONECTADO",
       ],
     },
   },

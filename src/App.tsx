@@ -24,6 +24,7 @@ import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
 import Feedbacks from "./pages/Feedbacks";
+import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -182,6 +183,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Feedbacks />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/onboarding"
+        element={
+          <ProtectedRoute>
+            <Onboarding />
           </ProtectedRoute>
         }
       />

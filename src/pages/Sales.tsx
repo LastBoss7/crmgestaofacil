@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { SaleComments } from '@/components/sales/SaleComments';
 import { SaleStatusActions } from '@/components/sales/SaleStatusActions';
 import { SaleForm } from '@/components/sales/SaleForm';
+import { PendingSalesAlert } from '@/components/sales/PendingSalesAlert';
 import { exportToExcel, exportToPDF, getPeriodLabel } from '@/lib/export-utils';
 import {
   Select,
@@ -52,7 +53,7 @@ interface SaleWithSeller extends Sale {
 
 const Sales = () => {
   const navigate = useNavigate();
-  const { user, profile, isSeller } = useAuth();
+  const { user, profile, isSeller, isCEO, isBackoffice } = useAuth();
   const [sales, setSales] = useState<SaleWithSeller[]>([]);
   const [sellers, setSellers] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
@@ -293,6 +294,11 @@ const Sales = () => {
             </Dialog>
           </div>
         </div>
+
+        {/* Pending Sales Alert - Only for CEO and Backoffice */}
+        {(isCEO || isBackoffice) && !loading && (
+          <PendingSalesAlert sales={sales} />
+        )}
 
         {/* Filters */}
         <Card className="shadow-card">

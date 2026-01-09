@@ -849,6 +849,7 @@ export type Database = {
           created_at: string
           id: string
           message: string
+          team_id: string | null
           user_id: string
           user_name: string
           user_role: string
@@ -858,6 +859,7 @@ export type Database = {
           created_at?: string
           id?: string
           message: string
+          team_id?: string | null
           user_id: string
           user_name: string
           user_role: string
@@ -867,6 +869,7 @@ export type Database = {
           created_at?: string
           id?: string
           message?: string
+          team_id?: string | null
           user_id?: string
           user_name?: string
           user_role?: string
@@ -877,6 +880,13 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_messages_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]

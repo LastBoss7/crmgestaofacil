@@ -18,7 +18,9 @@ import {
   Clock,
   ShieldCheck,
   MessageSquareText,
-  Wifi
+  Wifi,
+  Target,
+  PhoneCall
 } from 'lucide-react';
 import { ROLE_LABELS } from '@/types/database';
 import { useState, useEffect } from 'react';
@@ -114,6 +116,8 @@ const Sidebar = () => {
   const mainNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Vendas', href: '/vendas', icon: ShoppingBag, badge: salesStats.total > 0 ? salesStats.total : undefined },
+    { name: 'Campanhas', href: '/campanhas', icon: Target },
+    { name: 'Retornos', href: '/retornos', icon: PhoneCall },
     { name: 'Relatórios', href: '/relatorios', icon: PieChart },
     { name: 'Banda Larga', href: '/relatorios/banda-larga', icon: Wifi },
   ];

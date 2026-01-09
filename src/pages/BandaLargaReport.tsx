@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Wifi, 
   Monitor, 
@@ -19,7 +20,9 @@ import {
   ChevronRight,
   BarChart3,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  User,
+  Users
 } from 'lucide-react';
 import { format, isToday, subDays, addDays, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -52,6 +55,11 @@ interface DailyData {
   total: number;
 }
 
+interface Seller {
+  id: string;
+  nome: string;
+}
+
 const NEGOTIATION_TYPES = [
   { key: 'Banda Larga', label: 'Banda Larga', icon: Wifi, color: '#3b82f6' },
   { key: 'BL Solo', label: 'BL Solo', icon: Monitor, color: '#06b6d4' },
@@ -64,6 +72,8 @@ const FALLBACK_COLORS = ['#3b82f6', '#06b6d4', '#a855f7', '#f97316', '#10b981', 
 
 const BandaLargaReport = () => {
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  const [selectedSeller, setSelectedSeller] = useState<string>('all');
+  const [sellers, setSellers] = useState<Seller[]>([]);
   const [stats, setStats] = useState<NegotiationStats[]>([]);
   const [dailyData, setDailyData] = useState<DailyData[]>([]);
   const [total, setTotal] = useState(0);
@@ -72,17 +82,39 @@ const BandaLargaReport = () => {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Fetch sellers list
+  useEffect(() => {
+    const fetchSellers = async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, nome')
+        .eq('active', true)
+        .order('nome');
+      
+      if (data) {
+        setSellers(data);
+      }
+    };
+    fetchSellers();
+  }, []);
+
   const fetchStats = useCallback(async () => {
     setIsLoading(true);
     const monthStart = format(startOfMonth(selectedMonth), 'yyyy-MM-dd');
     const monthEnd = format(endOfMonth(selectedMonth), 'yyyy-MM-dd');
 
-    // Fetch current month data
-    const { data, error } = await supabase
+    // Build query with optional seller filter
+    let query = supabase
       .from('sales')
-      .select('tipo_negociacao, valor_mensal, data_venda')
+      .select('tipo_negociacao, valor_mensal, data_venda, seller_id')
       .gte('data_venda', monthStart)
       .lte('data_venda', monthEnd);
+    
+    if (selectedSeller !== 'all') {
+      query = query.eq('seller_id', selectedSeller);
+    }
+
+    const { data, error } = await query;
 
     if (!error && data) {
       // Group by type
@@ -138,15 +170,21 @@ const BandaLargaReport = () => {
       setDailyData(dailyArray);
     }
 
-    // Fetch previous month for comparison
+    // Fetch previous month for comparison (with same seller filter)
     const prevMonthStart = format(startOfMonth(subMonths(selectedMonth, 1)), 'yyyy-MM-dd');
     const prevMonthEnd = format(endOfMonth(subMonths(selectedMonth, 1)), 'yyyy-MM-dd');
 
-    const { data: prevData } = await supabase
+    let prevQuery = supabase
       .from('sales')
       .select('valor_mensal')
       .gte('data_venda', prevMonthStart)
       .lte('data_venda', prevMonthEnd);
+    
+    if (selectedSeller !== 'all') {
+      prevQuery = prevQuery.eq('seller_id', selectedSeller);
+    }
+
+    const { data: prevData } = await prevQuery;
 
     if (prevData) {
       setPreviousMonthStats({
@@ -156,7 +194,7 @@ const BandaLargaReport = () => {
     }
 
     setIsLoading(false);
-  }, [selectedMonth]);
+  }, [selectedMonth, selectedSeller]);
 
   useEffect(() => {
     fetchStats();
@@ -243,8 +281,30 @@ const BandaLargaReport = () => {
             </p>
           </div>
 
-          {/* Month Selector */}
-          <div className="flex items-center gap-2">
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Seller Filter */}
+            <Select value={selectedSeller} onValueChange={setSelectedSeller}>
+              <SelectTrigger className="w-[180px]">
+                <User className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Vendedor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Todos os vendedores
+                  </div>
+                </SelectItem>
+                {sellers.map((seller) => (
+                  <SelectItem key={seller.id} value={seller.id}>
+                    {seller.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Month Selector */}
             <Button 
               variant="outline" 
               size="icon" 

@@ -22,6 +22,16 @@ const formatDate = (date: string) => {
   }).format(new Date(date));
 };
 
+const formatDateTime = (date: string) => {
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(date));
+};
+
 export const exportToExcel = (
   sales: ExportSale[],
   sellers: Record<string, Profile>,
@@ -153,4 +163,106 @@ export const filterByPeriod = <T extends { created_at: string }>(
 export const getPeriodLabel = (period: PeriodFilter): string => {
   const option = PERIOD_OPTIONS.find(o => o.value === period);
   return option?.label || 'Todo período';
+};
+
+// Feedback export types
+export interface ExportFeedback {
+  id: string;
+  title: string;
+  message: string;
+  created_by_name: string;
+  seller_name?: string;
+  created_at: string;
+  read_at: string | null;
+}
+
+export const exportFeedbacksToExcel = (
+  feedbacks: ExportFeedback[],
+  filename: string = 'relatorio-feedbacks'
+) => {
+  const data = feedbacks.map((feedback) => ({
+    'Data': formatDateTime(feedback.created_at),
+    'Título': feedback.title,
+    'Mensagem': feedback.message,
+    'Enviado por': feedback.created_by_name,
+    'Vendedor': feedback.seller_name || '-',
+    'Status': feedback.read_at ? 'Lido' : 'Não lido',
+    'Lido em': feedback.read_at ? formatDateTime(feedback.read_at) : '-',
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(data);
+  
+  // Set column widths
+  ws['!cols'] = [
+    { wch: 18 }, // Data
+    { wch: 30 }, // Título
+    { wch: 60 }, // Mensagem
+    { wch: 25 }, // Enviado por
+    { wch: 25 }, // Vendedor
+    { wch: 12 }, // Status
+    { wch: 18 }, // Lido em
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Feedbacks');
+  
+  XLSX.writeFile(wb, `${filename}.xlsx`);
+};
+
+export const exportFeedbacksToPDF = (
+  feedbacks: ExportFeedback[],
+  filterDescription: string,
+  filename: string = 'relatorio-feedbacks'
+) => {
+  const doc = new jsPDF('landscape');
+  
+  // Title
+  doc.setFontSize(18);
+  doc.text('Relatório de Feedbacks', 14, 20);
+  
+  // Filter info
+  doc.setFontSize(11);
+  doc.setTextColor(100);
+  doc.text(`Filtros: ${filterDescription}`, 14, 28);
+  doc.text(`Gerado em: ${formatDateTime(new Date().toISOString())}`, 14, 34);
+  
+  // Summary
+  const totalFeedbacks = feedbacks.length;
+  const lidos = feedbacks.filter(f => f.read_at).length;
+  const naoLidos = feedbacks.filter(f => !f.read_at).length;
+  
+  doc.setTextColor(0);
+  doc.setFontSize(10);
+  doc.text(`Total de Feedbacks: ${totalFeedbacks}`, 14, 42);
+  doc.text(`Lidos: ${lidos}`, 80, 42);
+  doc.text(`Não lidos: ${naoLidos}`, 130, 42);
+  
+  // Table
+  const tableData = feedbacks.map((feedback) => [
+    formatDateTime(feedback.created_at),
+    feedback.title.substring(0, 30),
+    feedback.message.substring(0, 50) + (feedback.message.length > 50 ? '...' : ''),
+    feedback.created_by_name,
+    feedback.seller_name || '-',
+    feedback.read_at ? 'Lido' : 'Não lido',
+  ]);
+
+  autoTable(doc, {
+    startY: 48,
+    head: [['Data', 'Título', 'Mensagem', 'Enviado por', 'Vendedor', 'Status']],
+    body: tableData,
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [139, 92, 246] },
+    alternateRowStyles: { fillColor: [245, 245, 245] },
+    columnStyles: {
+      0: { cellWidth: 35 },
+      1: { cellWidth: 45 },
+      2: { cellWidth: 80 },
+      3: { cellWidth: 35 },
+      4: { cellWidth: 35 },
+      5: { cellWidth: 25 },
+    },
+  });
+  
+  doc.save(`${filename}.pdf`);
 };

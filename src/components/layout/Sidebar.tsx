@@ -7,7 +7,6 @@ import {
   Users2, 
   LogOut, 
   PieChart, 
-  UserPlus2, 
   Cog,
   Plus,
   UserCircle,

@@ -824,6 +824,7 @@ export type Database = {
     }
     Functions: {
       cnpj_exists: { Args: { check_cnpj: string }; Returns: boolean }
+      get_user_company_id: { Args: { _user_id?: string }; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -839,6 +840,10 @@ export type Database = {
       is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
       is_team_supervisor: {
         Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_belongs_to_company: {
+        Args: { _company_id: string; _user_id: string }
         Returns: boolean
       }
     }

@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { SaleComments } from '@/components/sales/SaleComments';
 import { SaleStatusActions } from '@/components/sales/SaleStatusActions';
 import { SaleForm } from '@/components/sales/SaleForm';
+import { SaleDetails } from '@/components/sales/SaleDetails';
 import { PendingSalesAlert } from '@/components/sales/PendingSalesAlert';
 import { exportToExcel, exportToPDF, getPeriodLabel } from '@/lib/export-utils';
 import {
@@ -415,59 +416,20 @@ const Sales = () => {
 
         {/* Sale Detail Dialog */}
         <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Detalhes da Venda</DialogTitle>
               <DialogDescription>
-                {selectedSale?.nome_fantasia || selectedSale?.razao_social}
+                Informações completas da venda
               </DialogDescription>
             </DialogHeader>
             {selectedSale && (
               <div className="space-y-6">
-                {/* Sale Info */}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label className="text-muted-foreground">CNPJ</Label>
-                    <p className="font-medium">{selectedSale.cnpj_cliente}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Razão Social</Label>
-                    <p className="font-medium">{selectedSale.razao_social}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Nome Fantasia</Label>
-                    <p className="font-medium">{selectedSale.nome_fantasia || '-'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Contato</Label>
-                    <p className="font-medium">{selectedSale.contato_responsavel || '-'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Telefone</Label>
-                    <p className="font-medium">{selectedSale.telefone_responsavel || '-'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-muted-foreground">Valor Mensal</Label>
-                    <p className="font-medium text-lg">{formatCurrency(Number(selectedSale.valor_mensal))}</p>
-                  </div>
-                </div>
-
-                <div>
-                  <Label className="text-muted-foreground">Produtos/Serviços</Label>
-                  <p className="font-medium">{selectedSale.produtos || '-'}</p>
-                </div>
-
-                <div>
-                  <Label className="text-muted-foreground">Observações do Vendedor</Label>
-                  <p className="font-medium">{selectedSale.observacoes_vendedor || '-'}</p>
-                </div>
-
-                {selectedSale.motivo_pendencia && (
-                  <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 p-4">
-                    <Label className="text-orange-400">Motivo da Pendência</Label>
-                    <p className="text-orange-300">{selectedSale.motivo_pendencia}</p>
-                  </div>
-                )}
+                {/* Complete Sale Details */}
+                <SaleDetails 
+                  sale={selectedSale} 
+                  seller={selectedSale.seller_id ? sellers[selectedSale.seller_id] : undefined}
+                />
 
                 {/* Documents Section */}
                 <div className="space-y-3">

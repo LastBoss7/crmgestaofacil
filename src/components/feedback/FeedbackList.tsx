@@ -243,7 +243,10 @@ export function FeedbackList({ refreshTrigger, filters }: FeedbackListProps) {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        {isSeller ? `De: ${feedback.created_by_name}` : `Para: ${feedback.seller_name}`}
+                        De: <span className="font-medium text-foreground/70">{feedback.created_by_name}</span>
+                        {(isBackoffice || isCEO) && feedback.seller_name && (
+                          <> → Para: <span className="font-medium text-foreground/70">{feedback.seller_name}</span></>
+                        )}
                         {' • '}
                         {format(new Date(feedback.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                       </p>

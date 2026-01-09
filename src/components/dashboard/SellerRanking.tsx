@@ -220,7 +220,7 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
 
     return Object.values(metricsMap)
       .filter(m => m.totalSales > 0 || goals.some(g => g.seller_id === m.id))
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => b.totalValue - a.totalValue);
   }, [sales, sellers, goals, currentMonth, currentYear]);
 
   const handleOpenGoalsDialog = () => {
@@ -476,7 +476,7 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
                     <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gray-400 flex items-center justify-center text-[10px] text-white font-bold">2</div>
                   </div>
                   <h3 className="text-sm font-semibold text-foreground truncate max-w-full">{top3[1].name}</h3>
-                  <p className={cn("text-lg font-bold", getScoreColor(top3[1].score))}>{top3[1].score} pts</p>
+                  <p className="text-lg font-bold text-emerald-500">{formatCurrency(top3[1].totalValue)}</p>
                   <div className="w-full mt-2">
                     <div className="flex justify-between text-[10px] mb-1">
                       <span className="text-muted-foreground">Meta</span>
@@ -509,7 +509,7 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
                     <Crown className="absolute -top-2 -right-1 h-5 w-5 text-yellow-500" />
                   </div>
                   <h3 className="text-sm font-bold text-foreground truncate max-w-full">{top3[0].name}</h3>
-                  <p className={cn("text-xl font-bold", getScoreColor(top3[0].score))}>{top3[0].score} pts</p>
+                  <p className="text-xl font-bold text-emerald-500">{formatCurrency(top3[0].totalValue)}</p>
                   <div className="w-full mt-2 space-y-1.5">
                     <div>
                       <div className="flex justify-between text-[10px] mb-0.5">
@@ -551,7 +551,7 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
                     <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-amber-600 flex items-center justify-center text-[10px] text-white font-bold">3</div>
                   </div>
                   <h3 className="text-sm font-semibold text-foreground truncate max-w-full">{top3[2].name}</h3>
-                  <p className={cn("text-lg font-bold", getScoreColor(top3[2].score))}>{top3[2].score} pts</p>
+                  <p className="text-lg font-bold text-emerald-500">{formatCurrency(top3[2].totalValue)}</p>
                   <div className="w-full mt-2">
                     <div className="flex justify-between text-[10px] mb-1">
                       <span className="text-muted-foreground">Meta</span>

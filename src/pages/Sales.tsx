@@ -5,7 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
-import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X } from 'lucide-react';
+import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X, Printer } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ import { SaleStatusActions } from '@/components/sales/SaleStatusActions';
 import { SaleForm } from '@/components/sales/SaleForm';
 import { SaleDetails } from '@/components/sales/SaleDetails';
 import { PendingSalesAlert } from '@/components/sales/PendingSalesAlert';
-import { exportToExcel, exportToPDF, getPeriodLabel } from '@/lib/export-utils';
+import { exportToExcel, exportToPDF, exportSaleDetailsToPDF, getPeriodLabel } from '@/lib/export-utils';
 import {
   Select,
   SelectContent,
@@ -551,8 +551,25 @@ const Sales = () => {
                   </Button>
                 </div>
 
-                {/* History Link */}
-                <div className="flex justify-end">
+                {/* Actions: History and Print */}
+                <div className="flex justify-end gap-2 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => {
+                      const sellerName = selectedSale.seller_id ? sellers[selectedSale.seller_id]?.nome : undefined;
+                      exportSaleDetailsToPDF(
+                        selectedSale, 
+                        sellerName,
+                        `venda-${selectedSale.cnpj_cliente.replace(/\D/g, '')}-${new Date().toISOString().split('T')[0]}`
+                      );
+                      toast.success('PDF gerado com sucesso!');
+                    }}
+                  >
+                    <Printer className="h-4 w-4" />
+                    Exportar PDF
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -560,7 +577,7 @@ const Sales = () => {
                     onClick={() => navigate(`/vendas/${selectedSale.id}/historico`)}
                   >
                     <History className="h-4 w-4" />
-                    Ver Histórico de Alterações
+                    Ver Histórico
                   </Button>
                 </div>
 

@@ -266,3 +266,175 @@ export const exportFeedbacksToPDF = (
   
   doc.save(`${filename}.pdf`);
 };
+
+// Export single sale details to PDF
+export const exportSaleDetailsToPDF = (
+  sale: Sale,
+  sellerName?: string,
+  filename: string = 'detalhes-venda'
+) => {
+  const doc = new jsPDF('portrait');
+  
+  const NEGOTIATION_TYPE_LABELS: Record<string, string> = {
+    novo: 'Novo Cliente',
+    portabilidade: 'Portabilidade',
+    upgrade: 'Upgrade',
+    migracao: 'Migração',
+    bl_solo: 'BL Solo',
+    vivo_total: 'VIVO TOTAL',
+    banda_larga: 'Banda Larga',
+  };
+
+  let yPos = 20;
+  const leftMargin = 14;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  
+  // Header
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Detalhes da Venda', leftMargin, yPos);
+  yPos += 10;
+  
+  // Date info
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100);
+  doc.text(`Gerado em: ${formatDateTime(new Date().toISOString())}`, leftMargin, yPos);
+  yPos += 8;
+  
+  // Status badge
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+  doc.text(`Status: ${SALE_STATUS_LABELS[sale.status]}`, leftMargin, yPos);
+  doc.text(`Valor Mensal: ${formatCurrency(Number(sale.valor_mensal))}`, pageWidth / 2, yPos);
+  yPos += 12;
+  
+  // Helper function to add section
+  const addSection = (title: string, fields: [string, string | null | undefined][]) => {
+    // Check if we need a new page
+    if (yPos > 260) {
+      doc.addPage();
+      yPos = 20;
+    }
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(139, 92, 246);
+    doc.text(title, leftMargin, yPos);
+    yPos += 2;
+    
+    // Underline
+    doc.setDrawColor(139, 92, 246);
+    doc.setLineWidth(0.5);
+    doc.line(leftMargin, yPos, pageWidth - leftMargin, yPos);
+    yPos += 6;
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0);
+    
+    fields.forEach(([label, value]) => {
+      if (yPos > 280) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${label}:`, leftMargin, yPos);
+      doc.setFont('helvetica', 'normal');
+      const displayValue = value || '-';
+      // Handle long text
+      const maxWidth = pageWidth - leftMargin - 60;
+      const splitText = doc.splitTextToSize(displayValue, maxWidth);
+      doc.text(splitText, 60, yPos);
+      yPos += splitText.length > 1 ? splitText.length * 4 + 4 : 5;
+    });
+    
+    yPos += 4;
+  };
+  
+  // Main info section
+  addSection('Informações da Venda', [
+    ['Cliente', sale.nome_fantasia || sale.razao_social],
+    ['CNPJ', sale.cnpj_cliente],
+    ['Data da Venda', sale.data_venda ? formatDate(sale.data_venda) : '-'],
+    ['Vendedor', sellerName || '-'],
+    ['Equipe', sale.equipe],
+    ['Tipo Negociação', NEGOTIATION_TYPE_LABELS[sale.tipo_negociacao || ''] || sale.tipo_negociacao],
+  ]);
+  
+  // Company data
+  addSection('Dados da Empresa', [
+    ['Razão Social', sale.razao_social],
+    ['Nome Fantasia', sale.nome_fantasia],
+    ['E-mail', sale.email],
+  ]);
+  
+  // Contacts
+  addSection('Contatos', [
+    ['Contato Responsável', sale.contato_responsavel],
+    ['Telefone Responsável', sale.telefone_responsavel],
+    ['Telefone 1', sale.telefone_1],
+    ['Telefone 2', sale.telefone_2],
+    ['Tel. Portabilidade', sale.telefone_portabilidade],
+  ]);
+  
+  // Address
+  const fullAddress = [
+    sale.endereco_rua,
+    sale.endereco_numero && `nº ${sale.endereco_numero}`,
+    sale.endereco_bairro,
+    sale.endereco_cidade,
+  ].filter(Boolean).join(', ');
+  
+  addSection('Endereço de Instalação', [
+    ['Endereço', fullAddress || '-'],
+    ['CEP', sale.endereco_cep],
+  ]);
+  
+  // Owner
+  addSection('Dados do Proprietário', [
+    ['Nome', sale.proprietario_nome],
+    ['CPF', sale.proprietario_cpf],
+    ['RG', sale.proprietario_rg],
+    ['Nome da Mãe', sale.proprietario_mae],
+    ['Data Nascimento', sale.proprietario_nascimento ? formatDate(sale.proprietario_nascimento) : '-'],
+  ]);
+  
+  // Account manager
+  addSection('Dados do Gestor de Conta', [
+    ['Nome', sale.gestor_nome],
+    ['CPF', sale.gestor_cpf],
+    ['RG', sale.gestor_rg],
+    ['Nome da Mãe', sale.gestor_mae],
+    ['Data Nascimento', sale.gestor_nascimento ? formatDate(sale.gestor_nascimento) : '-'],
+  ]);
+  
+  // Line assignor
+  addSection('Dados do Cedente da Linha', [
+    ['Nome', sale.cedente_nome],
+    ['CPF', sale.cedente_cpf],
+    ['RG', sale.cedente_rg],
+    ['Nome da Mãe', sale.cedente_mae],
+    ['Data Nascimento', sale.cedente_nascimento ? formatDate(sale.cedente_nascimento) : '-'],
+  ]);
+  
+  // Plan
+  addSection('Plano Contratado', [
+    ['Produtos/Serviços', sale.produtos],
+    ['Plano Contratado', sale.plano_contratado],
+    ['Valor Mensal Total', formatCurrency(Number(sale.valor_mensal))],
+    ['Valor BL', formatCurrency(Number(sale.bl_valor || 0))],
+    ['Valor VIVO Total', formatCurrency(Number(sale.vivo_total_valor || 0))],
+    ['Valor Móvel', formatCurrency(Number(sale.movel_valor || 0))],
+  ]);
+  
+  // Additional info
+  addSection('Informações Adicionais', [
+    ['Observações', sale.observacoes_vendedor],
+    ['Motivo Pendência', sale.motivo_pendencia],
+    ['Criado em', formatDateTime(sale.created_at)],
+    ['Atualizado em', formatDateTime(sale.updated_at)],
+  ]);
+  
+  doc.save(`${filename}.pdf`);
+};

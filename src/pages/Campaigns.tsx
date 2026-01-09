@@ -72,13 +72,14 @@ export default function Campaigns() {
     enabled: !!profile?.company_id,
   });
 
-  // Fetch sales for each campaign to calculate progress
+  // Fetch sales linked to campaigns
   const { data: salesData } = useQuery({
     queryKey: ['campaign-sales', profile?.company_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sales')
-        .select('id, valor_mensal, data_venda, status')
+        .select('id, valor_mensal, campaign_id, status')
+        .not('campaign_id', 'is', null)
         .in('status', ['VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA']);
 
       if (error) throw error;
@@ -138,14 +139,8 @@ export default function Campaigns() {
   const getCampaignProgress = (campaign: Campaign) => {
     if (!salesData) return { salesCount: 0, totalValue: 0 };
 
-    const campaignSales = salesData.filter((sale) => {
-      if (!sale.data_venda) return false;
-      const saleDate = new Date(sale.data_venda);
-      return (
-        !isBefore(saleDate, new Date(campaign.start_date)) &&
-        !isAfter(saleDate, new Date(campaign.end_date))
-      );
-    });
+    // Filter sales by campaign_id instead of date range
+    const campaignSales = salesData.filter((sale) => sale.campaign_id === campaign.id);
 
     return {
       salesCount: campaignSales.length,

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { Navigate } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Switch } from '@/components/ui/switch';
 import { 
   Building2, 
   Users, 
@@ -33,6 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 
 interface CompanyStats {
   id: string;
@@ -42,6 +44,7 @@ interface CompanyStats {
   created_at: string;
   owner_id: string;
   users_count: number;
+  active: boolean;
 }
 
 const AdminDashboard = () => {
@@ -49,6 +52,7 @@ const AdminDashboard = () => {
   const [search, setSearch] = useState('');
   const [selectedCompany, setSelectedCompany] = useState<CompanyStats | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   // Fetch all companies with stats
   const { data: companies, isLoading } = useQuery({
@@ -73,6 +77,7 @@ const AdminDashboard = () => {
 
           return {
             ...company,
+            active: company.active ?? true,
             users_count: usersCount || 0,
           };
         })
@@ -81,6 +86,25 @@ const AdminDashboard = () => {
       return companiesWithStats;
     },
     enabled: isSuperAdmin,
+  });
+
+  // Toggle company active status
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ companyId, active }: { companyId: string; active: boolean }) => {
+      const { error } = await supabase
+        .from('companies')
+        .update({ active })
+        .eq('id', companyId);
+      
+      if (error) throw error;
+    },
+    onSuccess: (_, { active }) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-companies'] });
+      toast.success(active ? 'Empresa ativada com sucesso' : 'Empresa desativada com sucesso');
+    },
+    onError: () => {
+      toast.error('Erro ao atualizar status da empresa');
+    },
   });
 
   // Calculate totals
@@ -201,13 +225,14 @@ const AdminDashboard = () => {
                       <TableHead>CNPJ</TableHead>
                       <TableHead className="text-center">Usuários</TableHead>
                       <TableHead>Criada em</TableHead>
+                      <TableHead className="text-center">Status</TableHead>
                       <TableHead className="w-10"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredCompanies?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                           Nenhuma empresa encontrada
                         </TableCell>
                       </TableRow>
@@ -234,6 +259,20 @@ const AdminDashboard = () => {
                           </TableCell>
                           <TableCell className="text-muted-foreground text-sm">
                             {format(new Date(company.created_at), "dd/MM/yyyy", { locale: ptBR })}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <Switch
+                                checked={company.active}
+                                onCheckedChange={(checked) => 
+                                  toggleActiveMutation.mutate({ companyId: company.id, active: checked })
+                                }
+                                disabled={toggleActiveMutation.isPending}
+                              />
+                              <Badge variant={company.active ? "default" : "secondary"}>
+                                {company.active ? 'Ativa' : 'Inativa'}
+                              </Badge>
+                            </div>
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>

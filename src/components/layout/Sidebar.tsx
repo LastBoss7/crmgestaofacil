@@ -18,7 +18,8 @@ import {
   Activity,
   Clock,
   ShieldCheck,
-  MessageSquareText
+  MessageSquareText,
+  Wifi
 } from 'lucide-react';
 import { ROLE_LABELS } from '@/types/database';
 import { useState, useEffect } from 'react';
@@ -115,6 +116,7 @@ const Sidebar = () => {
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Vendas', href: '/vendas', icon: ShoppingBag, badge: salesStats.total > 0 ? salesStats.total : undefined },
     { name: 'Relatórios', href: '/relatorios', icon: PieChart },
+    { name: 'Banda Larga', href: '/relatorios/banda-larga', icon: Wifi },
   ];
 
   const managementNavigation = [

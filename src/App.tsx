@@ -26,6 +26,7 @@ import Feedbacks from "./pages/Feedbacks";
 import Onboarding from "./pages/Onboarding";
 import BandaLargaReport from "./pages/BandaLargaReport";
 import Campaigns from "./pages/Campaigns";
+import CampaignRankings from "./pages/CampaignRankings";
 import Callbacks from "./pages/Callbacks";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
@@ -201,6 +202,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Campaigns />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/rankings"
+        element={
+          <ProtectedRoute>
+            <CampaignRankings />
           </ProtectedRoute>
         }
       />

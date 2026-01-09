@@ -25,6 +25,7 @@ import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
 import Feedbacks from "./pages/Feedbacks";
 import Onboarding from "./pages/Onboarding";
+import BandaLargaReport from "./pages/BandaLargaReport";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -87,6 +88,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Reports />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/relatorios/banda-larga"
+        element={
+          <ProtectedRoute>
+            <BandaLargaReport />
           </ProtectedRoute>
         }
       />

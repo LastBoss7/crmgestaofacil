@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Building2, ArrowRight, Check, Eye, EyeOff, ArrowLeft, Mail, Lock, User } from 'lucide-react';
+import { Loader2, Building2, ArrowRight, Check, Eye, EyeOff, ArrowLeft, Mail, Lock, User, Ticket } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,7 @@ const loginSchema = z.object({
 });
 
 const companySignupSchema = z.object({
+  invite_code: z.string().trim().min(6, 'Código de convite inválido'),
   nome: z.string().trim().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100, 'Nome muito longo'),
   email: z.string().trim().email('E-mail inválido'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres'),
@@ -28,7 +29,7 @@ const companySignupSchema = z.object({
 });
 
 type AuthMode = 'login' | 'signup';
-type SignupStep = 1 | 2;
+type SignupStep = 0 | 1 | 2;
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -50,15 +51,19 @@ const Auth = () => {
   const { user, signIn, loading: authLoading } = useAuth();
   
   const [mode, setMode] = useState<AuthMode>('login');
-  const [signupStep, setSignupStep] = useState<SignupStep>(1);
+  const [signupStep, setSignupStep] = useState<SignupStep>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [checkingCnpj, setCheckingCnpj] = useState(false);
   const [cnpjError, setCnpjError] = useState<string | null>(null);
   const [cnpjValid, setCnpjValid] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [checkingInviteCode, setCheckingInviteCode] = useState(false);
+  const [inviteCodeError, setInviteCodeError] = useState<string | null>(null);
+  const [inviteCodeValid, setInviteCodeValid] = useState(false);
   
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [companyData, setCompanyData] = useState({ 
+    invite_code: '',
     nome: '', 
     email: '', 
     password: '',
@@ -128,6 +133,26 @@ const Auth = () => {
     }
   };
 
+  const checkInviteCode = async (code: string) => {
+    if (code.length < 6) {
+      setInviteCodeError(null);
+      setInviteCodeValid(false);
+      return;
+    }
+
+    setCheckingInviteCode(true);
+    const { data } = await supabase.rpc('validate_company_invite_code', { invite_code: code.toUpperCase() });
+    setCheckingInviteCode(false);
+
+    if (data === true) {
+      setInviteCodeError(null);
+      setInviteCodeValid(true);
+    } else {
+      setInviteCodeError('Código inválido ou já utilizado');
+      setInviteCodeValid(false);
+    }
+  };
+
   const handleCompanySignup = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -139,6 +164,11 @@ const Auth = () => {
 
     if (cnpjError) {
       toast.error(cnpjError);
+      return;
+    }
+
+    if (!inviteCodeValid) {
+      toast.error('Código de convite inválido');
       return;
     }
 
@@ -184,6 +214,12 @@ const Auth = () => {
       return;
     }
 
+    // Marcar código como usado
+    await supabase.rpc('use_company_invite_code', { 
+      invite_code: companyData.invite_code.toUpperCase(), 
+      company_id: companyResult.id 
+    });
+
     await supabase
       .from('profiles')
       .update({ company_id: companyResult.id })
@@ -198,15 +234,19 @@ const Auth = () => {
     navigate('/onboarding');
   };
 
+  const canProceedStep0 = inviteCodeValid;
+
   const canProceedStep1 = companyData.cnpj.replace(/\D/g, '').length >= 14 && 
                           cnpjValid && 
                           companyData.razao_social.length >= 2;
 
   const resetSignup = () => {
-    setSignupStep(1);
-    setCompanyData({ nome: '', email: '', password: '', cnpj: '', razao_social: '', nome_fantasia: '' });
+    setSignupStep(0);
+    setCompanyData({ invite_code: '', nome: '', email: '', password: '', cnpj: '', razao_social: '', nome_fantasia: '' });
     setCnpjError(null);
     setCnpjValid(false);
+    setInviteCodeError(null);
+    setInviteCodeValid(false);
   };
 
   if (authLoading) {
@@ -427,6 +467,66 @@ const Auth = () => {
                     transition={{ duration: 0.3 }}
                   >
                     <AnimatePresence mode="wait">
+                      {/* Step 0 - Invite Code */}
+                      {signupStep === 0 && (
+                        <motion.div 
+                          key="step0"
+                          className="space-y-5"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -20 }}
+                        >
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-purple-500/20">
+                              <Ticket className="h-5 w-5 text-primary" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-semibold text-foreground">Código de Convite</h3>
+                              <p className="text-sm text-muted-foreground">Passo 1 de 3</p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label className="text-foreground text-sm font-medium">Insira o código de convite</Label>
+                              <div className="relative">
+                                <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  type="text"
+                                  placeholder="XXXXXX"
+                                  value={companyData.invite_code}
+                                  onChange={(e) => {
+                                    const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 10);
+                                    setCompanyData({ ...companyData, invite_code: value });
+                                    checkInviteCode(value);
+                                  }}
+                                  className={cn(
+                                    "h-12 pl-10 pr-10 bg-secondary/30 border-border/50 uppercase tracking-widest font-mono text-lg",
+                                    inviteCodeError && "border-destructive focus:border-destructive",
+                                    inviteCodeValid && "border-primary focus:border-primary"
+                                  )}
+                                />
+                                {checkingInviteCode && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+                                {inviteCodeValid && <Check className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />}
+                              </div>
+                              {inviteCodeError && <p className="text-xs text-destructive">{inviteCodeError}</p>}
+                              <p className="text-xs text-muted-foreground">
+                                Você precisa de um código de convite para cadastrar sua empresa. Entre em contato com o administrador para obter um código.
+                              </p>
+                            </div>
+                          </div>
+
+                          <Button
+                            onClick={() => setSignupStep(1)}
+                            disabled={!canProceedStep0}
+                            className="w-full h-12 text-base font-medium"
+                          >
+                            Continuar
+                            <ArrowRight className="h-4 w-4 ml-2" />
+                          </Button>
+                        </motion.div>
+                      )}
+
                       {/* Step 1 - Company Data */}
                       {signupStep === 1 && (
                         <motion.div 
@@ -436,13 +536,22 @@ const Auth = () => {
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: -20 }}
                         >
+                          <button
+                            type="button"
+                            onClick={() => setSignupStep(0)}
+                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+                          >
+                            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+                            Voltar
+                          </button>
+
                           <div className="flex items-center gap-3 mb-4">
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-emerald-500/20">
                               <Building2 className="h-5 w-5 text-primary" />
                             </div>
                             <div>
                               <h3 className="text-lg font-semibold text-foreground">Dados da Empresa</h3>
-                              <p className="text-sm text-muted-foreground">Passo 1 de 2</p>
+                              <p className="text-sm text-muted-foreground">Passo 2 de 3</p>
                             </div>
                           </div>
 
@@ -526,7 +635,7 @@ const Auth = () => {
 
                           <div>
                             <h3 className="text-lg font-semibold text-foreground">Dados do Administrador</h3>
-                            <p className="text-sm text-muted-foreground">Passo 2 de 2</p>
+                            <p className="text-sm text-muted-foreground">Passo 3 de 3</p>
                           </div>
 
                           <div className="space-y-4">

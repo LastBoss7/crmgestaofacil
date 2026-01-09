@@ -682,53 +682,6 @@ export type Database = {
         }
         Relationships: []
       }
-      team_invites: {
-        Row: {
-          company_id: string
-          created_at: string
-          email: string | null
-          expires_at: string
-          id: string
-          invite_code: string
-          invited_by: string
-          role: Database["public"]["Enums"]["app_role"]
-          used_at: string | null
-          used_by: string | null
-        }
-        Insert: {
-          company_id: string
-          created_at?: string
-          email?: string | null
-          expires_at: string
-          id?: string
-          invite_code: string
-          invited_by: string
-          role?: Database["public"]["Enums"]["app_role"]
-          used_at?: string | null
-          used_by?: string | null
-        }
-        Update: {
-          company_id?: string
-          created_at?: string
-          email?: string | null
-          expires_at?: string
-          id?: string
-          invite_code?: string
-          invited_by?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          used_at?: string | null
-          used_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "team_invites_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       team_messages: {
         Row: {
           company_id: string

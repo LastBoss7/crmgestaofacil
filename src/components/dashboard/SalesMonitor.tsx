@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format, isToday, subDays, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { NegotiationTypePanel } from './NegotiationTypePanel';
 
 interface RealtimeSale {
   id: string;
@@ -364,68 +365,74 @@ export const SalesMonitor = () => {
         </Card>
       </div>
 
-      {/* Sales Feed */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            {isViewingToday ? 'Feed de Vendas em Tempo Real' : `Vendas do Dia`}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[400px]">
-            <AnimatePresence>
-              {recentSales.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <CalendarIcon className="h-12 w-12 mb-4 opacity-50" />
-                  <p className="text-lg font-medium">Nenhuma venda encontrada</p>
-                  <p className="text-sm">
-                    {isViewingToday 
-                      ? 'Aguardando novas vendas...' 
-                      : `Não há vendas registradas em ${format(selectedDate, "dd/MM/yyyy")}`
-                    }
-                  </p>
-                </div>
-              ) : (
-                recentSales.map((sale, index) => (
-                  <motion.div
-                    key={sale.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="flex items-center justify-between p-4 border-b last:border-0 hover:bg-muted/30 transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium truncate">
-                          {sale.nome_fantasia || sale.razao_social}
+      {/* Sales Feed and Negotiation Panel */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Sales Feed - 2 columns */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              {isViewingToday ? 'Feed de Vendas em Tempo Real' : `Vendas do Dia`}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[400px]">
+              <AnimatePresence>
+                {recentSales.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <CalendarIcon className="h-12 w-12 mb-4 opacity-50" />
+                    <p className="text-lg font-medium">Nenhuma venda encontrada</p>
+                    <p className="text-sm">
+                      {isViewingToday 
+                        ? 'Aguardando novas vendas...' 
+                        : `Não há vendas registradas em ${format(selectedDate, "dd/MM/yyyy")}`
+                      }
+                    </p>
+                  </div>
+                ) : (
+                  recentSales.map((sale, index) => (
+                    <motion.div
+                      key={sale.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="flex items-center justify-between p-4 border-b last:border-0 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium truncate">
+                            {sale.nome_fantasia || sale.razao_social}
+                          </p>
+                          <Badge className={getStatusColor(sale.status)} variant="secondary">
+                            {SALE_STATUS_LABELS[sale.status]}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                          <Users className="h-3 w-3" />
+                          <span>{sale.seller_name || 'Vendedor'}</span>
+                          <span>•</span>
+                          <Clock className="h-3 w-3" />
+                          <span>{formatTime(sale.created_at)}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-green-400">
+                          {formatCurrency(Number(sale.valor_mensal))}
                         </p>
-                        <Badge className={getStatusColor(sale.status)} variant="secondary">
-                          {SALE_STATUS_LABELS[sale.status]}
-                        </Badge>
+                        <p className="text-xs text-muted-foreground">/mês</p>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        <Users className="h-3 w-3" />
-                        <span>{sale.seller_name || 'Vendedor'}</span>
-                        <span>•</span>
-                        <Clock className="h-3 w-3" />
-                        <span>{formatTime(sale.created_at)}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-green-400">
-                        {formatCurrency(Number(sale.valor_mensal))}
-                      </p>
-                      <p className="text-xs text-muted-foreground">/mês</p>
-                    </div>
-                  </motion.div>
-                ))
-              )}
-            </AnimatePresence>
-          </ScrollArea>
-        </CardContent>
-      </Card>
+                    </motion.div>
+                  ))
+                )}
+              </AnimatePresence>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        {/* Negotiation Type Panel - 1 column */}
+        <NegotiationTypePanel selectedDate={selectedDate} />
+      </div>
 
       {/* Last update info */}
       <div className="text-right">

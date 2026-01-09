@@ -16,7 +16,8 @@ import {
   MessageSquare,
   BarChart3,
   Activity,
-  Clock
+  Clock,
+  ShieldCheck
 } from 'lucide-react';
 import { ROLE_LABELS } from '@/types/database';
 import { useState, useEffect } from 'react';
@@ -25,6 +26,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { usePresence } from '@/hooks/usePresence';
 import { OnlineUsersDrawer } from '@/components/presence/OnlineUsersDrawer';
+import { useSuperAdmin } from '@/hooks/useSuperAdmin';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -68,6 +70,7 @@ const Sidebar = () => {
   
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const { isOnline, onlineCount, sessionDuration } = usePresence();
+  const { isSuperAdmin } = useSuperAdmin();
 
   useEffect(() => {
     const fetchSalesStats = async () => {
@@ -120,6 +123,7 @@ const Sidebar = () => {
     ...(isCEO ? [{ name: 'Monitor Chats', href: '/monitor-chats', icon: MessageSquare }] : []),
     ...(isCEO ? [{ name: 'Convites', href: '/equipe/convites', icon: UserPlus2 }] : []),
     ...(isCEO ? [{ name: 'Configurações', href: '/configuracoes', icon: Cog }] : []),
+    ...(isSuperAdmin ? [{ name: 'Admin', href: '/admin', icon: ShieldCheck }] : []),
   ];
 
   const isActive = (path: string) => location.pathname === path;

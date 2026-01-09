@@ -11,14 +11,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { 
   Building2, 
   Users, 
-  TrendingUp, 
   Search, 
   Eye,
   MoreHorizontal,
   Loader2,
   ShieldCheck,
-  Calendar,
-  DollarSign
+  Calendar
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -44,8 +42,6 @@ interface CompanyStats {
   created_at: string;
   owner_id: string;
   users_count: number;
-  sales_count: number;
-  total_value: number;
 }
 
 const AdminDashboard = () => {
@@ -75,20 +71,9 @@ const AdminDashboard = () => {
             .select('*', { count: 'exact', head: true })
             .eq('company_id', company.id);
 
-          // Count sales and total value
-          const { data: salesData } = await supabase
-            .from('sales')
-            .select('valor_mensal')
-            .eq('company_id', company.id);
-
-          const salesCount = salesData?.length || 0;
-          const totalValue = salesData?.reduce((sum, sale) => sum + (sale.valor_mensal || 0), 0) || 0;
-
           return {
             ...company,
             users_count: usersCount || 0,
-            sales_count: salesCount,
-            total_value: totalValue,
           };
         })
       );
@@ -102,8 +87,6 @@ const AdminDashboard = () => {
   const totals = {
     companies: companies?.length || 0,
     users: companies?.reduce((sum, c) => sum + c.users_count, 0) || 0,
-    sales: companies?.reduce((sum, c) => sum + c.sales_count, 0) || 0,
-    value: companies?.reduce((sum, c) => sum + c.total_value, 0) || 0,
   };
 
   // Filter companies by search
@@ -125,13 +108,6 @@ const AdminDashboard = () => {
   if (!isSuperAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(value);
-  };
 
   const viewCompanyDetails = (company: CompanyStats) => {
     setSelectedCompany(company);
@@ -162,7 +138,7 @@ const AdminDashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <Card className="glass-card">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -186,32 +162,6 @@ const AdminDashboard = () => {
             <CardContent>
               <div className="text-2xl font-bold">{totals.users}</div>
               <p className="text-xs text-muted-foreground mt-1">em todas as empresas</p>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Vendas
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totals.sales}</div>
-              <p className="text-xs text-muted-foreground mt-1">registradas no sistema</p>
-            </CardContent>
-          </Card>
-
-          <Card className="glass-card">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Valor Total
-              </CardTitle>
-              <DollarSign className="h-4 w-4 text-amber-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totals.value)}</div>
-              <p className="text-xs text-muted-foreground mt-1">em vendas mensais</p>
             </CardContent>
           </Card>
         </div>
@@ -250,8 +200,6 @@ const AdminDashboard = () => {
                       <TableHead>Empresa</TableHead>
                       <TableHead>CNPJ</TableHead>
                       <TableHead className="text-center">Usuários</TableHead>
-                      <TableHead className="text-center">Vendas</TableHead>
-                      <TableHead className="text-right">Valor Total</TableHead>
                       <TableHead>Criada em</TableHead>
                       <TableHead className="w-10"></TableHead>
                     </TableRow>
@@ -259,7 +207,7 @@ const AdminDashboard = () => {
                   <TableBody>
                     {filteredCompanies?.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                           Nenhuma empresa encontrada
                         </TableCell>
                       </TableRow>
@@ -283,12 +231,6 @@ const AdminDashboard = () => {
                           </TableCell>
                           <TableCell className="text-center">
                             <Badge variant="secondary">{company.users_count}</Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="outline">{company.sales_count}</Badge>
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {formatCurrency(company.total_value)}
                           </TableCell>
                           <TableCell className="text-muted-foreground text-sm">
                             {format(new Date(company.created_at), "dd/MM/yyyy", { locale: ptBR })}
@@ -354,22 +296,10 @@ const AdminDashboard = () => {
 
               <div className="border-t border-border pt-4">
                 <h4 className="font-medium mb-3">Estatísticas</h4>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center p-3 rounded-lg bg-secondary/50">
-                    <Users className="h-5 w-5 mx-auto text-primary mb-1" />
-                    <p className="text-2xl font-bold">{selectedCompany.users_count}</p>
-                    <p className="text-xs text-muted-foreground">Usuários</p>
-                  </div>
-                  <div className="text-center p-3 rounded-lg bg-secondary/50">
-                    <TrendingUp className="h-5 w-5 mx-auto text-emerald-500 mb-1" />
-                    <p className="text-2xl font-bold">{selectedCompany.sales_count}</p>
-                    <p className="text-xs text-muted-foreground">Vendas</p>
-                  </div>
-                  <div className="text-center p-3 rounded-lg bg-secondary/50">
-                    <DollarSign className="h-5 w-5 mx-auto text-amber-500 mb-1" />
-                    <p className="text-lg font-bold">{formatCurrency(selectedCompany.total_value)}</p>
-                    <p className="text-xs text-muted-foreground">Total</p>
-                  </div>
+                <div className="text-center p-4 rounded-lg bg-secondary/50">
+                  <Users className="h-6 w-6 mx-auto text-primary mb-2" />
+                  <p className="text-3xl font-bold">{selectedCompany.users_count}</p>
+                  <p className="text-sm text-muted-foreground">Usuários cadastrados</p>
                 </div>
               </div>
             </div>

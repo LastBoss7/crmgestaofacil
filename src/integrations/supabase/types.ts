@@ -145,6 +145,56 @@ export type Database = {
           },
         ]
       }
+      feedbacks: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          created_by: string
+          created_by_name: string
+          id: string
+          message: string
+          read_at: string | null
+          read_notified_at: string | null
+          seller_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          created_by: string
+          created_by_name: string
+          id?: string
+          message: string
+          read_at?: string | null
+          read_notified_at?: string | null
+          seller_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          created_by?: string
+          created_by_name?: string
+          id?: string
+          message?: string
+          read_at?: string | null
+          read_notified_at?: string | null
+          seller_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedbacks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           company_id: string | null

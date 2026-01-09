@@ -23,6 +23,7 @@ import OperatorStatus from "./pages/OperatorStatus";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
+import Feedbacks from "./pages/Feedbacks";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -173,6 +174,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/feedbacks"
+        element={
+          <ProtectedRoute>
+            <Feedbacks />
           </ProtectedRoute>
         }
       />

@@ -127,7 +127,7 @@ const Sidebar = () => {
     ...(isCEO || isBackoffice ? [{ name: 'Pausas', href: '/pausas', icon: Clock }] : []),
     { name: 'Feedbacks', href: '/feedbacks', icon: MessageSquareText, badge: unreadFeedbacksCount > 0 ? unreadFeedbacksCount : undefined },
     ...(isCEO ? [{ name: 'Monitor Chats', href: '/monitor-chats', icon: MessageSquare }] : []),
-    ...(isCEO ? [{ name: 'Convites', href: '/equipe/convites', icon: UserPlus2 }] : []),
+    
     ...(isCEO ? [{ name: 'Configurações', href: '/configuracoes', icon: Cog }] : []),
     ...(isSuperAdmin ? [{ name: 'Admin', href: '/admin', icon: ShieldCheck }] : []),
   ];

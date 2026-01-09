@@ -14,7 +14,7 @@ import Reports from "./pages/Reports";
 import Users from "./pages/Users";
 import SaleHistory from "./pages/SaleHistory";
 import SellerDetails from "./pages/SellerDetails";
-import TeamInvites from "./pages/TeamInvites";
+
 import Teams from "./pages/Teams";
 import ChatMonitor from "./pages/ChatMonitor";
 import TeamDashboard from "./pages/TeamDashboard";
@@ -112,14 +112,6 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <SellerDetails />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/equipe/convites"
-        element={
-          <ProtectedRoute>
-            <TeamInvites />
           </ProtectedRoute>
         }
       />

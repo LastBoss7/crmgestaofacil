@@ -2,10 +2,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Wifi, Smartphone, Monitor, Package, Layers, BarChart3 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Wifi, Smartphone, Monitor, Package, Layers, BarChart3, PieChart } from 'lucide-react';
 import { format, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { PieChart as RechartsPieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 interface NegotiationStats {
   tipo: string;
@@ -19,12 +20,14 @@ interface NegotiationTypePanelProps {
 }
 
 const NEGOTIATION_TYPES = [
-  { key: 'Banda Larga', label: 'Banda Larga', icon: Wifi, color: 'bg-blue-500' },
-  { key: 'BL Solo', label: 'BL Solo', icon: Monitor, color: 'bg-cyan-500' },
-  { key: 'Móvel', label: 'Móvel', icon: Smartphone, color: 'bg-purple-500' },
-  { key: 'VIVO TOTAL', label: 'VIVO Total', icon: Package, color: 'bg-orange-500' },
-  { key: 'Fixo + Banda Larga', label: 'Fixo + BL', icon: Layers, color: 'bg-emerald-500' },
+  { key: 'Banda Larga', label: 'Banda Larga', icon: Wifi, color: '#3b82f6' },
+  { key: 'BL Solo', label: 'BL Solo', icon: Monitor, color: '#06b6d4' },
+  { key: 'Móvel', label: 'Móvel', icon: Smartphone, color: '#a855f7' },
+  { key: 'VIVO TOTAL', label: 'VIVO Total', icon: Package, color: '#f97316' },
+  { key: 'Fixo + Banda Larga', label: 'Fixo + BL', icon: Layers, color: '#10b981' },
 ];
+
+const FALLBACK_COLORS = ['#3b82f6', '#06b6d4', '#a855f7', '#f97316', '#10b981', '#ec4899', '#8b5cf6', '#14b8a6'];
 
 export const NegotiationTypePanel = ({ selectedDate }: NegotiationTypePanelProps) => {
   const [stats, setStats] = useState<NegotiationStats[]>([]);
@@ -104,23 +107,66 @@ export const NegotiationTypePanel = ({ selectedDate }: NegotiationTypePanelProps
     }).format(value);
   };
 
-  const getTypeConfig = (tipo: string) => {
-    return NEGOTIATION_TYPES.find(t => t.key === tipo) || {
-      key: tipo,
-      label: tipo,
-      icon: BarChart3,
-      color: 'bg-gray-500',
-    };
+  const getTypeColor = (tipo: string, index: number) => {
+    const config = NEGOTIATION_TYPES.find(t => t.key === tipo);
+    return config?.color || FALLBACK_COLORS[index % FALLBACK_COLORS.length];
+  };
+
+  const getTypeLabel = (tipo: string) => {
+    const config = NEGOTIATION_TYPES.find(t => t.key === tipo);
+    return config?.label || tipo;
   };
 
   const isViewingToday = isToday(selectedDate);
+
+  // Prepare chart data
+  const chartData = stats.map((stat, index) => ({
+    name: getTypeLabel(stat.tipo),
+    value: stat.count,
+    monetaryValue: stat.value,
+    color: getTypeColor(stat.tipo, index),
+  }));
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-popover border rounded-lg shadow-lg p-3">
+          <p className="font-medium">{data.name}</p>
+          <p className="text-sm text-muted-foreground">
+            Quantidade: <span className="font-semibold text-foreground">{data.value}</span>
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Valor: <span className="font-semibold text-green-500">{formatCurrency(data.monetaryValue)}</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const CustomLegend = ({ payload }: any) => {
+    return (
+      <div className="flex flex-wrap justify-center gap-2 mt-4">
+        {payload?.map((entry: any, index: number) => (
+          <div key={index} className="flex items-center gap-1.5 text-xs">
+            <div 
+              className="w-3 h-3 rounded-full" 
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="text-muted-foreground">{entry.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5" />
-          Vendas por Tipo de Negociação
+          <PieChart className="h-5 w-5" />
+          Vendas por Tipo
           {isViewingToday && (
             <Badge variant="secondary" className="ml-2 bg-green-500/10 text-green-500">
               Tempo Real
@@ -143,53 +189,106 @@ export const NegotiationTypePanel = ({ selectedDate }: NegotiationTypePanelProps
         ) : (
           <>
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-muted/50 rounded-lg p-4 text-center">
-                <p className="text-2xl font-bold">{total}</p>
-                <p className="text-xs text-muted-foreground">Total de Vendas</p>
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-muted/50 rounded-lg p-3 text-center">
+                <p className="text-xl font-bold">{total}</p>
+                <p className="text-xs text-muted-foreground">Total</p>
               </div>
-              <div className="bg-muted/50 rounded-lg p-4 text-center">
-                <p className="text-2xl font-bold text-green-500">{formatCurrency(totalValue)}</p>
-                <p className="text-xs text-muted-foreground">Valor Total</p>
+              <div className="bg-muted/50 rounded-lg p-3 text-center">
+                <p className="text-lg font-bold text-green-500">{formatCurrency(totalValue)}</p>
+                <p className="text-xs text-muted-foreground">Valor</p>
               </div>
             </div>
 
-            {/* Type Breakdown */}
-            <div className="space-y-4">
-              {stats.map((stat) => {
-                const config = getTypeConfig(stat.tipo);
-                const Icon = config.icon;
-                
-                return (
-                  <div key={stat.tipo} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className={`p-1.5 rounded ${config.color}/20`}>
-                          <Icon className={`h-4 w-4 ${config.color.replace('bg-', 'text-')}`} />
-                        </div>
-                        <span className="font-medium text-sm">{config.label}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Badge variant="secondary" className="font-mono">
-                          {stat.count}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground w-20 text-right">
-                          {formatCurrency(stat.value)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Progress 
-                        value={stat.percentage} 
-                        className="h-2 flex-1"
+            {/* Charts with Tabs */}
+            <Tabs defaultValue="pie" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="pie" className="text-xs">
+                  <PieChart className="h-3 w-3 mr-1" />
+                  Pizza
+                </TabsTrigger>
+                <TabsTrigger value="bar" className="text-xs">
+                  <BarChart3 className="h-3 w-3 mr-1" />
+                  Barras
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="pie" className="mt-0">
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RechartsPieChart>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="45%"
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend content={<CustomLegend />} />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="bar" className="mt-0">
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={chartData}
+                      layout="vertical"
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis type="number" className="text-xs" />
+                      <YAxis 
+                        dataKey="name" 
+                        type="category" 
+                        width={80} 
+                        className="text-xs"
+                        tick={{ fontSize: 10 }}
                       />
-                      <span className="text-xs text-muted-foreground w-12 text-right">
-                        {stat.percentage.toFixed(1)}%
-                      </span>
-                    </div>
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            {/* Detailed List */}
+            <div className="mt-4 pt-4 border-t space-y-2">
+              {stats.slice(0, 5).map((stat, index) => (
+                <div key={stat.tipo} className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <div 
+                      className="w-2.5 h-2.5 rounded-full" 
+                      style={{ backgroundColor: getTypeColor(stat.tipo, index) }}
+                    />
+                    <span className="text-muted-foreground truncate max-w-[100px]">
+                      {getTypeLabel(stat.tipo)}
+                    </span>
                   </div>
-                );
-              })}
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="font-mono text-xs h-5">
+                      {stat.count}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {stat.percentage.toFixed(0)}%
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </>
         )}

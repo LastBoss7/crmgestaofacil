@@ -5,10 +5,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, Building2, Phone, MapPin, User, Users, FileText, DollarSign, Loader2, Upload, X, File } from 'lucide-react';
+import { Calendar, Building2, Phone, MapPin, User, Users, FileText, DollarSign, Loader2, Upload, X, File, Target } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import { maskCPF, maskCNPJ, maskCEP, maskPhone } from '@/lib/masks';
 
@@ -73,6 +74,7 @@ interface FormData {
   // Outros
   produtos: string;
   observacoes_vendedor: string;
+  campaign_id: string;
 }
 
 const initialFormData: FormData = {
@@ -113,6 +115,7 @@ const initialFormData: FormData = {
   valor_mensal: '',
   produtos: '',
   observacoes_vendedor: '',
+  campaign_id: '',
 };
 
 type FieldErrors = Partial<Record<keyof FormData, string>>;
@@ -128,6 +131,22 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   const [documents, setDocuments] = useState<File[]>([]);
   const [uploadingDocs, setUploadingDocs] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch active campaigns
+  const { data: activeCampaigns = [] } = useQuery({
+    queryKey: ['active-campaigns', profile?.company_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sales_campaigns')
+        .select('id, name')
+        .eq('status', 'active')
+        .order('name');
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.company_id,
+  });
 
   const validateField = (field: keyof FormData, value: string): string | undefined => {
     switch (field) {
@@ -404,6 +423,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         produtos: form.produtos || null,
         observacoes_vendedor: form.observacoes_vendedor || null,
         status: 'PRE_ANALISE',
+        campaign_id: form.campaign_id || null,
       }).select('id').single();
 
       if (error) throw error;
@@ -484,6 +504,27 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
               </SelectContent>
             </Select>
           </div>
+          {activeCampaigns.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="campaign_id" className="flex items-center gap-1">
+                <Target className="h-3 w-3" />
+                Campanha
+              </Label>
+              <Select value={form.campaign_id} onValueChange={(v) => updateForm('campaign_id', v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Vincular a campanha..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Nenhuma</SelectItem>
+                  {activeCampaigns.map((campaign) => (
+                    <SelectItem key={campaign.id} value={campaign.id}>
+                      {campaign.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
 

@@ -563,6 +563,7 @@ export type Database = {
       sales: {
         Row: {
           bl_valor: number | null
+          campaign_id: string | null
           cedente_cpf: string | null
           cedente_mae: string | null
           cedente_nascimento: string | null
@@ -612,6 +613,7 @@ export type Database = {
         }
         Insert: {
           bl_valor?: number | null
+          campaign_id?: string | null
           cedente_cpf?: string | null
           cedente_mae?: string | null
           cedente_nascimento?: string | null
@@ -661,6 +663,7 @@ export type Database = {
         }
         Update: {
           bl_valor?: number | null
+          campaign_id?: string | null
           cedente_cpf?: string | null
           cedente_mae?: string | null
           cedente_nascimento?: string | null
@@ -709,6 +712,13 @@ export type Database = {
           vivo_total_valor?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "sales_campaigns"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_company_id_fkey"
             columns: ["company_id"]

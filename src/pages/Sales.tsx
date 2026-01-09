@@ -52,7 +52,7 @@ interface SaleWithSeller extends Sale {
 
 const Sales = () => {
   const navigate = useNavigate();
-  const { user, isSeller } = useAuth();
+  const { user, profile, isSeller } = useAuth();
   const [sales, setSales] = useState<SaleWithSeller[]>([]);
   const [sellers, setSellers] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
@@ -130,10 +130,17 @@ const Sales = () => {
   const fetchSales = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('sales')
       .select('*')
       .order('created_at', { ascending: false });
+    
+    // Filter by company_id for multi-tenancy
+    if (profile?.company_id) {
+      query = query.eq('company_id', profile.company_id);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching sales:', error);
@@ -161,7 +168,7 @@ const Sales = () => {
 
   useEffect(() => {
     fetchSales();
-  }, [user]);
+  }, [user, profile?.company_id]);
 
   const handleSaleCreated = () => {
     setIsNewSaleOpen(false);

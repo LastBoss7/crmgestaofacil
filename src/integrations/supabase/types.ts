@@ -144,6 +144,7 @@ export type Database = {
       }
       notifications: {
         Row: {
+          company_id: string | null
           created_at: string | null
           id: string
           message: string
@@ -155,6 +156,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string | null
           id?: string
           message: string
@@ -166,6 +168,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string | null
           id?: string
           message?: string
@@ -176,7 +179,15 @@ export type Database = {
           type?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notifications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       operator_current_status: {
         Row: {
@@ -301,6 +312,7 @@ export type Database = {
       }
       sale_comments: {
         Row: {
+          company_id: string | null
           created_at: string | null
           id: string
           message: string
@@ -310,6 +322,7 @@ export type Database = {
           user_role: string
         }
         Insert: {
+          company_id?: string | null
           created_at?: string | null
           id?: string
           message: string
@@ -319,6 +332,7 @@ export type Database = {
           user_role: string
         }
         Update: {
+          company_id?: string | null
           created_at?: string | null
           id?: string
           message?: string
@@ -328,6 +342,13 @@ export type Database = {
           user_role?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sale_comments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sale_comments_sale_id_fkey"
             columns: ["sale_id"]
@@ -342,6 +363,7 @@ export type Database = {
           changed_at: string
           changed_by: string
           changed_by_name: string
+          company_id: string | null
           field_changed: string
           id: string
           new_value: string | null
@@ -352,6 +374,7 @@ export type Database = {
           changed_at?: string
           changed_by: string
           changed_by_name: string
+          company_id?: string | null
           field_changed: string
           id?: string
           new_value?: string | null
@@ -362,6 +385,7 @@ export type Database = {
           changed_at?: string
           changed_by?: string
           changed_by_name?: string
+          company_id?: string | null
           field_changed?: string
           id?: string
           new_value?: string | null
@@ -369,6 +393,13 @@ export type Database = {
           sale_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sale_history_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sale_history_sale_id_fkey"
             columns: ["sale_id"]
@@ -387,6 +418,7 @@ export type Database = {
           cedente_nome: string | null
           cedente_rg: string | null
           cnpj_cliente: string
+          company_id: string | null
           contato_responsavel: string | null
           created_at: string | null
           data_venda: string | null
@@ -435,6 +467,7 @@ export type Database = {
           cedente_nome?: string | null
           cedente_rg?: string | null
           cnpj_cliente: string
+          company_id?: string | null
           contato_responsavel?: string | null
           created_at?: string | null
           data_venda?: string | null
@@ -483,6 +516,7 @@ export type Database = {
           cedente_nome?: string | null
           cedente_rg?: string | null
           cnpj_cliente?: string
+          company_id?: string | null
           contato_responsavel?: string | null
           created_at?: string | null
           data_venda?: string | null
@@ -523,10 +557,19 @@ export type Database = {
           valor_mensal?: number
           vivo_total_valor?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sales_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       seller_goals: {
         Row: {
+          company_id: string | null
           created_at: string
           id: string
           month: number
@@ -537,6 +580,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          company_id?: string | null
           created_at?: string
           id?: string
           month: number
@@ -547,6 +591,7 @@ export type Database = {
           year: number
         }
         Update: {
+          company_id?: string | null
           created_at?: string
           id?: string
           month?: number
@@ -556,7 +601,15 @@ export type Database = {
           updated_at?: string
           year?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "seller_goals_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_invites: {
         Row: {

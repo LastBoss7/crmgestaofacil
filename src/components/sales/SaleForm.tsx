@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Calendar, Building2, Phone, MapPin, User, Users, FileText, DollarSign, Loader2, Upload, X, File } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 import { z } from 'zod';
 import { maskCPF, maskCNPJ, maskCEP, maskPhone } from '@/lib/masks';
 
@@ -117,6 +118,7 @@ const initialFormData: FormData = {
 type FieldErrors = Partial<Record<keyof FormData, string>>;
 
 export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
+  const { profile } = useAuth();
   const [form, setForm] = useState<FormData>(initialFormData);
   const [loading, setLoading] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
@@ -363,6 +365,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
     try {
       const { data: saleData, error } = await supabase.from('sales').insert({
         seller_id: userId,
+        company_id: profile?.company_id || null,
         data_venda: form.data_venda || null,
         equipe: form.equipe || null,
         tipo_negociacao: form.tipo_negociacao || null,

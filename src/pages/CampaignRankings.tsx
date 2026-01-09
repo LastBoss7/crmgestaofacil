@@ -9,9 +9,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
-import { Trophy, Medal, TrendingUp, Users, Target, Award, Crown, Flame } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Trophy, Medal, TrendingUp, Users, Target, Award, Crown, Flame, Download, FileSpreadsheet, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { exportCampaignRankingToExcel, exportCampaignRankingToPDF } from '@/lib/export-utils';
+import { toast } from 'sonner';
 
 interface Campaign {
   id: string;
@@ -192,14 +196,61 @@ export default function CampaignRankings() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Trophy className="h-6 w-6 text-amber-500" />
-            Ranking de Campanhas
-          </h1>
-          <p className="text-muted-foreground">
-            Ranking geral e histórico de performance dos vendedores
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <Trophy className="h-6 w-6 text-amber-500" />
+              Ranking de Campanhas
+            </h1>
+            <p className="text-muted-foreground">
+              Ranking geral e histórico de performance dos vendedores
+            </p>
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <Download className="h-4 w-4" />
+                Exportar
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  const filterLabel = selectedCampaign === 'all' 
+                    ? 'Todas as Campanhas' 
+                    : campaigns.find(c => c.id === selectedCampaign)?.name || 'Campanha';
+                  exportCampaignRankingToExcel(
+                    globalRanking,
+                    campaignStats,
+                    filterLabel
+                  );
+                  toast.success('Relatório Excel exportado com sucesso!');
+                }}
+                className="gap-2"
+              >
+                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                Exportar Excel
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  const filterLabel = selectedCampaign === 'all' 
+                    ? 'Todas as Campanhas' 
+                    : campaigns.find(c => c.id === selectedCampaign)?.name || 'Campanha';
+                  exportCampaignRankingToPDF(
+                    globalRanking,
+                    campaignStats,
+                    filterLabel
+                  );
+                  toast.success('Relatório PDF exportado com sucesso!');
+                }}
+                className="gap-2"
+              >
+                <FileText className="h-4 w-4 text-red-600" />
+                Exportar PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {/* Overview Cards */}

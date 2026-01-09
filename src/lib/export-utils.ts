@@ -568,3 +568,208 @@ export const exportBandaLargaToPDF = (
   
   doc.save(`${filename}.pdf`);
 };
+
+// Campaign Rankings export types
+export interface CampaignRankingExportData {
+  sellerId: string;
+  nome: string;
+  salesCount: number;
+  totalValue: number;
+  campaigns: number;
+}
+
+export interface CampaignExportData {
+  id: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+  target_value: number;
+  target_sales: number;
+  salesCount: number;
+  totalValue: number;
+  uniqueSellers: number;
+}
+
+export const exportCampaignRankingToExcel = (
+  ranking: CampaignRankingExportData[],
+  campaigns: CampaignExportData[],
+  filterLabel: string,
+  filename: string = 'ranking-campanhas'
+) => {
+  const wb = XLSX.utils.book_new();
+  
+  // Ranking sheet
+  const rankingData = ranking.map((seller, index) => ({
+    'Posição': index + 1,
+    'Vendedor': seller.nome,
+    'Vendas': seller.salesCount,
+    'Valor Total': Number(seller.totalValue),
+    'Campanhas Participadas': seller.campaigns,
+    'Ticket Médio': Number(seller.salesCount > 0 ? seller.totalValue / seller.salesCount : 0),
+  }));
+
+  const wsRanking = XLSX.utils.json_to_sheet(rankingData);
+  wsRanking['!cols'] = [
+    { wch: 10 }, // Posição
+    { wch: 30 }, // Vendedor
+    { wch: 10 }, // Vendas
+    { wch: 18 }, // Valor Total
+    { wch: 22 }, // Campanhas
+    { wch: 18 }, // Ticket Médio
+  ];
+  XLSX.utils.book_append_sheet(wb, wsRanking, 'Ranking Geral');
+
+  // Campaigns sheet
+  const campaignsData = campaigns.map((campaign) => ({
+    'Campanha': campaign.name,
+    'Início': formatDate(campaign.start_date),
+    'Fim': formatDate(campaign.end_date),
+    'Meta Vendas': campaign.target_sales,
+    'Vendas Realizadas': campaign.salesCount,
+    '% Meta Vendas': `${Math.min((campaign.salesCount / campaign.target_sales) * 100, 100).toFixed(1)}%`,
+    'Meta Valor': Number(campaign.target_value),
+    'Valor Realizado': Number(campaign.totalValue),
+    '% Meta Valor': `${Math.min((campaign.totalValue / campaign.target_value) * 100, 100).toFixed(1)}%`,
+    'Vendedores': campaign.uniqueSellers,
+  }));
+
+  const wsCampaigns = XLSX.utils.json_to_sheet(campaignsData);
+  wsCampaigns['!cols'] = [
+    { wch: 25 }, // Campanha
+    { wch: 12 }, // Início
+    { wch: 12 }, // Fim
+    { wch: 12 }, // Meta Vendas
+    { wch: 18 }, // Vendas Realizadas
+    { wch: 15 }, // % Meta Vendas
+    { wch: 15 }, // Meta Valor
+    { wch: 18 }, // Valor Realizado
+    { wch: 15 }, // % Meta Valor
+    { wch: 12 }, // Vendedores
+  ];
+  XLSX.utils.book_append_sheet(wb, wsCampaigns, 'Campanhas');
+
+  // Summary sheet
+  const totalSales = ranking.reduce((acc, r) => acc + r.salesCount, 0);
+  const totalValue = ranking.reduce((acc, r) => acc + r.totalValue, 0);
+  const summaryData = [
+    { 'Métrica': 'Total de Vendedores', 'Valor': ranking.length },
+    { 'Métrica': 'Total de Campanhas', 'Valor': campaigns.length },
+    { 'Métrica': 'Total de Vendas', 'Valor': totalSales },
+    { 'Métrica': 'Valor Total Faturado', 'Valor': formatCurrency(totalValue) },
+    { 'Métrica': 'Ticket Médio', 'Valor': formatCurrency(totalSales > 0 ? totalValue / totalSales : 0) },
+    { 'Métrica': 'Filtro Aplicado', 'Valor': filterLabel },
+    { 'Métrica': 'Gerado em', 'Valor': formatDateTime(new Date().toISOString()) },
+  ];
+
+  const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+  wsSummary['!cols'] = [{ wch: 25 }, { wch: 30 }];
+  XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumo');
+
+  XLSX.writeFile(wb, `${filename}.xlsx`);
+};
+
+export const exportCampaignRankingToPDF = (
+  ranking: CampaignRankingExportData[],
+  campaigns: CampaignExportData[],
+  filterLabel: string,
+  filename: string = 'ranking-campanhas'
+) => {
+  const doc = new jsPDF('portrait');
+  
+  // Title
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Ranking de Campanhas', 14, 20);
+  
+  // Info
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100);
+  doc.text(`Filtro: ${filterLabel}`, 14, 28);
+  doc.text(`Gerado em: ${formatDateTime(new Date().toISOString())}`, 14, 34);
+  
+  // Summary box
+  const totalSales = ranking.reduce((acc, r) => acc + r.salesCount, 0);
+  const totalValue = ranking.reduce((acc, r) => acc + r.totalValue, 0);
+  
+  doc.setTextColor(0);
+  doc.setFillColor(245, 245, 245);
+  doc.roundedRect(14, 40, 180, 24, 3, 3, 'F');
+  
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Campanhas:', 20, 48);
+  doc.text('Vendedores:', 60, 48);
+  doc.text('Total Vendas:', 100, 48);
+  doc.text('Valor Total:', 145, 48);
+  
+  doc.setFont('helvetica', 'normal');
+  doc.text(String(campaigns.length), 20, 56);
+  doc.text(String(ranking.length), 60, 56);
+  doc.text(String(totalSales), 100, 56);
+  doc.text(formatCurrency(totalValue), 145, 56);
+  
+  // Ranking table
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(139, 92, 246);
+  doc.text('Ranking de Vendedores', 14, 74);
+  
+  const rankingTableData = ranking.slice(0, 15).map((seller, index) => [
+    String(index + 1),
+    index === 0 ? '🥇 ' + seller.nome : index === 1 ? '🥈 ' + seller.nome : index === 2 ? '🥉 ' + seller.nome : seller.nome,
+    String(seller.salesCount),
+    formatCurrency(seller.totalValue),
+    String(seller.campaigns),
+  ]);
+
+  autoTable(doc, {
+    startY: 78,
+    head: [['#', 'Vendedor', 'Vendas', 'Valor Total', 'Campanhas']],
+    body: rankingTableData,
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [139, 92, 246] },
+    alternateRowStyles: { fillColor: [249, 250, 251] },
+    columnStyles: {
+      0: { cellWidth: 12, halign: 'center' },
+      1: { cellWidth: 60 },
+      2: { cellWidth: 25, halign: 'center' },
+      3: { cellWidth: 40, halign: 'right' },
+      4: { cellWidth: 25, halign: 'center' },
+    },
+  });
+
+  // Campaigns table on new page
+  doc.addPage();
+  
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(139, 92, 246);
+  doc.text('Performance das Campanhas', 14, 20);
+  
+  const campaignsTableData = campaigns.map((campaign) => [
+    campaign.name.substring(0, 20),
+    `${formatDate(campaign.start_date)} - ${formatDate(campaign.end_date)}`,
+    `${campaign.salesCount}/${campaign.target_sales}`,
+    formatCurrency(campaign.totalValue),
+    String(campaign.uniqueSellers),
+  ]);
+
+  autoTable(doc, {
+    startY: 26,
+    head: [['Campanha', 'Período', 'Vendas', 'Faturamento', 'Vendedores']],
+    body: campaignsTableData,
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [59, 130, 246] },
+    alternateRowStyles: { fillColor: [249, 250, 251] },
+    columnStyles: {
+      0: { cellWidth: 45 },
+      1: { cellWidth: 50 },
+      2: { cellWidth: 25, halign: 'center' },
+      3: { cellWidth: 35, halign: 'right' },
+      4: { cellWidth: 25, halign: 'center' },
+    },
+  });
+  
+  doc.save(`${filename}.pdf`);
+};

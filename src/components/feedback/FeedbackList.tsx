@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,11 +7,12 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MessageSquare, Check, CheckCheck, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import type { FeedbackFilters } from '@/pages/Feedbacks';
 
 interface Feedback {
   id: string;
@@ -28,9 +29,10 @@ interface Feedback {
 
 interface FeedbackListProps {
   refreshTrigger?: number;
+  filters?: FeedbackFilters;
 }
 
-export function FeedbackList({ refreshTrigger }: FeedbackListProps) {
+export function FeedbackList({ refreshTrigger, filters }: FeedbackListProps) {
   const { user, profile, isSeller, isBackoffice, isCEO } = useAuth();
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,6 +90,45 @@ export function FeedbackList({ refreshTrigger }: FeedbackListProps) {
     };
   }, [user, refreshTrigger]);
 
+  // Filter feedbacks based on filters
+  const filteredFeedbacks = useMemo(() => {
+    if (!filters) return feedbacks;
+
+    return feedbacks.filter((feedback) => {
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const matchesTitle = feedback.title.toLowerCase().includes(searchLower);
+        const matchesMessage = feedback.message.toLowerCase().includes(searchLower);
+        if (!matchesTitle && !matchesMessage) return false;
+      }
+
+      // Seller filter
+      if (filters.sellerId && filters.sellerId !== 'all') {
+        if (feedback.seller_id !== filters.sellerId) return false;
+      }
+
+      // Read status filter
+      if (filters.readStatus !== 'all') {
+        if (filters.readStatus === 'read' && !feedback.read_at) return false;
+        if (filters.readStatus === 'unread' && feedback.read_at) return false;
+      }
+
+      // Date filters
+      const feedbackDate = new Date(feedback.created_at);
+      
+      if (filters.startDate) {
+        if (isBefore(feedbackDate, startOfDay(filters.startDate))) return false;
+      }
+
+      if (filters.endDate) {
+        if (isAfter(feedbackDate, endOfDay(filters.endDate))) return false;
+      }
+
+      return true;
+    });
+  }, [feedbacks, filters]);
+
   const markAsRead = async (feedback: Feedback) => {
     if (!user || !profile) return;
 
@@ -135,7 +176,7 @@ export function FeedbackList({ refreshTrigger }: FeedbackListProps) {
     );
   }
 
-  if (feedbacks.length === 0) {
+  if (filteredFeedbacks.length === 0) {
     return (
       <Card>
         <CardContent className="p-6">
@@ -143,7 +184,9 @@ export function FeedbackList({ refreshTrigger }: FeedbackListProps) {
             <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
             <p className="text-lg font-medium">Nenhum feedback</p>
             <p className="text-sm">
-              {isSeller ? 'Você ainda não recebeu feedbacks.' : 'Nenhum feedback enviado ainda.'}
+              {filters && (filters.search || filters.sellerId !== 'all' || filters.readStatus !== 'all' || filters.startDate || filters.endDate)
+                ? 'Nenhum feedback encontrado com os filtros aplicados.'
+                : isSeller ? 'Você ainda não recebeu feedbacks.' : 'Nenhum feedback enviado ainda.'}
             </p>
           </div>
         </CardContent>
@@ -157,12 +200,15 @@ export function FeedbackList({ refreshTrigger }: FeedbackListProps) {
         <CardTitle className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5" />
           {isSeller ? 'Meus Feedbacks' : 'Feedbacks Enviados'}
+          <Badge variant="secondary" className="ml-auto">
+            {filteredFeedbacks.length} {filteredFeedbacks.length === 1 ? 'resultado' : 'resultados'}
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[400px] pr-4">
           <AnimatePresence>
-            {feedbacks.map((feedback, index) => (
+            {filteredFeedbacks.map((feedback, index) => (
               <motion.div
                 key={feedback.id}
                 initial={{ opacity: 0, y: 10 }}

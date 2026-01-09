@@ -59,10 +59,8 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
       return ['AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO'];
     }
     if (isSeller && isOwner) {
-      // Vendedor só pode colocar em auditoria (submeter para aprovação)
-      if (sale.status === 'PRE_ANALISE' || sale.status === 'PENDENCIA') {
-        return ['AGUARDANDO_AUDITORIA'];
-      }
+      // Vendedor pode usar: Pré-Análise, Aguardando Auditoria, Aceite Enviado, Chamado em Aberto, Desconectado
+      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO'];
     }
     return [];
   };
@@ -226,22 +224,37 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
     );
   }
 
-  // Seller submit for analysis
-  if (isSeller && isOwner && (sale.status === 'PRE_ANALISE' || sale.status === 'PENDENCIA')) {
+  // Seller full control select
+  if (isSeller && isOwner && availableStatuses.length > 0) {
     return (
       <div className="space-y-4 border-t pt-4">
-        <h3 className="font-semibold text-sm">Ações</h3>
-        <Button
-          className="w-full gap-2"
-          onClick={() => handleQuickAction('AGUARDANDO_AUDITORIA')}
-          disabled={loading}
-        >
-          <Clock className="h-4 w-4" />
-          Enviar para Auditoria
-        </Button>
-        <p className="text-xs text-muted-foreground text-center">
-          Sua venda será auditada pelo Backoffice
-        </p>
+        <h3 className="font-semibold text-sm">Alterar Status</h3>
+        <div className="space-y-3">
+          <Select
+            value={statusUpdate.status}
+            onValueChange={(v) => setStatusUpdate({ ...statusUpdate, status: v as SaleStatus })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o status" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableStatuses.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {SALE_STATUS_LABELS[status]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              Cancelar
+            </Button>
+            <Button onClick={handleStatusUpdate} disabled={loading} className="flex-1">
+              Salvar
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }

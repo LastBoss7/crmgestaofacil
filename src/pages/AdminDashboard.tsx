@@ -61,6 +61,10 @@ interface InviteCode {
   used_at: string | null;
   used_by_company_id: string | null;
   is_active: boolean;
+  used_by_company?: {
+    razao_social: string;
+    nome_fantasia: string | null;
+  } | null;
 }
 
 const AdminDashboard = () => {
@@ -106,13 +110,19 @@ const AdminDashboard = () => {
     enabled: isSuperAdmin,
   });
 
-  // Fetch invite codes
+  // Fetch invite codes with company data
   const { data: inviteCodes, isLoading: loadingCodes } = useQuery({
     queryKey: ['admin-invite-codes'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('company_invite_codes')
-        .select('*')
+        .select(`
+          *,
+          used_by_company:companies!company_invite_codes_used_by_company_id_fkey(
+            razao_social,
+            nome_fantasia
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -449,6 +459,7 @@ const AdminDashboard = () => {
                           <TableHead>Código</TableHead>
                           <TableHead>Criado em</TableHead>
                           <TableHead className="text-center">Status</TableHead>
+                          <TableHead>Empresa</TableHead>
                           <TableHead>Usado em</TableHead>
                           <TableHead className="w-20">Ações</TableHead>
                         </TableRow>
@@ -456,7 +467,7 @@ const AdminDashboard = () => {
                       <TableBody>
                         {inviteCodes?.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                               Nenhum código gerado ainda
                             </TableCell>
                           </TableRow>
@@ -493,6 +504,22 @@ const AdminDashboard = () => {
                                   <Badge variant="default" className="bg-emerald-500">Disponível</Badge>
                                 ) : (
                                   <Badge variant="destructive">Inativo</Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {code.used_by_company ? (
+                                  <div>
+                                    <p className="font-medium text-foreground text-sm">
+                                      {code.used_by_company.nome_fantasia || code.used_by_company.razao_social}
+                                    </p>
+                                    {code.used_by_company.nome_fantasia && (
+                                      <p className="text-xs text-muted-foreground">
+                                        {code.used_by_company.razao_social}
+                                      </p>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground">-</span>
                                 )}
                               </TableCell>
                               <TableCell className="text-muted-foreground text-sm">

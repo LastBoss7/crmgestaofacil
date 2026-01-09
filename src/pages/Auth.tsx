@@ -195,7 +195,7 @@ const Auth = () => {
 
     setIsLoading(false);
     toast.success('Empresa cadastrada com sucesso!');
-    navigate('/dashboard');
+    navigate('/onboarding');
   };
 
   const canProceedStep1 = companyData.cnpj.replace(/\D/g, '').length >= 14 && 

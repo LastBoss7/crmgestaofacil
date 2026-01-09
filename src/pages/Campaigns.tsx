@@ -1,0 +1,433 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import Layout from '@/components/layout/Layout';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Plus, Target, Calendar, TrendingUp, Pause, Play, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { format, differenceInDays, isAfter, isBefore } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+interface Campaign {
+  id: string;
+  name: string;
+  description: string | null;
+  start_date: string;
+  end_date: string;
+  target_value: number;
+  target_sales: number;
+  status: string;
+  company_id: string;
+  created_by: string;
+  created_at: string;
+}
+
+export default function Campaigns() {
+  const { user, profile, isCEO, isBackoffice } = useAuth();
+  const queryClient = useQueryClient();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    start_date: '',
+    end_date: '',
+    target_value: '',
+    target_sales: '',
+  });
+
+  const canManage = isCEO || isBackoffice;
+
+  const { data: campaigns = [], isLoading } = useQuery({
+    queryKey: ['campaigns', profile?.company_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sales_campaigns')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as Campaign[];
+    },
+    enabled: !!profile?.company_id,
+  });
+
+  // Fetch sales for each campaign to calculate progress
+  const { data: salesData } = useQuery({
+    queryKey: ['campaign-sales', profile?.company_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sales')
+        .select('id, valor_mensal, data_venda, status')
+        .in('status', ['VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA']);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.company_id,
+  });
+
+  const createCampaignMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      const { error } = await supabase.from('sales_campaigns').insert({
+        name: data.name,
+        description: data.description || null,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        target_value: parseFloat(data.target_value) || 0,
+        target_sales: parseInt(data.target_sales) || 0,
+        company_id: profile?.company_id,
+        created_by: user?.id,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      toast.success('Campanha criada com sucesso!');
+      setIsDialogOpen(false);
+      setFormData({
+        name: '',
+        description: '',
+        start_date: '',
+        end_date: '',
+        target_value: '',
+        target_sales: '',
+      });
+    },
+    onError: () => {
+      toast.error('Erro ao criar campanha');
+    },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await supabase
+        .from('sales_campaigns')
+        .update({ status })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      toast.success('Status atualizado!');
+    },
+  });
+
+  const getCampaignProgress = (campaign: Campaign) => {
+    if (!salesData) return { salesCount: 0, totalValue: 0 };
+
+    const campaignSales = salesData.filter((sale) => {
+      if (!sale.data_venda) return false;
+      const saleDate = new Date(sale.data_venda);
+      return (
+        !isBefore(saleDate, new Date(campaign.start_date)) &&
+        !isAfter(saleDate, new Date(campaign.end_date))
+      );
+    });
+
+    return {
+      salesCount: campaignSales.length,
+      totalValue: campaignSales.reduce((acc, sale) => acc + (sale.valor_mensal || 0), 0),
+    };
+  };
+
+  const getStatusBadge = (campaign: Campaign) => {
+    const today = new Date();
+    const startDate = new Date(campaign.start_date);
+    const endDate = new Date(campaign.end_date);
+
+    if (campaign.status === 'paused') {
+      return <Badge variant="secondary">Pausada</Badge>;
+    }
+    if (campaign.status === 'completed') {
+      return <Badge className="bg-green-500">Concluída</Badge>;
+    }
+    if (isBefore(today, startDate)) {
+      return <Badge variant="outline">Agendada</Badge>;
+    }
+    if (isAfter(today, endDate)) {
+      return <Badge variant="destructive">Encerrada</Badge>;
+    }
+    return <Badge className="bg-blue-500">Ativa</Badge>;
+  };
+
+  const getDaysRemaining = (endDate: string) => {
+    const days = differenceInDays(new Date(endDate), new Date());
+    if (days < 0) return 'Encerrada';
+    if (days === 0) return 'Último dia';
+    return `${days} dias restantes`;
+  };
+
+  return (
+    <Layout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Campanhas de Vendas</h1>
+            <p className="text-muted-foreground">
+              Crie e acompanhe campanhas específicas com metas e prazos
+            </p>
+          </div>
+
+          {canManage && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova Campanha
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Criar Nova Campanha</DialogTitle>
+                </DialogHeader>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    createCampaignMutation.mutate(formData);
+                  }}
+                  className="space-y-4"
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome da Campanha</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Ex: Black Friday 2024"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Descrição</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="Descrição da campanha..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="start_date">Data Início</Label>
+                      <Input
+                        id="start_date"
+                        type="date"
+                        value={formData.start_date}
+                        onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="end_date">Data Fim</Label>
+                      <Input
+                        id="end_date"
+                        type="date"
+                        value={formData.end_date}
+                        onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="target_sales">Meta de Vendas</Label>
+                      <Input
+                        id="target_sales"
+                        type="number"
+                        value={formData.target_sales}
+                        onChange={(e) => setFormData({ ...formData, target_sales: e.target.value })}
+                        placeholder="Ex: 50"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="target_value">Meta de Valor (R$)</Label>
+                      <Input
+                        id="target_value"
+                        type="number"
+                        step="0.01"
+                        value={formData.target_value}
+                        onChange={(e) => setFormData({ ...formData, target_value: e.target.value })}
+                        placeholder="Ex: 50000"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <Button type="submit" className="w-full" disabled={createCampaignMutation.isPending}>
+                    {createCampaignMutation.isPending ? 'Criando...' : 'Criar Campanha'}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
+
+        {isLoading ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardHeader className="h-24 bg-muted" />
+                <CardContent className="h-32" />
+              </Card>
+            ))}
+          </div>
+        ) : campaigns.length === 0 ? (
+          <Card className="py-12">
+            <CardContent className="flex flex-col items-center justify-center text-center">
+              <Target className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Nenhuma campanha ainda</h3>
+              <p className="text-muted-foreground mb-4">
+                Crie sua primeira campanha para acompanhar metas específicas
+              </p>
+              {canManage && (
+                <Button onClick={() => setIsDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Criar Campanha
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {campaigns.map((campaign) => {
+              const progress = getCampaignProgress(campaign);
+              const salesProgress = campaign.target_sales > 0
+                ? Math.min((progress.salesCount / campaign.target_sales) * 100, 100)
+                : 0;
+              const valueProgress = campaign.target_value > 0
+                ? Math.min((progress.totalValue / campaign.target_value) * 100, 100)
+                : 0;
+
+              return (
+                <Card key={campaign.id} className="overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between">
+                      <CardTitle className="text-lg">{campaign.name}</CardTitle>
+                      {getStatusBadge(campaign)}
+                    </div>
+                    {campaign.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {campaign.description}
+                      </p>
+                    )}
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        {format(new Date(campaign.start_date), 'dd/MM', { locale: ptBR })} -{' '}
+                        {format(new Date(campaign.end_date), 'dd/MM/yyyy', { locale: ptBR })}
+                      </span>
+                    </div>
+
+                    <div className="text-xs font-medium text-muted-foreground">
+                      {getDaysRemaining(campaign.end_date)}
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Vendas</span>
+                          <span className="font-medium">
+                            {progress.salesCount} / {campaign.target_sales}
+                          </span>
+                        </div>
+                        <Progress value={salesProgress} className="h-2" />
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Valor</span>
+                          <span className="font-medium">
+                            {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            }).format(progress.totalValue)}{' '}
+                            /{' '}
+                            {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            }).format(campaign.target_value)}
+                          </span>
+                        </div>
+                        <Progress value={valueProgress} className="h-2" />
+                      </div>
+                    </div>
+
+                    {canManage && campaign.status !== 'completed' && (
+                      <div className="flex gap-2 pt-2">
+                        {campaign.status === 'paused' ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() =>
+                              updateStatusMutation.mutate({ id: campaign.id, status: 'active' })
+                            }
+                          >
+                            <Play className="mr-1 h-3 w-3" />
+                            Retomar
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() =>
+                              updateStatusMutation.mutate({ id: campaign.id, status: 'paused' })
+                            }
+                          >
+                            <Pause className="mr-1 h-3 w-3" />
+                            Pausar
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1"
+                          onClick={() =>
+                            updateStatusMutation.mutate({ id: campaign.id, status: 'completed' })
+                          }
+                        >
+                          <CheckCircle className="mr-1 h-3 w-3" />
+                          Concluir
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </Layout>
+  );
+}

@@ -14,7 +14,6 @@ import Reports from "./pages/Reports";
 import Users from "./pages/Users";
 import SaleHistory from "./pages/SaleHistory";
 import SellerDetails from "./pages/SellerDetails";
-
 import Teams from "./pages/Teams";
 import ChatMonitor from "./pages/ChatMonitor";
 import TeamDashboard from "./pages/TeamDashboard";
@@ -26,6 +25,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Feedbacks from "./pages/Feedbacks";
 import Onboarding from "./pages/Onboarding";
 import BandaLargaReport from "./pages/BandaLargaReport";
+import Campaigns from "./pages/Campaigns";
+import Callbacks from "./pages/Callbacks";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -192,6 +193,22 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Onboarding />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/campanhas"
+        element={
+          <ProtectedRoute>
+            <Campaigns />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/retornos"
+        element={
+          <ProtectedRoute>
+            <Callbacks />
           </ProtectedRoute>
         }
       />

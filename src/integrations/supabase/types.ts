@@ -71,6 +71,63 @@ export type Database = {
           },
         ]
       }
+      callbacks: {
+        Row: {
+          client_name: string
+          company_id: string | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          phone: string
+          sale_id: string | null
+          scheduled_at: string
+          seller_id: string
+          status: string
+        }
+        Insert: {
+          client_name: string
+          company_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          phone: string
+          sale_id?: string | null
+          scheduled_at: string
+          seller_id: string
+          status?: string
+        }
+        Update: {
+          client_name?: string
+          company_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          phone?: string
+          sale_id?: string | null
+          scheduled_at?: string
+          seller_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "callbacks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "callbacks_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           active: boolean
@@ -654,6 +711,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sales_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_campaigns: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          end_date: string
+          id: string
+          name: string
+          start_date: string
+          status: string
+          target_sales: number
+          target_value: number
+          updated_at: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_date: string
+          id?: string
+          name: string
+          start_date: string
+          status?: string
+          target_sales?: number
+          target_value?: number
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          name?: string
+          start_date?: string
+          status?: string
+          target_sales?: number
+          target_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_campaigns_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"

@@ -800,41 +800,49 @@ export default function ChatMonitor() {
                           <div
                             key={key}
                             onClick={() => setSelectedConversation(key)}
-                            className={`p-3 border-b cursor-pointer transition-colors hover:bg-muted/50 ${
-                              isSelected ? 'bg-muted' : ''
+                            className={`p-4 border-b cursor-pointer transition-colors hover:bg-muted/50 ${
+                              isSelected ? 'bg-muted border-l-2 border-l-primary' : ''
                             }`}
                           >
-                            <div className="flex items-start gap-3">
-                              <div className="flex -space-x-2">
-                                <Avatar className="h-8 w-8 border-2 border-background">
+                            <div className="flex items-center gap-3">
+                              {/* User Avatars - More prominent */}
+                              <div className="flex items-center">
+                                <Avatar className="h-10 w-10 border-2 border-background ring-2 ring-primary/20">
                                   <AvatarImage src={p1?.avatar_url || undefined} />
-                                  <AvatarFallback className="text-xs">
+                                  <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
                                     {getInitials(p1?.nome || '')}
                                   </AvatarFallback>
                                 </Avatar>
-                                <Avatar className="h-8 w-8 border-2 border-background">
+                                <Avatar className="h-10 w-10 border-2 border-background ring-2 ring-secondary/20 -ml-3">
                                   <AvatarImage src={p2?.avatar_url || undefined} />
-                                  <AvatarFallback className="text-xs">
+                                  <AvatarFallback className="text-xs bg-secondary/50 font-medium">
                                     {getInitials(p2?.nome || '')}
                                   </AvatarFallback>
                                 </Avatar>
                               </div>
+                              
+                              {/* Conversation Info */}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between">
-                                  <p className="text-sm font-medium truncate">
+                                  <p className="text-sm font-semibold truncate">
                                     {p1?.nome?.split(' ')[0]} ↔ {p2?.nome?.split(' ')[0]}
                                   </p>
-                                  <span className="text-xs text-muted-foreground">
+                                  <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
                                     {format(new Date(lastMessage.created_at), 'HH:mm')}
                                   </span>
                                 </div>
-                                <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                <p className="text-xs text-muted-foreground truncate mt-1">
                                   {lastMessage.message}
                                 </p>
-                                <div className="flex gap-1 mt-1">
+                                <div className="flex gap-1 mt-1.5 flex-wrap">
                                   {p1?.team_id && (
-                                    <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0.5">
                                       {getTeam(p1.team_id)?.name}
+                                    </Badge>
+                                  )}
+                                  {p2?.team_id && p2.team_id !== p1?.team_id && (
+                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
+                                      {getTeam(p2.team_id)?.name}
                                     </Badge>
                                   )}
                                 </div>

@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import {
   Dialog,
   DialogContent,
@@ -24,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus, Target, Calendar, TrendingUp, Pause, Play, CheckCircle } from 'lucide-react';
+import { Plus, Target, Calendar, TrendingUp, Pause, Play, CheckCircle, Trophy, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, differenceInDays, isAfter, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -72,13 +74,13 @@ export default function Campaigns() {
     enabled: !!profile?.company_id,
   });
 
-  // Fetch sales linked to campaigns
+  // Fetch sales linked to campaigns with seller info
   const { data: salesData } = useQuery({
     queryKey: ['campaign-sales', profile?.company_id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sales')
-        .select('id, valor_mensal, campaign_id, status')
+        .select('id, valor_mensal, campaign_id, status, seller_id')
         .not('campaign_id', 'is', null)
         .in('status', ['VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA']);
 
@@ -87,6 +89,22 @@ export default function Campaigns() {
     },
     enabled: !!profile?.company_id,
   });
+
+  // Fetch profiles for seller names
+  const { data: profiles } = useQuery({
+    queryKey: ['profiles', profile?.company_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, nome, avatar_url');
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.company_id,
+  });
+
+  const [selectedCampaignRanking, setSelectedCampaignRanking] = useState<string | null>(null);
 
   const createCampaignMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -146,6 +164,38 @@ export default function Campaigns() {
       salesCount: campaignSales.length,
       totalValue: campaignSales.reduce((acc, sale) => acc + (sale.valor_mensal || 0), 0),
     };
+  };
+
+  // Get seller ranking for a campaign
+  const getCampaignRanking = (campaignId: string) => {
+    if (!salesData || !profiles) return [];
+
+    const campaignSales = salesData.filter((sale) => sale.campaign_id === campaignId);
+    
+    // Group by seller
+    const sellerStats: Record<string, { salesCount: number; totalValue: number }> = {};
+    
+    campaignSales.forEach((sale) => {
+      if (!sale.seller_id) return;
+      if (!sellerStats[sale.seller_id]) {
+        sellerStats[sale.seller_id] = { salesCount: 0, totalValue: 0 };
+      }
+      sellerStats[sale.seller_id].salesCount += 1;
+      sellerStats[sale.seller_id].totalValue += sale.valor_mensal || 0;
+    });
+
+    // Convert to array with profile info and sort
+    return Object.entries(sellerStats)
+      .map(([sellerId, stats]) => {
+        const sellerProfile = profiles.find((p) => p.id === sellerId);
+        return {
+          sellerId,
+          nome: sellerProfile?.nome || 'Desconhecido',
+          avatar_url: sellerProfile?.avatar_url,
+          ...stats,
+        };
+      })
+      .sort((a, b) => b.totalValue - a.totalValue);
   };
 
   const getStatusBadge = (campaign: Campaign) => {
@@ -375,6 +425,72 @@ export default function Campaigns() {
                         <Progress value={valueProgress} className="h-2" />
                       </div>
                     </div>
+
+                    {/* Ranking Button */}
+                    {progress.salesCount > 0 && (
+                      <Sheet>
+                        <SheetTrigger asChild>
+                          <Button size="sm" variant="ghost" className="w-full">
+                            <Trophy className="mr-2 h-4 w-4 text-amber-500" />
+                            Ver Ranking
+                          </Button>
+                        </SheetTrigger>
+                        <SheetContent>
+                          <SheetHeader>
+                            <SheetTitle className="flex items-center gap-2">
+                              <Trophy className="h-5 w-5 text-amber-500" />
+                              Ranking - {campaign.name}
+                            </SheetTitle>
+                          </SheetHeader>
+                          <div className="mt-6 space-y-3">
+                            {getCampaignRanking(campaign.id).map((seller, index) => (
+                              <div
+                                key={seller.sellerId}
+                                className={`flex items-center gap-3 p-3 rounded-lg ${
+                                  index === 0
+                                    ? 'bg-amber-500/10 border border-amber-500/30'
+                                    : index === 1
+                                    ? 'bg-slate-400/10 border border-slate-400/30'
+                                    : index === 2
+                                    ? 'bg-orange-600/10 border border-orange-600/30'
+                                    : 'bg-muted/50'
+                                }`}
+                              >
+                                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-background font-bold text-sm">
+                                  {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                                </div>
+                                <Avatar className="h-10 w-10">
+                                  <AvatarImage src={seller.avatar_url || ''} />
+                                  <AvatarFallback>
+                                    {seller.nome.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium truncate">{seller.nome}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {seller.salesCount} vendas
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="font-semibold text-primary">
+                                    {new Intl.NumberFormat('pt-BR', {
+                                      style: 'currency',
+                                      currency: 'BRL',
+                                    }).format(seller.totalValue)}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                            {getCampaignRanking(campaign.id).length === 0 && (
+                              <div className="text-center py-8 text-muted-foreground">
+                                <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                <p>Nenhuma venda nesta campanha ainda</p>
+                              </div>
+                            )}
+                          </div>
+                        </SheetContent>
+                      </Sheet>
+                    )}
 
                     {canManage && campaign.status !== 'completed' && (
                       <div className="flex gap-2 pt-2">

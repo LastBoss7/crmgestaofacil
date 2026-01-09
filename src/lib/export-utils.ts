@@ -438,3 +438,133 @@ export const exportSaleDetailsToPDF = (
   
   doc.save(`${filename}.pdf`);
 };
+
+// Banda Larga Report export types
+export interface BandaLargaStats {
+  tipo: string;
+  count: number;
+  value: number;
+  percentage: number;
+}
+
+export const exportBandaLargaToExcel = (
+  stats: BandaLargaStats[],
+  total: number,
+  totalValue: number,
+  periodLabel: string,
+  sellerName?: string,
+  filename: string = 'relatorio-banda-larga'
+) => {
+  // Summary sheet data
+  const summaryData = [
+    { 'Métrica': 'Total de Vendas', 'Valor': total },
+    { 'Métrica': 'Valor Total', 'Valor': formatCurrency(totalValue) },
+    { 'Métrica': 'Ticket Médio', 'Valor': formatCurrency(total > 0 ? totalValue / total : 0) },
+    { 'Métrica': 'Período', 'Valor': periodLabel },
+    { 'Métrica': 'Vendedor', 'Valor': sellerName || 'Todos os vendedores' },
+  ];
+
+  // Detail sheet data
+  const detailData = stats.map((stat) => ({
+    'Tipo de Negociação': stat.tipo,
+    'Quantidade': stat.count,
+    'Valor Total': Number(stat.value),
+    '% do Total': `${stat.percentage.toFixed(1)}%`,
+    'Ticket Médio': Number(stat.count > 0 ? stat.value / stat.count : 0),
+  }));
+
+  const wb = XLSX.utils.book_new();
+  
+  // Summary sheet
+  const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+  wsSummary['!cols'] = [{ wch: 20 }, { wch: 30 }];
+  XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumo');
+  
+  // Detail sheet
+  const wsDetail = XLSX.utils.json_to_sheet(detailData);
+  wsDetail['!cols'] = [
+    { wch: 25 }, // Tipo
+    { wch: 12 }, // Quantidade
+    { wch: 18 }, // Valor Total
+    { wch: 12 }, // % do Total
+    { wch: 18 }, // Ticket Médio
+  ];
+  XLSX.utils.book_append_sheet(wb, wsDetail, 'Detalhamento');
+  
+  XLSX.writeFile(wb, `${filename}.xlsx`);
+};
+
+export const exportBandaLargaToPDF = (
+  stats: BandaLargaStats[],
+  total: number,
+  totalValue: number,
+  periodLabel: string,
+  sellerName?: string,
+  filename: string = 'relatorio-banda-larga'
+) => {
+  const doc = new jsPDF('portrait');
+  
+  // Title
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Relatório de Banda Larga', 14, 20);
+  
+  // Period info
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100);
+  doc.text(`Período: ${periodLabel}`, 14, 28);
+  doc.text(`Vendedor: ${sellerName || 'Todos os vendedores'}`, 14, 34);
+  doc.text(`Gerado em: ${formatDate(new Date().toISOString())}`, 14, 40);
+  
+  // Summary box
+  doc.setTextColor(0);
+  doc.setFillColor(245, 245, 245);
+  doc.roundedRect(14, 46, 180, 30, 3, 3, 'F');
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Total de Vendas:', 20, 56);
+  doc.text('Valor Total:', 80, 56);
+  doc.text('Ticket Médio:', 140, 56);
+  
+  doc.setFont('helvetica', 'normal');
+  doc.text(String(total), 20, 66);
+  doc.text(formatCurrency(totalValue), 80, 66);
+  doc.text(formatCurrency(total > 0 ? totalValue / total : 0), 140, 66);
+  
+  // Table
+  const tableData = stats.map((stat) => [
+    stat.tipo,
+    String(stat.count),
+    formatCurrency(stat.value),
+    `${stat.percentage.toFixed(1)}%`,
+    formatCurrency(stat.count > 0 ? stat.value / stat.count : 0),
+  ]);
+
+  autoTable(doc, {
+    startY: 84,
+    head: [['Tipo', 'Qtd', 'Valor Total', '% do Total', 'Ticket Médio']],
+    body: tableData,
+    foot: [[
+      'TOTAL',
+      String(total),
+      formatCurrency(totalValue),
+      '100%',
+      formatCurrency(total > 0 ? totalValue / total : 0),
+    ]],
+    styles: { fontSize: 9, cellPadding: 3 },
+    headStyles: { fillColor: [59, 130, 246] },
+    footStyles: { fillColor: [229, 231, 235], textColor: [0, 0, 0], fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [249, 250, 251] },
+    columnStyles: {
+      0: { cellWidth: 50 },
+      1: { cellWidth: 25, halign: 'center' },
+      2: { cellWidth: 40, halign: 'right' },
+      3: { cellWidth: 30, halign: 'center' },
+      4: { cellWidth: 40, halign: 'right' },
+    },
+  });
+  
+  doc.save(`${filename}.pdf`);
+};

@@ -62,6 +62,7 @@ export default function ChatMonitor() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [conversations, setConversations] = useState<Map<string, DirectMessage[]>>(new Map());
+  const [userNames, setUserNames] = useState<Map<string, string>>(new Map());
   
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
   const [selectedUser, setSelectedUser] = useState<string>('all');
@@ -92,17 +93,26 @@ export default function ChatMonitor() {
       if (profilesRes.data) setProfiles(profilesRes.data);
       if (teamsRes.data) setTeams(teamsRes.data as Team[]);
 
-      // Group direct messages by conversation
+      // Group direct messages by conversation and build user names map
       if (messagesRes.data) {
         const convMap = new Map<string, DirectMessage[]>();
+        const namesMap = new Map<string, string>();
+        
         messagesRes.data.forEach((msg) => {
           const key = [msg.sender_id, msg.receiver_id].sort().join('-');
           if (!convMap.has(key)) {
             convMap.set(key, []);
           }
           convMap.get(key)!.push(msg);
+          
+          // Build names map from sender_name
+          if (msg.sender_name && msg.sender_name.trim()) {
+            namesMap.set(msg.sender_id, msg.sender_name);
+          }
         });
+        
         setConversations(convMap);
+        setUserNames(namesMap);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -796,21 +806,14 @@ export default function ChatMonitor() {
                         const p2 = getProfile(participants[1]);
                         const isSelected = selectedConversation === key;
                         
-                        // Get names from messages - check both sender and receiver
+                        // Get names - prioritize profile, then userNames map, then messages
                         const getName = (participantId: string) => {
-                          const profile = participantId === participants[0] ? p1 : p2;
+                          const profile = getProfile(participantId);
                           if (profile?.nome) return profile.nome;
                           
-                          // Check if this participant sent a message (sender_name)
-                          const sentMsg = messages.find(m => m.sender_id === participantId);
-                          if (sentMsg?.sender_name) return sentMsg.sender_name;
-                          
-                          // Check if this participant received a message (we can get their name from when they sent)
-                          const receivedMsg = messages.find(m => m.receiver_id === participantId);
-                          if (receivedMsg) {
-                            // Find a message where this participant was the sender
-                            const asSender = messages.find(m => m.sender_id === participantId);
-                            if (asSender?.sender_name) return asSender.sender_name;
+                          // Check userNames map built from all messages
+                          if (userNames.has(participantId)) {
+                            return userNames.get(participantId)!;
                           }
                           
                           return 'Usuário';

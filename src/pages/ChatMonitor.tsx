@@ -796,20 +796,28 @@ export default function ChatMonitor() {
                         const p2 = getProfile(participants[1]);
                         const isSelected = selectedConversation === key;
                         
-                        // Get names from messages if profile not found
-                        const getName1 = () => {
-                          if (p1?.nome) return p1.nome;
-                          const msgFromP1 = messages.find(m => m.sender_id === participants[0]);
-                          return msgFromP1?.sender_name || 'Usuário';
-                        };
-                        const getName2 = () => {
-                          if (p2?.nome) return p2.nome;
-                          const msgFromP2 = messages.find(m => m.sender_id === participants[1]);
-                          return msgFromP2?.sender_name || 'Usuário';
+                        // Get names from messages - check both sender and receiver
+                        const getName = (participantId: string) => {
+                          const profile = participantId === participants[0] ? p1 : p2;
+                          if (profile?.nome) return profile.nome;
+                          
+                          // Check if this participant sent a message (sender_name)
+                          const sentMsg = messages.find(m => m.sender_id === participantId);
+                          if (sentMsg?.sender_name) return sentMsg.sender_name;
+                          
+                          // Check if this participant received a message (we can get their name from when they sent)
+                          const receivedMsg = messages.find(m => m.receiver_id === participantId);
+                          if (receivedMsg) {
+                            // Find a message where this participant was the sender
+                            const asSender = messages.find(m => m.sender_id === participantId);
+                            if (asSender?.sender_name) return asSender.sender_name;
+                          }
+                          
+                          return 'Usuário';
                         };
                         
-                        const name1 = getName1();
-                        const name2 = getName2();
+                        const name1 = getName(participants[0]);
+                        const name2 = getName(participants[1]);
                         
                         return (
                           <div

@@ -35,12 +35,23 @@ serve(async (req) => {
   }
 
   try {
-    // Validar webhook secret (opcional, mas recomendado)
-    const webhookSecret = req.headers.get('x-webhook-secret');
+    // Validar webhook secret (OBRIGATÓRIO para segurança)
     const expectedSecret = Deno.env.get('WEBHOOK_SECRET');
     
-    if (expectedSecret && webhookSecret !== expectedSecret) {
-      console.warn('Invalid webhook secret received');
+    // Se o secret não estiver configurado, rejeitar todas as requisições
+    if (!expectedSecret) {
+      console.error('WEBHOOK_SECRET not configured - rejecting request for security');
+      return new Response(
+        JSON.stringify({ error: 'Webhook not properly configured' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const webhookSecret = req.headers.get('x-webhook-secret');
+    
+    // Validar que o secret foi enviado e corresponde
+    if (!webhookSecret || webhookSecret !== expectedSecret) {
+      console.warn('Invalid or missing webhook secret received');
       return new Response(
         JSON.stringify({ error: 'Invalid webhook secret' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

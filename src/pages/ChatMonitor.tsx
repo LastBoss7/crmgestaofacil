@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { usePresence } from '@/hooks/usePresence';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -56,6 +57,7 @@ interface Conversation {
 export default function ChatMonitor() {
   const { isCEO } = useAuth();
   const navigate = useNavigate();
+  const { isUserOnline } = usePresence();
   
   const [directMessages, setDirectMessages] = useState<DirectMessage[]>([]);
   const [teamMessages, setTeamMessages] = useState<TeamMessage[]>([]);
@@ -831,20 +833,36 @@ export default function ChatMonitor() {
                             }`}
                           >
                             <div className="flex items-center gap-3">
-                              {/* User Avatars - More prominent */}
+                              {/* User Avatars with Online Status */}
                               <div className="flex items-center">
-                                <Avatar className="h-10 w-10 border-2 border-background ring-2 ring-primary/20">
-                                  <AvatarImage src={p1?.avatar_url || undefined} />
-                                  <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
-                                    {getInitials(name1)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <Avatar className="h-10 w-10 border-2 border-background ring-2 ring-secondary/20 -ml-3">
-                                  <AvatarImage src={p2?.avatar_url || undefined} />
-                                  <AvatarFallback className="text-xs bg-secondary/50 font-medium">
-                                    {getInitials(name2)}
-                                  </AvatarFallback>
-                                </Avatar>
+                                <div className="relative">
+                                  <Avatar className="h-10 w-10 border-2 border-background ring-2 ring-primary/20">
+                                    <AvatarImage src={p1?.avatar_url || undefined} />
+                                    <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
+                                      {getInitials(name1)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span 
+                                    className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background ${
+                                      isUserOnline(participants[0]) ? 'bg-green-500' : 'bg-muted-foreground/40'
+                                    }`}
+                                    title={isUserOnline(participants[0]) ? 'Online' : 'Offline'}
+                                  />
+                                </div>
+                                <div className="relative -ml-3">
+                                  <Avatar className="h-10 w-10 border-2 border-background ring-2 ring-secondary/20">
+                                    <AvatarImage src={p2?.avatar_url || undefined} />
+                                    <AvatarFallback className="text-xs bg-secondary/50 font-medium">
+                                      {getInitials(name2)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span 
+                                    className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background ${
+                                      isUserOnline(participants[1]) ? 'bg-green-500' : 'bg-muted-foreground/40'
+                                    }`}
+                                    title={isUserOnline(participants[1]) ? 'Online' : 'Offline'}
+                                  />
+                                </div>
                               </div>
                               
                               {/* Conversation Info */}

@@ -776,16 +776,16 @@ export default function ChatMonitor() {
           </TabsContent>
 
           <TabsContent value="direct" className="mt-0">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Conversations List */}
-              <Card className="lg:col-span-1">
+              <Card className="md:col-span-1">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium">
                     Conversas ({getFilteredConversations().length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <ScrollArea className="h-[500px]">
+                  <ScrollArea className="h-[400px] md:h-[500px]">
                     {getFilteredConversations().length === 0 ? (
                       <div className="p-4 text-center text-muted-foreground">
                         Nenhuma conversa encontrada
@@ -801,7 +801,7 @@ export default function ChatMonitor() {
                             key={key}
                             onClick={() => setSelectedConversation(key)}
                             className={`p-4 border-b cursor-pointer transition-colors hover:bg-muted/50 ${
-                              isSelected ? 'bg-muted border-l-2 border-l-primary' : ''
+                              isSelected ? 'bg-primary/10 border-l-4 border-l-primary' : ''
                             }`}
                           >
                             <div className="flex items-center gap-3">
@@ -825,7 +825,7 @@ export default function ChatMonitor() {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between">
                                   <p className="text-sm font-semibold truncate">
-                                    {p1?.nome?.split(' ')[0]} ↔ {p2?.nome?.split(' ')[0]}
+                                    {p1?.nome?.split(' ')[0] || '??'} ↔ {p2?.nome?.split(' ')[0] || '??'}
                                   </p>
                                   <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
                                     {format(new Date(lastMessage.created_at), 'HH:mm')}
@@ -857,52 +857,69 @@ export default function ChatMonitor() {
               </Card>
 
               {/* Messages View */}
-              <Card className="lg:col-span-2">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium">
-                    {selectedConversation ? 'Mensagens' : 'Selecione uma conversa'}
+              <Card className="md:col-span-2">
+                <CardHeader className="pb-3 border-b">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    {selectedConversation ? (
+                      <>
+                        Conversa selecionada
+                        <Badge variant="secondary" className="ml-2">
+                          {selectedConvMessages.length} mensagens
+                        </Badge>
+                      </>
+                    ) : (
+                      'Selecione uma conversa'
+                    )}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[500px]">
+                <CardContent className="p-0">
+                  <ScrollArea className="h-[400px] md:h-[500px]">
                     {!selectedConversation ? (
-                      <div className="flex items-center justify-center h-full text-muted-foreground">
-                        <div className="text-center">
-                          <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                          <p>Selecione uma conversa para ver as mensagens</p>
+                      <div className="flex items-center justify-center h-full min-h-[300px] text-muted-foreground">
+                        <div className="text-center p-8">
+                          <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                          <p className="text-lg font-medium mb-2">Nenhuma conversa selecionada</p>
+                          <p className="text-sm">Clique em uma conversa à esquerda para ver as mensagens</p>
                         </div>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {[...selectedConvMessages].reverse().map((msg) => {
-                          const sender = getProfile(msg.sender_id);
-                          return (
-                            <div key={msg.id} className="flex gap-3">
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage src={sender?.avatar_url || undefined} />
-                                <AvatarFallback className="text-xs">
-                                  {getInitials(sender?.nome || msg.sender_name)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium">{msg.sender_name}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {formatDate(msg.created_at)}
-                                  </span>
-                                  {!msg.read_at && (
-                                    <Badge variant="secondary" className="text-[10px]">
-                                      Não lida
-                                    </Badge>
-                                  )}
+                      <div className="space-y-4 p-4">
+                        {selectedConvMessages.length === 0 ? (
+                          <div className="text-center text-muted-foreground py-8">
+                            Nenhuma mensagem nesta conversa
+                          </div>
+                        ) : (
+                          [...selectedConvMessages].reverse().map((msg) => {
+                            const sender = getProfile(msg.sender_id);
+                            return (
+                              <div key={msg.id} className="flex gap-3">
+                                <Avatar className="h-8 w-8 shrink-0">
+                                  <AvatarImage src={sender?.avatar_url || undefined} />
+                                  <AvatarFallback className="text-xs">
+                                    {getInitials(sender?.nome || msg.sender_name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-sm font-medium">{msg.sender_name}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {formatDate(msg.created_at)}
+                                    </span>
+                                    {!msg.read_at && (
+                                      <Badge variant="secondary" className="text-[10px]">
+                                        Não lida
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-sm mt-1 p-3 bg-muted rounded-lg inline-block max-w-full break-words">
+                                    {msg.message}
+                                  </p>
                                 </div>
-                                <p className="text-sm mt-1 p-2 bg-muted rounded-lg inline-block">
-                                  {msg.message}
-                                </p>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })
+                        )}
                       </div>
                     )}
                   </ScrollArea>

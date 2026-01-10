@@ -791,10 +791,25 @@ export default function ChatMonitor() {
                         Nenhuma conversa encontrada
                       </div>
                     ) : (
-                      getFilteredConversations().map(({ key, participants, lastMessage }) => {
+                      getFilteredConversations().map(({ key, participants, messages, lastMessage }) => {
                         const p1 = getProfile(participants[0]);
                         const p2 = getProfile(participants[1]);
                         const isSelected = selectedConversation === key;
+                        
+                        // Get names from messages if profile not found
+                        const getName1 = () => {
+                          if (p1?.nome) return p1.nome;
+                          const msgFromP1 = messages.find(m => m.sender_id === participants[0]);
+                          return msgFromP1?.sender_name || 'Usuário';
+                        };
+                        const getName2 = () => {
+                          if (p2?.nome) return p2.nome;
+                          const msgFromP2 = messages.find(m => m.sender_id === participants[1]);
+                          return msgFromP2?.sender_name || 'Usuário';
+                        };
+                        
+                        const name1 = getName1();
+                        const name2 = getName2();
                         
                         return (
                           <div
@@ -810,13 +825,13 @@ export default function ChatMonitor() {
                                 <Avatar className="h-10 w-10 border-2 border-background ring-2 ring-primary/20">
                                   <AvatarImage src={p1?.avatar_url || undefined} />
                                   <AvatarFallback className="text-xs bg-primary/10 text-primary font-medium">
-                                    {getInitials(p1?.nome || '')}
+                                    {getInitials(name1)}
                                   </AvatarFallback>
                                 </Avatar>
                                 <Avatar className="h-10 w-10 border-2 border-background ring-2 ring-secondary/20 -ml-3">
                                   <AvatarImage src={p2?.avatar_url || undefined} />
                                   <AvatarFallback className="text-xs bg-secondary/50 font-medium">
-                                    {getInitials(p2?.nome || '')}
+                                    {getInitials(name2)}
                                   </AvatarFallback>
                                 </Avatar>
                               </div>
@@ -825,7 +840,7 @@ export default function ChatMonitor() {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between">
                                   <p className="text-sm font-semibold truncate">
-                                    {p1?.nome?.split(' ')[0] || '??'} ↔ {p2?.nome?.split(' ')[0] || '??'}
+                                    {name1.split(' ')[0]} ↔ {name2.split(' ')[0]}
                                   </p>
                                   <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
                                     {format(new Date(lastMessage.created_at), 'HH:mm')}

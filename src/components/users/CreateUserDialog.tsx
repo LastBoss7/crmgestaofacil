@@ -28,7 +28,7 @@ const createUserSchema = z.object({
   sobrenome: z.string().trim().min(2, 'Sobrenome deve ter no mínimo 2 caracteres').max(100, 'Sobrenome muito longo'),
   email: z.string().trim().email('E-mail inválido').max(255, 'E-mail muito longo'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres').max(50, 'Senha muito longa'),
-  role: z.enum(['CEO', 'BACKOFFICE', 'SELLER']),
+  role: z.enum(['CEO', 'BACKOFFICE', 'SUPERVISOR', 'SELLER']),
 });
 
 interface CreateUserDialogProps {
@@ -38,7 +38,7 @@ interface CreateUserDialogProps {
 }
 
 export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUserDialogProps) => {
-  const { profile, isCEO, isBackoffice } = useAuth();
+  const { profile, isCEO, isSupervisor } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -99,14 +99,14 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
         return;
       }
 
-      // Update profile with company_id and team_id (if backoffice creating seller)
+      // Update profile with company_id and team_id (if supervisor creating seller)
       const updateData: { company_id: string; nome: string; team_id?: string } = { 
         company_id: profile.company_id,
         nome: fullName 
       };
 
-      // If backoffice is creating a seller, add them to the backoffice's team
-      if (isBackoffice && formData.role === 'SELLER' && profile.team_id) {
+      // If supervisor is creating a seller, add them to the supervisor's team
+      if (isSupervisor && formData.role === 'SELLER' && profile.team_id) {
         updateData.team_id = profile.team_id;
       }
 
@@ -164,9 +164,9 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
     toast.success('Senha gerada! Anote antes de salvar.');
   };
 
-  // Backoffice can only create SELLER
+  // CEO can create all roles, Supervisor can only create SELLER
   const availableRoles: AppRole[] = isCEO 
-    ? ['CEO', 'BACKOFFICE', 'SELLER'] 
+    ? ['CEO', 'BACKOFFICE', 'SUPERVISOR', 'SELLER'] 
     : ['SELLER'];
 
   return (
@@ -286,9 +286,17 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
               )}
               {formData.role === 'BACKOFFICE' && (
                 <>
+                  <li>• Ver todas as vendas da empresa</li>
+                  <li>• Alterar status e dados de vendas (Qualidade)</li>
+                  <li>• Auditar vendas</li>
+                </>
+              )}
+              {formData.role === 'SUPERVISOR' && (
+                <>
+                  <li>• Gerenciar equipe de vendedores</li>
                   <li>• Ver todas as vendas</li>
-                  <li>• Alterar status de vendas</li>
                   <li>• Cadastrar vendedores na própria equipe</li>
+                  <li>• Enviar feedbacks</li>
                 </>
               )}
               {formData.role === 'SELLER' && (

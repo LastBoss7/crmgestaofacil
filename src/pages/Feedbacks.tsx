@@ -44,7 +44,7 @@ interface Feedback {
 
 export default function Feedbacks() {
   const navigate = useNavigate();
-  const { user, isSeller, isBackoffice, isCEO } = useAuth();
+  const { user, isSeller, isBackoffice, isSupervisor, isCEO } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [sellers, setSellers] = useState<Profile[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -78,7 +78,7 @@ export default function Feedbacks() {
       return;
     }
 
-    if ((isBackoffice || isCEO) && data) {
+    if ((isBackoffice || isSupervisor || isCEO) && data) {
       const sellerIds = [...new Set(data.map(f => f.seller_id))];
       const { data: profiles } = await supabase
         .from('profiles')
@@ -94,7 +94,7 @@ export default function Feedbacks() {
     } else {
       setAllFeedbacks(data || []);
     }
-  }, [user, isBackoffice, isCEO]);
+  }, [user, isBackoffice, isSupervisor, isCEO]);
 
   useEffect(() => {
     if (!user) {
@@ -104,8 +104,8 @@ export default function Feedbacks() {
 
     fetchFeedbacksForExport();
 
-    // Fetch sellers for backoffice/CEO
-    if (isBackoffice || isCEO) {
+    // Fetch sellers for supervisor/backoffice/CEO
+    if (isBackoffice || isSupervisor || isCEO) {
       const fetchSellers = async () => {
         const { data } = await supabase
           .from('profiles')
@@ -125,7 +125,7 @@ export default function Feedbacks() {
       };
       fetchSellers();
     }
-  }, [user, isBackoffice, isCEO, navigate, fetchFeedbacksForExport]);
+  }, [user, isBackoffice, isSupervisor, isCEO, navigate, fetchFeedbacksForExport]);
 
   // Get filtered feedbacks
   const getFilteredFeedbacks = useCallback((): ExportFeedback[] => {
@@ -257,7 +257,7 @@ export default function Feedbacks() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {(isBackoffice || isCEO) && (
+            {(isBackoffice || isSupervisor || isCEO) && (
               <Button onClick={() => setDialogOpen(true)} className="gap-2">
                 <MessageSquarePlus className="h-4 w-4" />
                 Novo Feedback
@@ -279,8 +279,8 @@ export default function Feedbacks() {
             />
           </div>
 
-          {/* Seller Filter - only for backoffice/CEO */}
-          {(isBackoffice || isCEO) && sellers.length > 0 && (
+          {/* Seller Filter - only for supervisor/backoffice/CEO */}
+          {(isBackoffice || isSupervisor || isCEO) && sellers.length > 0 && (
             <Select
               value={filters.sellerId}
               onValueChange={(value) => setFilters(prev => ({ ...prev, sellerId: value }))}
@@ -377,7 +377,7 @@ export default function Feedbacks() {
         <FeedbackList refreshTrigger={refreshTrigger} filters={filters} />
 
         {/* Dialog */}
-        {(isBackoffice || isCEO) && (
+        {(isBackoffice || isSupervisor || isCEO) && (
           <FeedbackDialog
             open={dialogOpen}
             onOpenChange={setDialogOpen}

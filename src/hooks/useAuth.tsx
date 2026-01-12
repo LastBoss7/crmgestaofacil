@@ -14,9 +14,11 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   isCEO: boolean;
   isBackoffice: boolean;
+  isSupervisor: boolean;
   isSeller: boolean;
   canManageUsers: boolean;
   canManageSaleStatus: boolean;
+  canManageTeam: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -129,9 +131,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isCEO = role === 'CEO';
   const isBackoffice = role === 'BACKOFFICE';
+  const isSupervisor = role === 'SUPERVISOR';
   const isSeller = role === 'SELLER';
-  const canManageUsers = isCEO || isBackoffice;
+  const canManageUsers = isCEO || isSupervisor;
   const canManageSaleStatus = isCEO || isBackoffice;
+  const canManageTeam = isCEO || isSupervisor;
 
   return (
     <AuthContext.Provider
@@ -146,9 +150,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signOut,
         isCEO,
         isBackoffice,
+        isSupervisor,
         isSeller,
         canManageUsers,
         canManageSaleStatus,
+        canManageTeam,
       }}
     >
       {children}

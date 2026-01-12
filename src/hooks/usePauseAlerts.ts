@@ -16,7 +16,7 @@ const DEFAULT_CONFIG: PauseConfig = {
 };
 
 export function usePauseAlerts(config: Partial<PauseConfig> = {}) {
-  const { user, profile, isCEO, isBackoffice } = useAuth();
+  const { user, profile, isCEO, isSupervisor } = useAuth();
   const alertedOperatorsRef = useRef<Set<string>>(new Set());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -24,7 +24,7 @@ export function usePauseAlerts(config: Partial<PauseConfig> = {}) {
 
   const checkPauseExceeded = useCallback(async () => {
     if (!user?.id || !profile?.company_id) return;
-    if (!isCEO && !isBackoffice) return;
+    if (!isCEO && !isSupervisor) return;
 
     try {
       const now = new Date();
@@ -109,7 +109,7 @@ export function usePauseAlerts(config: Partial<PauseConfig> = {}) {
     } catch (error) {
       console.error('Error in pause alert check:', error);
     }
-  }, [user?.id, profile?.company_id, isCEO, isBackoffice, finalConfig]);
+  }, [user?.id, profile?.company_id, isCEO, isSupervisor, finalConfig]);
 
   // Create notification for managers
   const createAlertNotification = async (
@@ -133,7 +133,7 @@ export function usePauseAlerts(config: Partial<PauseConfig> = {}) {
         .from('user_roles')
         .select('user_id, role')
         .in('user_id', managers.map(m => m.id))
-        .in('role', ['CEO', 'BACKOFFICE']);
+        .in('role', ['CEO', 'SUPERVISOR']);
 
       if (!roles || roles.length === 0) return;
 
@@ -161,7 +161,7 @@ export function usePauseAlerts(config: Partial<PauseConfig> = {}) {
 
   // Start interval to check pauses
   useEffect(() => {
-    if (!isCEO && !isBackoffice) return;
+    if (!isCEO && !isSupervisor) return;
 
     // Initial check
     checkPauseExceeded();
@@ -174,11 +174,11 @@ export function usePauseAlerts(config: Partial<PauseConfig> = {}) {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isCEO, isBackoffice, checkPauseExceeded, finalConfig.checkIntervalMs]);
+  }, [isCEO, isSupervisor, checkPauseExceeded, finalConfig.checkIntervalMs]);
 
   // Subscribe to status changes to check immediately
   useEffect(() => {
-    if (!isCEO && !isBackoffice) return;
+    if (!isCEO && !isSupervisor) return;
 
     const channel = supabase
       .channel('pause-alerts')
@@ -199,7 +199,7 @@ export function usePauseAlerts(config: Partial<PauseConfig> = {}) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isCEO, isBackoffice, checkPauseExceeded]);
+  }, [isCEO, isSupervisor, checkPauseExceeded]);
 
   return {
     checkPauseExceeded,

@@ -33,7 +33,7 @@ interface FeedbackListProps {
 }
 
 export function FeedbackList({ refreshTrigger, filters }: FeedbackListProps) {
-  const { user, profile, isSeller, isBackoffice, isCEO } = useAuth();
+  const { user, profile, isSeller, isBackoffice, isSupervisor, isCEO } = useAuth();
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,8 +48,8 @@ export function FeedbackList({ refreshTrigger, filters }: FeedbackListProps) {
 
       if (error) throw error;
 
-      // Fetch seller names for backoffice/CEO view
-      if ((isBackoffice || isCEO) && data) {
+      // Fetch seller names for supervisor/backoffice/CEO view
+      if ((isBackoffice || isSupervisor || isCEO) && data) {
         const sellerIds = [...new Set(data.map(f => f.seller_id))];
         const { data: profiles } = await supabase
           .from('profiles')
@@ -244,7 +244,7 @@ export function FeedbackList({ refreshTrigger, filters }: FeedbackListProps) {
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         De: <span className="font-medium text-foreground/70">{feedback.created_by_name}</span>
-                        {(isBackoffice || isCEO) && feedback.seller_name && (
+                        {(isBackoffice || isSupervisor || isCEO) && feedback.seller_name && (
                           <> → Para: <span className="font-medium text-foreground/70">{feedback.seller_name}</span></>
                         )}
                         {' • '}

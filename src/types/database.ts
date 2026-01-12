@@ -1,4 +1,4 @@
-export type AppRole = 'CEO' | 'BACKOFFICE' | 'SELLER';
+export type AppRole = 'CEO' | 'BACKOFFICE' | 'SUPERVISOR' | 'SELLER';
 
 export type SaleStatus = 'PRE_ANALISE' | 'AGUARDANDO_AUDITORIA' | 'PENDENCIA' | 'VENDA_AUDITADA' | 'INSTALACAO_MARCADA' | 'INSTALADA' | 'CANCELADA' | 'ACEITE_ENVIADO' | 'CHAMADO_EM_ABERTO' | 'DESCONECTADO';
 
@@ -136,7 +136,8 @@ export const SALE_STATUS_LABELS: Record<SaleStatus, string> = {
 
 export const ROLE_LABELS: Record<AppRole, string> = {
   CEO: 'CEO',
-  BACKOFFICE: 'Backoffice',
+  BACKOFFICE: 'Qualidade',
+  SUPERVISOR: 'Supervisor',
   SELLER: 'Vendedor',
 };
 

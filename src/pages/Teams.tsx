@@ -22,7 +22,7 @@ interface TeamWithDetails extends Team {
 }
 
 export default function Teams() {
-  const { user, isCEO, isBackoffice, profile } = useAuth();
+  const { user, isCEO, isSupervisor, profile } = useAuth();
   const navigate = useNavigate();
   const [teams, setTeams] = useState<TeamWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,10 +37,10 @@ export default function Teams() {
   const [supervisorId, setSupervisorId] = useState('');
   
   // Available users for supervisor/members
-  const [backofficeUsers, setBackofficeUsers] = useState<(Profile & { role?: AppRole })[]>([]);
+  const [supervisorUsers, setSupervisorUsers] = useState<(Profile & { role?: AppRole })[]>([]);
   const [sellerUsers, setSellerUsers] = useState<(Profile & { role?: AppRole })[]>([]);
 
-  const canAccessPage = isCEO || isBackoffice;
+  const canAccessPage = isCEO || isSupervisor;
 
   useEffect(() => {
     if (!canAccessPage) {
@@ -125,7 +125,7 @@ export default function Teams() {
         return { ...profile, role: userRole?.role as AppRole };
       });
 
-      setBackofficeUsers(profilesWithRoles.filter(p => p.role === 'BACKOFFICE'));
+      setSupervisorUsers(profilesWithRoles.filter(p => p.role === 'SUPERVISOR'));
       setSellerUsers(profilesWithRoles.filter(p => p.role === 'SELLER'));
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -332,13 +332,13 @@ export default function Teams() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="supervisor">Supervisor (Backoffice) *</Label>
+                  <Label htmlFor="supervisor">Supervisor *</Label>
                   <Select value={supervisorId} onValueChange={setSupervisorId}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o supervisor" />
                     </SelectTrigger>
                     <SelectContent>
-                      {backofficeUsers.map((user) => (
+                      {supervisorUsers.map((user) => (
                         <SelectItem key={user.id} value={user.id}>
                           {user.nome} ({user.email})
                         </SelectItem>

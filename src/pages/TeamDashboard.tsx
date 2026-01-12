@@ -83,7 +83,7 @@ interface SellerGoal {
 
 export default function TeamDashboard() {
   const navigate = useNavigate();
-  const { user, isBackoffice, isCEO, profile } = useAuth();
+  const { user, isSupervisor, isCEO, profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [team, setTeam] = useState<Team | null>(null);
   const [members, setMembers] = useState<Profile[]>([]);
@@ -94,12 +94,12 @@ export default function TeamDashboard() {
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
-    if (!isBackoffice && !isCEO) {
+    if (!isSupervisor && !isCEO) {
       navigate('/dashboard');
       return;
     }
     fetchTeamData();
-  }, [user, isBackoffice, isCEO]);
+  }, [user, isSupervisor, isCEO]);
 
   const fetchTeamData = async () => {
     if (!user) return;

@@ -31,6 +31,7 @@ import { SellerRanking } from '@/components/dashboard/SellerRanking';
 import { ComparativeMetrics } from '@/components/dashboard/ComparativeMetrics';
 import { MonthlyGoalProgress } from '@/components/dashboard/MonthlyGoalProgress';
 import { BroadcastManager } from '@/components/broadcast/BroadcastManager';
+import { PendingSalesByTeam } from '@/components/dashboard/PendingSalesByTeam';
 import { motion } from 'framer-motion';
 
 const STATUS_BADGE_STYLES: Record<SaleStatus, { bg: string; text: string; label: string }> = {
@@ -194,6 +195,7 @@ const Dashboard = () => {
 
           <TabsContent value="comparative" className="mt-6 space-y-6">
             <MonthlyGoalProgress />
+            {isCEO && <PendingSalesByTeam />}
             {(isCEO || isBackoffice) && <BroadcastManager />}
             <ComparativeMetrics />
           </TabsContent>

@@ -42,14 +42,16 @@ interface UserWithRole extends Profile {
 
 const Users = () => {
   const navigate = useNavigate();
-  const { canManageUsers, loading: authLoading, isCEO, isBackoffice } = useAuth();
+  const { canManageUsers, loading: authLoading, isCEO, isSupervisor } = useAuth();
   const [users, setUsers] = useState<UserWithRole[]>([]);
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newRole, setNewRole] = useState<AppRole | ''>('');
+  const [newTeamId, setNewTeamId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !canManageUsers) {
@@ -82,13 +84,15 @@ const Users = () => {
     }
 
     // Fetch all teams
-    const { data: teams, error: teamsError } = await supabase
+    const { data: teamsData, error: teamsError } = await supabase
       .from('teams')
       .select('id, name');
 
     if (teamsError) {
       console.error('Error fetching teams:', teamsError);
     }
+
+    setTeams(teamsData || []);
 
     // Create maps
     const rolesMap: Record<string, AppRole> = {};
@@ -97,7 +101,7 @@ const Users = () => {
     });
 
     const teamsMap: Record<string, string> = {};
-    (teams || []).forEach((t) => {
+    (teamsData || []).forEach((t) => {
       teamsMap[t.id] = t.name;
     });
 
@@ -117,7 +121,7 @@ const Users = () => {
     }
   }, [canManageUsers]);
 
-  const handleRoleUpdate = async () => {
+  const handleUserUpdate = async () => {
     if (!selectedUser || !newRole) return;
 
     // Check if role already exists
@@ -127,7 +131,7 @@ const Users = () => {
       .eq('user_id', selectedUser.id)
       .maybeSingle();
 
-    let error;
+    let roleError;
     
     if (existingRole) {
       // Update existing role
@@ -135,23 +139,38 @@ const Users = () => {
         .from('user_roles')
         .update({ role: newRole })
         .eq('user_id', selectedUser.id);
-      error = updateError;
+      roleError = updateError;
     } else {
       // Insert new role
       const { error: insertError } = await supabase
         .from('user_roles')
         .insert({ user_id: selectedUser.id, role: newRole });
-      error = insertError;
+      roleError = insertError;
     }
 
-    if (error) {
+    if (roleError) {
       toast.error('Erro ao atualizar função');
-      console.error(error);
-    } else {
-      toast.success('Função atualizada com sucesso!');
-      setIsEditOpen(false);
-      fetchUsers();
+      console.error(roleError);
+      return;
     }
+
+    // Update team_id for BACKOFFICE users
+    if (newRole === 'BACKOFFICE' && newTeamId !== selectedUser.team_id) {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ team_id: newTeamId })
+        .eq('id', selectedUser.id);
+
+      if (profileError) {
+        toast.error('Erro ao atualizar equipe');
+        console.error(profileError);
+        return;
+      }
+    }
+
+    toast.success('Usuário atualizado com sucesso!');
+    setIsEditOpen(false);
+    fetchUsers();
   };
 
   const handleToggleActive = async (user: UserWithRole) => {
@@ -284,6 +303,7 @@ const Users = () => {
                             onClick={() => {
                               setSelectedUser(user);
                               setNewRole(user.role || '');
+                              setNewTeamId(user.team_id || null);
                               setIsEditOpen(true);
                             }}
                           >
@@ -310,13 +330,13 @@ const Users = () => {
           </CardContent>
         </Card>
 
-        {/* Edit Role Dialog */}
+        {/* Edit User Dialog */}
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Editar Função</DialogTitle>
+              <DialogTitle>Editar Usuário</DialogTitle>
               <DialogDescription>
-                Alterar função de {selectedUser?.nome}
+                Alterar função e equipe de {selectedUser?.nome}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -327,12 +347,39 @@ const Users = () => {
                     <SelectValue placeholder="Selecione a função" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="CEO">CEO (Super Admin)</SelectItem>
-                    <SelectItem value="BACKOFFICE">Backoffice (Admin Operacional)</SelectItem>
+                    {isCEO && <SelectItem value="CEO">CEO (Super Admin)</SelectItem>}
+                    {isCEO && <SelectItem value="SUPERVISOR">Supervisor</SelectItem>}
+                    {isCEO && <SelectItem value="BACKOFFICE">Qualidade</SelectItem>}
                     <SelectItem value="SELLER">Vendedor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Team selector for BACKOFFICE */}
+              {newRole === 'BACKOFFICE' && (
+                <div className="space-y-2">
+                  <Label>Equipe (Unidade)</Label>
+                  <Select 
+                    value={newTeamId || 'none'} 
+                    onValueChange={(v) => setNewTeamId(v === 'none' ? null : v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a equipe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Sem equipe</SelectItem>
+                      {teams.map((team) => (
+                        <SelectItem key={team.id} value={team.id}>
+                          {team.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    O usuário Qualidade só verá vendas desta equipe
+                  </p>
+                </div>
+              )}
 
               <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
                 <p className="text-sm font-medium">Permissões:</p>
@@ -345,11 +392,19 @@ const Users = () => {
                       <li>• Alterar status de vendas</li>
                     </>
                   )}
+                  {newRole === 'SUPERVISOR' && (
+                    <>
+                      <li>• Gerenciar equipes</li>
+                      <li>• Cadastrar vendedores</li>
+                      <li>• Ver todas as vendas da empresa</li>
+                      <li>• Enviar feedbacks</li>
+                    </>
+                  )}
                   {newRole === 'BACKOFFICE' && (
                     <>
-                      <li>• Ver todas as vendas</li>
+                      <li>• Ver vendas da sua equipe</li>
                       <li>• Alterar status de vendas</li>
-                      <li>• Cadastrar vendedores na própria equipe</li>
+                      <li>• Editar dados das vendas</li>
                     </>
                   )}
                   {newRole === 'SELLER' && (
@@ -366,7 +421,7 @@ const Users = () => {
                 <Button variant="outline" onClick={() => setIsEditOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={handleRoleUpdate} disabled={!newRole}>
+                <Button onClick={handleUserUpdate} disabled={!newRole}>
                   Salvar
                 </Button>
               </div>

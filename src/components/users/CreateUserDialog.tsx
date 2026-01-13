@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,11 @@ import { toast } from 'sonner';
 import { Loader2, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { z } from 'zod';
 
+interface Team {
+  id: string;
+  name: string;
+}
+
 const createUserSchema = z.object({
   nome: z.string().trim().min(2, 'Nome deve ter no mínimo 2 caracteres').max(100, 'Nome muito longo'),
   sobrenome: z.string().trim().min(2, 'Sobrenome deve ter no mínimo 2 caracteres').max(100, 'Sobrenome muito longo'),
@@ -41,13 +46,35 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
   const { profile, isCEO, isSupervisor } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [formData, setFormData] = useState({
     nome: '',
     sobrenome: '',
     email: '',
     password: '',
     role: 'SELLER' as AppRole,
+    teamId: null as string | null,
   });
+
+  // Fetch teams when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchTeams();
+    }
+  }, [open]);
+
+  const fetchTeams = async () => {
+    const { data, error } = await supabase
+      .from('teams')
+      .select('id, name')
+      .order('name');
+    
+    if (error) {
+      console.error('Error fetching teams:', error);
+    } else {
+      setTeams(data || []);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,14 +126,18 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
         return;
       }
 
-      // Update profile with company_id and team_id (if supervisor creating seller)
-      const updateData: { company_id: string; nome: string; team_id?: string } = { 
+      // Update profile with company_id, nome and team_id
+      const updateData: { company_id: string; nome: string; team_id?: string | null } = { 
         company_id: profile.company_id,
         nome: fullName 
       };
 
-      // If supervisor is creating a seller, add them to the supervisor's team
-      if (isSupervisor && formData.role === 'SELLER' && profile.team_id) {
+      // Set team_id based on role and selection
+      if (formData.teamId) {
+        // If a team was explicitly selected
+        updateData.team_id = formData.teamId;
+      } else if (isSupervisor && formData.role === 'SELLER' && profile.team_id) {
+        // If supervisor is creating a seller, add them to the supervisor's team
         updateData.team_id = profile.team_id;
       }
 
@@ -141,6 +172,7 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
         email: '',
         password: '',
         role: 'SELLER',
+        teamId: null,
       });
       
       onOpenChange(false);
@@ -258,7 +290,7 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
             <Label htmlFor="role">Função</Label>
             <Select 
               value={formData.role} 
-              onValueChange={(v) => setFormData(prev => ({ ...prev, role: v as AppRole }))}
+              onValueChange={(v) => setFormData(prev => ({ ...prev, role: v as AppRole, teamId: null }))}
               disabled={isLoading}
             >
               <SelectTrigger>
@@ -273,6 +305,35 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
               </SelectContent>
             </Select>
           </div>
+
+          {/* Team selector - show for BACKOFFICE and SELLER when CEO is creating */}
+          {isCEO && (formData.role === 'BACKOFFICE' || formData.role === 'SELLER') && (
+            <div className="space-y-2">
+              <Label htmlFor="team">Equipe</Label>
+              <Select 
+                value={formData.teamId || 'none'} 
+                onValueChange={(v) => setFormData(prev => ({ ...prev, teamId: v === 'none' ? null : v }))}
+                disabled={isLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a equipe" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sem equipe</SelectItem>
+                  {teams.map((team) => (
+                    <SelectItem key={team.id} value={team.id}>
+                      {team.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {formData.role === 'BACKOFFICE' && (
+                <p className="text-xs text-muted-foreground">
+                  O usuário Qualidade só verá vendas desta equipe
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="rounded-lg border bg-muted/50 p-3 space-y-1">
             <p className="text-xs font-medium text-muted-foreground">Permissões da função:</p>

@@ -154,8 +154,8 @@ const Users = () => {
       return;
     }
 
-    // Update team_id for BACKOFFICE users
-    if (newRole === 'BACKOFFICE' && newTeamId !== selectedUser.team_id) {
+    // Update team_id for BACKOFFICE or SELLER users
+    if ((newRole === 'BACKOFFICE' || newRole === 'SELLER') && newTeamId !== selectedUser.team_id) {
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ team_id: newTeamId })
@@ -348,17 +348,17 @@ const Users = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {isCEO && <SelectItem value="CEO">CEO (Super Admin)</SelectItem>}
-                    {isCEO && <SelectItem value="SUPERVISOR">Supervisor</SelectItem>}
-                    {isCEO && <SelectItem value="BACKOFFICE">Qualidade</SelectItem>}
+                    {(isCEO || isSupervisor) && <SelectItem value="SUPERVISOR">Supervisor</SelectItem>}
+                    {(isCEO || isSupervisor) && <SelectItem value="BACKOFFICE">Qualidade</SelectItem>}
                     <SelectItem value="SELLER">Vendedor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Team selector for BACKOFFICE */}
-              {newRole === 'BACKOFFICE' && (
+              {/* Team selector for BACKOFFICE and SELLER */}
+              {(newRole === 'BACKOFFICE' || newRole === 'SELLER') && (
                 <div className="space-y-2">
-                  <Label>Equipe (Unidade)</Label>
+                  <Label>Equipe {newRole === 'BACKOFFICE' ? '(Unidade)' : ''}</Label>
                   <Select 
                     value={newTeamId || 'none'} 
                     onValueChange={(v) => setNewTeamId(v === 'none' ? null : v)}
@@ -375,9 +375,11 @@ const Users = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground">
-                    O usuário Qualidade só verá vendas desta equipe
-                  </p>
+                  {newRole === 'BACKOFFICE' && (
+                    <p className="text-xs text-muted-foreground">
+                      O usuário Qualidade só verá vendas desta equipe
+                    </p>
+                  )}
                 </div>
               )}
 

@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, AppRole, ROLE_LABELS, UserRole } from '@/types/database';
-import { Plus, Search, UserCheck, UserX, Shield, UserPlus, Users2 } from 'lucide-react';
+import { Plus, Search, UserCheck, UserX, Shield, UserPlus, Users2, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { CreateUserDialog } from '@/components/users/CreateUserDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 interface UserWithRole extends Profile {
   role?: AppRole;
@@ -50,8 +51,12 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [newRole, setNewRole] = useState<AppRole | ''>('');
   const [newTeamId, setNewTeamId] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !canManageUsers) {
@@ -188,6 +193,61 @@ const Users = () => {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!selectedUser || !newPassword) {
+      toast.error('Preencha a nova senha');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error('A senha deve ter no mínimo 6 caracteres');
+      return;
+    }
+
+    setIsResettingPassword(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('reset-user-password', {
+        body: {
+          userId: selectedUser.id,
+          newPassword: newPassword,
+        },
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        toast.error('Erro ao redefinir senha: ' + error.message);
+        return;
+      }
+
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      toast.success(`Senha de ${selectedUser.nome} redefinida com sucesso!`);
+      setIsResetPasswordOpen(false);
+      setNewPassword('');
+      setShowPassword(false);
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      toast.error('Erro ao redefinir senha');
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
+  const generatePassword = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let password = '';
+    for (let i = 0; i < 10; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewPassword(password);
+    setShowPassword(true);
+    toast.success('Senha gerada! Anote antes de salvar.');
+  };
+
   const filteredUsers = users.filter((user) =>
     user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -296,10 +356,11 @@ const Users = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>{formatDate(user.created_at)}</TableCell>
-                        <TableCell className="text-right space-x-2">
+                        <TableCell className="text-right space-x-1">
                           <Button
                             variant="ghost"
                             size="sm"
+                            title="Editar função"
                             onClick={() => {
                               setSelectedUser(user);
                               setNewRole(user.role || '');
@@ -312,12 +373,26 @@ const Users = () => {
                           <Button
                             variant="ghost"
                             size="sm"
+                            title="Redefinir senha"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setNewPassword('');
+                              setShowPassword(false);
+                              setIsResetPasswordOpen(true);
+                            }}
+                          >
+                            <KeyRound className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title={user.active ? 'Desativar usuário' : 'Ativar usuário'}
                             onClick={() => handleToggleActive(user)}
                           >
                             {user.active ? (
                               <UserX className="h-4 w-4 text-destructive" />
                             ) : (
-                              <UserCheck className="h-4 w-4 text-green-600" />
+                              <UserCheck className="h-4 w-4 text-emerald-600" />
                             )}
                           </Button>
                         </TableCell>
@@ -437,6 +512,87 @@ const Users = () => {
           onOpenChange={setIsCreateOpen}
           onUserCreated={fetchUsers}
         />
+
+        {/* Reset Password Dialog */}
+        <Dialog open={isResetPasswordOpen} onOpenChange={setIsResetPasswordOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <KeyRound className="h-5 w-5" />
+                Redefinir Senha
+              </DialogTitle>
+              <DialogDescription>
+                Definir uma nova senha para {selectedUser?.nome}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="newPassword">Nova Senha</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto p-0 text-xs text-primary hover:text-primary/80"
+                    onClick={generatePassword}
+                  >
+                    Gerar senha
+                  </Button>
+                </div>
+                <div className="relative">
+                  <Input
+                    id="newPassword"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Mínimo 6 caracteres"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    disabled={isResettingPassword}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-lg border bg-amber-50 dark:bg-amber-950/30 p-3">
+                <p className="text-xs text-amber-700 dark:text-amber-400">
+                  <strong>Atenção:</strong> Anote a senha antes de salvar. Ela não poderá ser visualizada depois.
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsResetPasswordOpen(false);
+                    setNewPassword('');
+                    setShowPassword(false);
+                  }}
+                  disabled={isResettingPassword}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleResetPassword} 
+                  disabled={isResettingPassword || newPassword.length < 6}
+                >
+                  {isResettingPassword ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    'Redefinir Senha'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

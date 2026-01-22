@@ -43,7 +43,7 @@ interface CreateUserDialogProps {
 }
 
 export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUserDialogProps) => {
-  const { profile, isCEO, isSupervisor } = useAuth();
+  const { profile, isCEO, isSupervisor, session } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [teams, setTeams] = useState<Team[]>([]);
@@ -100,67 +100,28 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
     setIsLoading(true);
 
     try {
-      // Create user in auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: { nome: fullName }
-        }
+      // Call edge function to create user (doesn't affect current session)
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email: formData.email,
+          password: formData.password,
+          nome: fullName,
+          role: formData.role,
+          teamId: formData.teamId,
+        },
       });
 
-      if (authError) {
-        if (authError.message.includes('already registered')) {
-          toast.error('Este e-mail já está cadastrado');
-        } else {
-          toast.error('Erro ao criar usuário: ' + authError.message);
-        }
+      if (error) {
+        console.error('Edge function error:', error);
+        toast.error('Erro ao criar usuário: ' + error.message);
         setIsLoading(false);
         return;
       }
 
-      if (!authData.user) {
-        toast.error('Erro ao criar usuário');
+      if (data?.error) {
+        toast.error(data.error);
         setIsLoading(false);
         return;
-      }
-
-      // Update profile with company_id, nome and team_id
-      const updateData: { company_id: string; nome: string; team_id?: string | null } = { 
-        company_id: profile.company_id,
-        nome: fullName 
-      };
-
-      // Set team_id based on role and selection
-      if (formData.teamId) {
-        // If a team was explicitly selected
-        updateData.team_id = formData.teamId;
-      } else if (isSupervisor && formData.role === 'SELLER' && profile.team_id) {
-        // If supervisor is creating a seller, add them to the supervisor's team
-        updateData.team_id = profile.team_id;
-      }
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update(updateData)
-        .eq('id', authData.user.id);
-
-      if (profileError) {
-        console.error('Error updating profile:', profileError);
-      }
-
-      // Insert user role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({ 
-          user_id: authData.user.id, 
-          role: formData.role 
-        });
-
-      if (roleError) {
-        console.error('Error inserting role:', roleError);
-        toast.error('Usuário criado, mas erro ao definir função');
       }
 
       toast.success(`Usuário ${fullName} criado com sucesso!`);

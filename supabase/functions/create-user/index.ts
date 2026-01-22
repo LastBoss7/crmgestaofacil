@@ -88,6 +88,43 @@ serve(async (req) => {
       );
     }
 
+    // Roles that require a team_id
+    const rolesRequiringTeam = ["SUPERVISOR", "BACKOFFICE", "SELLER"];
+    if (rolesRequiringTeam.includes(role) && !teamId) {
+      // For SUPERVISOR creating SELLER, use their own team if not specified
+      if (callerRole.role === "SUPERVISOR" && role === "SELLER" && callerProfile.team_id) {
+        // Will use caller's team_id below
+      } else {
+        return new Response(
+          JSON.stringify({ error: `É obrigatório selecionar uma equipe para ${role}` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Validate that the team belongs to the same company
+    if (teamId) {
+      const { data: teamData, error: teamError } = await supabaseAdmin
+        .from("teams")
+        .select("id, company_id")
+        .eq("id", teamId)
+        .single();
+
+      if (teamError || !teamData) {
+        return new Response(
+          JSON.stringify({ error: "Equipe não encontrada" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (teamData.company_id !== callerProfile.company_id) {
+        return new Response(
+          JSON.stringify({ error: "Equipe não pertence à sua empresa" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     // Create user using admin API (doesn't affect current session)
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,

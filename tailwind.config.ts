@@ -139,6 +139,10 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.6" },
         },
+        ripple: {
+          "0%": { width: "0", height: "0", opacity: "0.5" },
+          "100%": { width: "500px", height: "500px", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -149,6 +153,7 @@ export default {
         "scale-in": "scale-in 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards",
         shimmer: "shimmer 2s linear infinite",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        ripple: "ripple 0.6s ease-out forwards",
       },
       transitionTimingFunction: {
         "premium": "cubic-bezier(0.4, 0, 0.2, 1)",

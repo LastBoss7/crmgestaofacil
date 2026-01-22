@@ -76,6 +76,10 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
     }
   };
 
+  // Roles that require a team
+  const rolesRequiringTeam: AppRole[] = ['SUPERVISOR', 'BACKOFFICE', 'SELLER'];
+  const requiresTeam = rolesRequiringTeam.includes(formData.role);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -94,6 +98,12 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
 
     if (!profile?.company_id) {
       toast.error('Você precisa estar vinculado a uma empresa');
+      return;
+    }
+
+    // Validate team requirement for non-CEO roles
+    if (requiresTeam && !formData.teamId) {
+      toast.error(`É obrigatório selecionar uma equipe para ${ROLE_LABELS[formData.role]}`);
       return;
     }
 
@@ -269,20 +279,23 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
             </Select>
           </div>
 
-          {/* Team selector - show for BACKOFFICE and SELLER */}
-          {(formData.role === 'BACKOFFICE' || formData.role === 'SELLER') && (
+          {/* Team selector - required for SUPERVISOR, BACKOFFICE and SELLER */}
+          {requiresTeam && (
             <div className="space-y-2">
-              <Label htmlFor="team">Equipe</Label>
+              <Label htmlFor="team" className="flex items-center gap-1">
+                Equipe
+                <span className="text-destructive">*</span>
+              </Label>
               <Select 
-                value={formData.teamId || 'none'} 
-                onValueChange={(v) => setFormData(prev => ({ ...prev, teamId: v === 'none' ? null : v }))}
+                value={formData.teamId || ''} 
+                onValueChange={(v) => setFormData(prev => ({ ...prev, teamId: v || null }))}
                 disabled={isLoading}
+                required
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a equipe" />
+                <SelectTrigger className={!formData.teamId ? 'border-destructive/50' : ''}>
+                  <SelectValue placeholder="Selecione a equipe (obrigatório)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Sem equipe</SelectItem>
                   {teams.map((team) => (
                     <SelectItem key={team.id} value={team.id}>
                       {team.name}
@@ -290,11 +303,11 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
                   ))}
                 </SelectContent>
               </Select>
-              {formData.role === 'BACKOFFICE' && (
-                <p className="text-xs text-muted-foreground">
-                  O usuário Qualidade só verá vendas desta equipe
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground">
+                {formData.role === 'BACKOFFICE' && 'O usuário Qualidade só verá vendas desta equipe'}
+                {formData.role === 'SUPERVISOR' && 'O supervisor gerenciará esta equipe'}
+                {formData.role === 'SELLER' && 'O vendedor pertencerá a esta equipe'}
+              </p>
             </div>
           )}
 

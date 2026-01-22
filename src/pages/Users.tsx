@@ -159,8 +159,8 @@ const Users = () => {
       return;
     }
 
-    // Update team_id for BACKOFFICE or SELLER users
-    if ((newRole === 'BACKOFFICE' || newRole === 'SELLER') && newTeamId !== selectedUser.team_id) {
+    // Update team_id for SUPERVISOR, BACKOFFICE or SELLER users
+    if ((newRole === 'SUPERVISOR' || newRole === 'BACKOFFICE' || newRole === 'SELLER') && newTeamId !== selectedUser.team_id) {
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ team_id: newTeamId })
@@ -430,10 +430,12 @@ const Users = () => {
                 </Select>
               </div>
 
-              {/* Team selector for BACKOFFICE and SELLER */}
-              {(newRole === 'BACKOFFICE' || newRole === 'SELLER') && (
+              {/* Team selector for SUPERVISOR, BACKOFFICE and SELLER */}
+              {(newRole === 'SUPERVISOR' || newRole === 'BACKOFFICE' || newRole === 'SELLER') && (
                 <div className="space-y-2">
-                  <Label>Equipe {newRole === 'BACKOFFICE' ? '(Unidade)' : ''}</Label>
+                  <Label>
+                    Equipe {newRole === 'SUPERVISOR' ? '(Equipe que lidera)' : newRole === 'BACKOFFICE' ? '(Unidade)' : ''}
+                  </Label>
                   <Select 
                     value={newTeamId || 'none'} 
                     onValueChange={(v) => setNewTeamId(v === 'none' ? null : v)}
@@ -450,6 +452,11 @@ const Users = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                  {newRole === 'SUPERVISOR' && (
+                    <p className="text-xs text-muted-foreground">
+                      O supervisor gerenciará esta equipe
+                    </p>
+                  )}
                   {newRole === 'BACKOFFICE' && (
                     <p className="text-xs text-muted-foreground">
                       O usuário Qualidade só verá vendas desta equipe

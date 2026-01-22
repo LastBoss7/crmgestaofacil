@@ -10,7 +10,8 @@ import {
   Calendar,
   Briefcase,
   Users,
-  Info
+  Info,
+  History
 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui/accordion';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Sale, Profile } from '@/types/database';
+import { SaleTimeline } from './SaleTimeline';
 
 interface SaleDetailsProps {
   sale: Sale;
@@ -220,9 +222,9 @@ export function SaleDetails({ sale, seller }: SaleDetailsProps) {
                 <p className="font-medium text-sm whitespace-pre-wrap">{sale.observacoes_vendedor || '-'}</p>
               </div>
               {sale.motivo_pendencia && (
-                <div className="rounded-lg border border-orange-500/30 bg-orange-500/10 p-3">
-                  <Label className="text-xs text-orange-400">Motivo da Pendência</Label>
-                  <p className="text-sm text-orange-300 whitespace-pre-wrap">{sale.motivo_pendencia}</p>
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+                  <Label className="text-xs text-amber-400">Motivo da Pendência</Label>
+                  <p className="text-sm text-amber-300 whitespace-pre-wrap">{sale.motivo_pendencia}</p>
                 </div>
               )}
               <Separator />
@@ -231,6 +233,16 @@ export function SaleDetails({ sale, seller }: SaleDetailsProps) {
                 <InfoField label="Última atualização" value={format(new Date(sale.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })} />
               </div>
             </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Histórico e Timeline */}
+        <AccordionItem value="historico" className="border rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline py-3">
+            <SectionHeader icon={History} title="Histórico de Alterações" />
+          </AccordionTrigger>
+          <AccordionContent className="pb-4">
+            <SaleTimeline saleId={sale.id} />
           </AccordionContent>
         </AccordionItem>
       </Accordion>

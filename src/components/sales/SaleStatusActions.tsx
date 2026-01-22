@@ -224,7 +224,54 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
     );
   }
 
-  // Seller full control select
+  // Seller quick action when sale is in PENDENCIA - needs to resend for review
+  if (isSeller && isOwner && sale.status === 'PENDENCIA') {
+    return (
+      <div className="space-y-4 border-t pt-4">
+        <div className="p-4 rounded-lg border border-amber-500/30 bg-amber-500/10">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
+            <div className="flex-1">
+              <h4 className="font-medium text-amber-600">Venda com Pendência</h4>
+              <p className="text-sm text-muted-foreground mt-1">
+                {sale.motivo_pendencia || 'Verifique os dados e corrija os problemas apontados.'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <h3 className="font-semibold text-sm">Ações</h3>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="default"
+            size="sm"
+            className="gap-2"
+            onClick={() => handleQuickAction('AGUARDANDO_AUDITORIA')}
+            disabled={loading}
+          >
+            <Clock className="h-4 w-4" />
+            Reenviar para Auditoria
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => handleQuickAction('PRE_ANALISE')}
+            disabled={loading}
+          >
+            Voltar para Pré-Análise
+          </Button>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          Após corrigir os dados, clique em "Reenviar para Auditoria" para que o Backoffice analise novamente.
+        </p>
+      </div>
+    );
+  }
+
+  // Seller full control select for other statuses
   if (isSeller && isOwner && availableStatuses.length > 0) {
     return (
       <div className="space-y-4 border-t pt-4">

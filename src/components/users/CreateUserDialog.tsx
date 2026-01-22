@@ -157,9 +157,11 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
     toast.success('Senha gerada! Anote antes de salvar.');
   };
 
-  // CEO can create all roles, Supervisor can only create SELLER
+  // CEO can create all roles, Supervisor can create SELLER, BACKOFFICE, SUPERVISOR
   const availableRoles: AppRole[] = isCEO 
     ? ['CEO', 'BACKOFFICE', 'SUPERVISOR', 'SELLER'] 
+    : isSupervisor
+    ? ['SELLER', 'BACKOFFICE', 'SUPERVISOR']
     : ['SELLER'];
 
   return (
@@ -267,8 +269,8 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
             </Select>
           </div>
 
-          {/* Team selector - show for BACKOFFICE and SELLER when CEO is creating */}
-          {isCEO && (formData.role === 'BACKOFFICE' || formData.role === 'SELLER') && (
+          {/* Team selector - show for BACKOFFICE and SELLER */}
+          {(formData.role === 'BACKOFFICE' || formData.role === 'SELLER') && (
             <div className="space-y-2">
               <Label htmlFor="team">Equipe</Label>
               <Select 

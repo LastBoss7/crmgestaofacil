@@ -269,34 +269,34 @@ export const ComparativeMetrics = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Today vs Yesterday Section */}
       <div>
-        <div className="flex items-center gap-2 mb-4">
-          <Calendar className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Hoje vs Ontem</h3>
-          <Badge variant="secondary" className="text-xs">
+        <div className="flex items-center gap-2 mb-3">
+          <Calendar className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold">Hoje vs Ontem</h3>
+          <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
             {format(new Date(), "dd/MM", { locale: ptBR })} vs {format(subDays(new Date(), 1), "dd/MM", { locale: ptBR })}
           </Badge>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2">
           {/* Sales Count */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
             <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-500/10 flex-shrink-0">
-                    <ShoppingCart className="h-4 w-4 text-blue-500" />
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-blue-500/10 flex-shrink-0">
+                    <ShoppingCart className="h-3.5 w-3.5 text-blue-500" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-muted-foreground">Vendas</p>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xl font-bold">{todayStats.sales}</span>
-                      <span className="text-xs text-muted-foreground">vs {yesterdayStats.sales}</span>
+                    <p className="text-[10px] text-muted-foreground uppercase">Vendas</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg font-bold">{todayStats.sales}</span>
+                      <span className="text-[10px] text-muted-foreground">vs {yesterdayStats.sales}</span>
                     </div>
                   </div>
                   <TrendIndicator change={dayVsDayChange.sales} size="sm" />
@@ -307,20 +307,20 @@ export const ComparativeMetrics = () => {
 
           {/* Value */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.05 }}
           >
             <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-emerald-500/10 flex-shrink-0">
-                    <DollarSign className="h-4 w-4 text-emerald-500" />
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-emerald-500/10 flex-shrink-0">
+                    <DollarSign className="h-3.5 w-3.5 text-emerald-500" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-muted-foreground">Valor Total</p>
-                    <p className="text-lg font-bold truncate">{formatCurrency(todayStats.value)}</p>
-                    <span className="text-[10px] text-muted-foreground">vs {formatCurrency(yesterdayStats.value)}</span>
+                    <p className="text-[10px] text-muted-foreground uppercase">Valor</p>
+                    <p className="text-sm font-bold truncate">{formatCurrency(todayStats.value)}</p>
+                    <span className="text-[9px] text-muted-foreground">vs {formatCurrency(yesterdayStats.value)}</span>
                   </div>
                   <TrendIndicator change={dayVsDayChange.value} size="sm" />
                 </div>
@@ -330,21 +330,21 @@ export const ComparativeMetrics = () => {
 
           {/* Approved */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.1 }}
           >
             <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-violet-500/10 flex-shrink-0">
-                    <Target className="h-4 w-4 text-violet-500" />
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-violet-500/10 flex-shrink-0">
+                    <Target className="h-3.5 w-3.5 text-violet-500" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-muted-foreground">Aprovadas</p>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xl font-bold">{todayStats.approved}</span>
-                      <span className="text-xs text-muted-foreground">vs {yesterdayStats.approved}</span>
+                    <p className="text-[10px] text-muted-foreground uppercase">Aprovadas</p>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg font-bold">{todayStats.approved}</span>
+                      <span className="text-[10px] text-muted-foreground">vs {yesterdayStats.approved}</span>
                     </div>
                   </div>
                   <TrendIndicator change={dayVsDayChange.approved} size="sm" />
@@ -357,55 +357,55 @@ export const ComparativeMetrics = () => {
 
       {/* Week vs Week Section */}
       <div>
-        <div className="flex items-center gap-2 mb-4">
-          <BarChart3 className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Semana Atual vs Semana Anterior</h3>
+        <div className="flex items-center gap-2 mb-3">
+          <BarChart3 className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold">Semana Atual vs Anterior</h3>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           {/* Week Stats Cards */}
-          <div className="lg:col-span-1 space-y-4">
+          <div className="lg:col-span-1 space-y-2">
             <Card>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
+              <CardContent className="p-3">
+                <div className="space-y-2">
                   {/* Sales */}
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-blue-500/10">
-                        <ShoppingCart className="h-4 w-4 text-blue-500" />
+                  <div className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-md bg-blue-500/10">
+                        <ShoppingCart className="h-3 w-3 text-blue-500" />
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Vendas</p>
-                        <p className="font-semibold">{thisWeekStats.sales} <span className="text-xs text-muted-foreground font-normal">vs {lastWeekStats.sales}</span></p>
+                        <p className="text-[10px] text-muted-foreground">Vendas</p>
+                        <p className="text-xs font-semibold">{thisWeekStats.sales} <span className="text-[10px] text-muted-foreground font-normal">vs {lastWeekStats.sales}</span></p>
                       </div>
                     </div>
                     <TrendIndicator change={weekVsWeekChange.sales} size="sm" />
                   </div>
 
                   {/* Value */}
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-emerald-500/10">
-                        <DollarSign className="h-4 w-4 text-emerald-500" />
+                  <div className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-md bg-emerald-500/10">
+                        <DollarSign className="h-3 w-3 text-emerald-500" />
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Valor Total</p>
-                        <p className="font-semibold text-sm">{formatCurrency(thisWeekStats.value)}</p>
-                        <p className="text-xs text-muted-foreground">vs {formatCurrency(lastWeekStats.value)}</p>
+                        <p className="text-[10px] text-muted-foreground">Valor</p>
+                        <p className="text-xs font-semibold">{formatCurrency(thisWeekStats.value)}</p>
+                        <p className="text-[9px] text-muted-foreground">vs {formatCurrency(lastWeekStats.value)}</p>
                       </div>
                     </div>
                     <TrendIndicator change={weekVsWeekChange.value} size="sm" />
                   </div>
 
                   {/* Approved */}
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-violet-500/10">
-                        <Target className="h-4 w-4 text-violet-500" />
+                  <div className="flex items-center justify-between p-2 rounded-md bg-muted/50">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-md bg-violet-500/10">
+                        <Target className="h-3 w-3 text-violet-500" />
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Aprovadas</p>
-                        <p className="font-semibold">{thisWeekStats.approved} <span className="text-xs text-muted-foreground font-normal">vs {lastWeekStats.approved}</span></p>
+                        <p className="text-[10px] text-muted-foreground">Aprovadas</p>
+                        <p className="text-xs font-semibold">{thisWeekStats.approved} <span className="text-[10px] text-muted-foreground font-normal">vs {lastWeekStats.approved}</span></p>
                       </div>
                     </div>
                     <TrendIndicator change={weekVsWeekChange.approved} size="sm" />
@@ -417,12 +417,12 @@ export const ComparativeMetrics = () => {
 
           {/* Week Comparison Chart */}
           <Card className="lg:col-span-2">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Comparativo Diário</CardTitle>
-              <CardDescription>Vendas por dia da semana</CardDescription>
+            <CardHeader className="pb-1 pt-3 px-4">
+              <CardTitle className="text-xs">Comparativo Diário</CardTitle>
+              <CardDescription className="text-[10px]">Vendas por dia</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="h-[250px]">
+            <CardContent className="pb-3 px-4">
+              <div className="h-[160px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={weekComparisonChart} barGap={8}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />

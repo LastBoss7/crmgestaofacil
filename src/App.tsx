@@ -28,6 +28,7 @@ import BandaLargaReport from "./pages/BandaLargaReport";
 import Campaigns from "./pages/Campaigns";
 import CampaignRankings from "./pages/CampaignRankings";
 import Callbacks from "./pages/Callbacks";
+import TeamReport from "./pages/TeamReport";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -218,6 +219,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <Callbacks />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/relatorio-equipes"
+        element={
+          <ProtectedRoute>
+            <TeamReport />
           </ProtectedRoute>
         }
       />

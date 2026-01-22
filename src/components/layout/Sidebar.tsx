@@ -128,6 +128,7 @@ const Sidebar = () => {
   const managementNavigation = [
     ...(canManageUsers ? [{ name: 'Usuários', href: '/usuarios', icon: Users2 }] : []),
     ...(isCEO || isSupervisor ? [{ name: 'Equipes', href: '/equipes', icon: Users2 }] : []),
+    ...(isCEO || isSupervisor ? [{ name: 'Relatório Equipes', href: '/relatorio-equipes', icon: BarChart3 }] : []),
     ...(isSupervisor ? [{ name: 'Minha Equipe', href: '/minha-equipe', icon: BarChart3 }] : []),
     ...(isCEO || isSupervisor || isBackoffice ? [{ name: 'Monitoramento', href: '/monitoramento', icon: Activity }] : []),
     ...(isCEO || isSupervisor ? [{ name: 'Pausas', href: '/pausas', icon: Clock }] : []),

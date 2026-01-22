@@ -161,150 +161,144 @@ const Dashboard = () => {
 
   return (
     <Layout>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-4 animate-fade-in">
         {/* Header with Tabs */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-xl font-semibold text-foreground">Dashboard</h1>
           <Button 
+            size="sm"
             onClick={() => navigate('/vendas')}
-            className="gap-2 bg-primary hover:bg-primary/90"
+            className="gap-1.5 h-8 text-sm bg-primary hover:bg-primary/90"
           >
-            <span className="text-lg leading-none">+</span>
+            <span className="text-sm leading-none">+</span>
             Adicionar Cliente
           </Button>
         </div>
 
         <Tabs defaultValue="comparative" className="w-full">
-          <TabsList className="grid w-full max-w-3xl grid-cols-4">
-            <TabsTrigger value="comparative" className="gap-2">
-              <TrendingUp className="h-4 w-4" />
+          <TabsList className="grid w-full max-w-2xl grid-cols-4 h-9">
+            <TabsTrigger value="comparative" className="gap-1.5 text-xs">
+              <TrendingUp className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Comparativo</span>
             </TabsTrigger>
-            <TabsTrigger value="metrics" className="gap-2">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Métricas</span> Call Center
+            <TabsTrigger value="metrics" className="gap-1.5 text-xs">
+              <BarChart3 className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Métricas</span>
             </TabsTrigger>
-            <TabsTrigger value="ranking" className="gap-2">
-              <Trophy className="h-4 w-4" />
+            <TabsTrigger value="ranking" className="gap-1.5 text-xs">
+              <Trophy className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Ranking</span>
             </TabsTrigger>
-            <TabsTrigger value="clients" className="gap-2">
-              <Users className="h-4 w-4" />
+            <TabsTrigger value="clients" className="gap-1.5 text-xs">
+              <Users className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Clientes</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="comparative" className="mt-6 space-y-6">
+          <TabsContent value="comparative" className="mt-4 space-y-4">
             <MonthlyGoalProgress />
             {isCEO && <PendingSalesByTeam />}
             {(isCEO || isBackoffice) && <BroadcastManager />}
             <ComparativeMetrics />
           </TabsContent>
 
-          <TabsContent value="metrics" className="mt-6">
+          <TabsContent value="metrics" className="mt-4">
             <CallCenterMetrics sales={allSales} />
           </TabsContent>
 
-          <TabsContent value="ranking" className="mt-6">
+          <TabsContent value="ranking" className="mt-4">
             <SellerRanking sales={allSales} sellers={sellers} />
           </TabsContent>
 
           <TabsContent value="clients" className="mt-6">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-          {/* Total Customers */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            onClick={() => setStatusFilter('all')}
-            className={cn(
-              "bg-card border border-border rounded-xl p-4 cursor-pointer transition-all hover:border-primary/50",
-              statusFilter === 'all' && "ring-2 ring-primary"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-                <Building2 className="h-4 w-4 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground">Total Clientes</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-foreground">{stats.total.toLocaleString('pt-BR')}</span>
-                  {stats.total > 0 && <TrendingUp className="h-3 w-3 text-emerald-500" />}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Approved */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            onClick={() => setStatusFilter(statusFilter === 'VENDA_AUDITADA' ? 'all' : 'VENDA_AUDITADA')}
-            className={cn(
-              "bg-card border border-border rounded-xl p-4 cursor-pointer transition-all hover:border-emerald-500/50",
-              statusFilter === 'VENDA_AUDITADA' && "ring-2 ring-emerald-500"
-            )}
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-emerald-500/10 flex-shrink-0">
-                <UserCheck className="h-4 w-4 text-emerald-500" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground">Aprovados</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-foreground">{stats.aprovadas.toLocaleString('pt-BR')}</span>
-                  {stats.aprovadas > 0 && <TrendingUp className="h-3 w-3 text-emerald-500" />}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Team */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            onClick={() => navigate('/usuarios')}
-            className="bg-card border border-border rounded-xl p-4 cursor-pointer transition-all hover:border-primary/50"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-violet-500/10 flex-shrink-0">
-                <Activity className="h-4 w-4 text-violet-500" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground">Equipe</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-foreground">{sellers.length}</span>
-                  <div className="flex -space-x-1">
-                    {sellers.slice(0, 3).map((seller, idx) => (
-                      <Avatar key={idx} className="h-6 w-6 border-2 border-card">
-                        <AvatarImage src={seller.avatar_url || ''} />
-                        <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
-                          {getInitials(seller.nome)}
-                        </AvatarFallback>
-                      </Avatar>
-                    ))}
-                    {sellers.length > 3 && (
-                      <div className="h-6 w-6 rounded-full bg-muted border-2 border-card flex items-center justify-center">
-                        <span className="text-[8px] text-muted-foreground font-medium">+{sellers.length - 3}</span>
-                      </div>
-                    )}
+            {/* Stats Cards - Compact */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {/* Total Customers */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                onClick={() => setStatusFilter('all')}
+                className={cn(
+                  "bg-card border border-border rounded-lg p-3 cursor-pointer transition-all hover:border-primary/50",
+                  statusFilter === 'all' && "ring-1 ring-primary"
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-primary/10 flex-shrink-0">
+                    <Building2 className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Clientes</p>
+                    <span className="text-lg font-bold text-foreground">{stats.total.toLocaleString('pt-BR')}</span>
                   </div>
                 </div>
-              </div>
-            </div>
-          </motion.div>
+              </motion.div>
+
+              {/* Approved */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                onClick={() => setStatusFilter(statusFilter === 'VENDA_AUDITADA' ? 'all' : 'VENDA_AUDITADA')}
+                className={cn(
+                  "bg-card border border-border rounded-lg p-3 cursor-pointer transition-all hover:border-emerald-500/50",
+                  statusFilter === 'VENDA_AUDITADA' && "ring-1 ring-emerald-500"
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-emerald-500/10 flex-shrink-0">
+                    <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Aprovados</p>
+                    <span className="text-lg font-bold text-foreground">{stats.aprovadas.toLocaleString('pt-BR')}</span>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Team */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                onClick={() => navigate('/usuarios')}
+                className="bg-card border border-border rounded-lg p-3 cursor-pointer transition-all hover:border-primary/50"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-violet-500/10 flex-shrink-0">
+                    <Activity className="h-3.5 w-3.5 text-violet-500" />
+                  </div>
+                  <div className="min-w-0 flex-1 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Equipe</p>
+                      <span className="text-lg font-bold text-foreground">{sellers.length}</span>
+                    </div>
+                    <div className="flex -space-x-1">
+                      {sellers.slice(0, 2).map((seller, idx) => (
+                        <Avatar key={idx} className="h-5 w-5 border border-card">
+                          <AvatarImage src={seller.avatar_url || ''} />
+                          <AvatarFallback className="text-[7px] bg-primary/10 text-primary">
+                            {getInitials(seller.nome)}
+                          </AvatarFallback>
+                        </Avatar>
+                      ))}
+                      {sellers.length > 2 && (
+                        <div className="h-5 w-5 rounded-full bg-muted border border-card flex items-center justify-center">
+                          <span className="text-[7px] text-muted-foreground font-medium">+{sellers.length - 2}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             </div>
 
-        {/* Filters & Search */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Status Filter Chips */}
+        {/* Filters & Search - Compact */}
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div className="flex flex-wrap items-center gap-1">
             <Badge 
               variant={statusFilter === 'all' ? 'default' : 'outline'}
-              className="cursor-pointer px-3 py-1.5"
+              className="cursor-pointer px-2 py-0.5 text-xs h-6"
               onClick={() => setStatusFilter('all')}
             >
               Todos ({allSales.length})
@@ -319,7 +313,7 @@ const Dashboard = () => {
                   key={status}
                   variant={statusFilter === status ? 'default' : 'outline'}
                   className={cn(
-                    "cursor-pointer px-3 py-1.5",
+                    "cursor-pointer px-2 py-0.5 text-xs h-6",
                     statusFilter === status && style.bg
                   )}
                   onClick={() => setStatusFilter(statusFilter === status ? 'all' : status)}
@@ -330,53 +324,52 @@ const Dashboard = () => {
             })}
           </div>
 
-          {/* Search */}
-          <div className="relative w-full md:w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="relative w-full md:w-56">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
               placeholder="Buscar empresa..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-card"
+              className="pl-8 h-8 text-sm bg-card"
             />
           </div>
         </div>
 
-        {/* Table */}
+        {/* Table - Compact */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="bg-card border border-border rounded-xl overflow-hidden"
+          transition={{ delay: 0.15 }}
+          className="bg-card border border-border rounded-lg overflow-hidden"
         >
           {/* Table Header */}
-          <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-border bg-muted/30">
+          <div className="grid grid-cols-12 gap-3 px-4 py-2.5 border-b border-border bg-muted/30">
             <div className="col-span-4">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Empresa</span>
+              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Empresa</span>
             </div>
             <div className="col-span-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</span>
+              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Status</span>
             </div>
             <div className="col-span-3">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Valor Mensal</span>
+              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Valor</span>
             </div>
             <div className="col-span-2">
-              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Progresso</span>
+              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Progresso</span>
             </div>
             <div className="col-span-1"></div>
           </div>
 
           {/* Table Body */}
           {paginatedSales.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <Building2 className="h-12 w-12 mb-4 opacity-50" />
-              <p className="text-lg font-medium">Nenhum cliente encontrado</p>
-              <p className="text-sm mt-1">
+            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+              <Building2 className="h-8 w-8 mb-3 opacity-50" />
+              <p className="text-sm font-medium">Nenhum cliente encontrado</p>
+              <p className="text-xs mt-1">
                 {searchQuery || statusFilter !== 'all' 
-                  ? 'Tente ajustar os filtros de busca.' 
+                  ? 'Tente ajustar os filtros.' 
                   : 'Adicione seu primeiro cliente.'}
               </p>
-              <Button onClick={() => navigate('/vendas')} className="mt-4">
+              <Button size="sm" onClick={() => navigate('/vendas')} className="mt-3 h-7 text-xs">
                 Adicionar Cliente
               </Button>
             </div>
@@ -388,44 +381,47 @@ const Dashboard = () => {
                 return (
                   <motion.div
                     key={sale.id}
-                    initial={{ opacity: 0, x: -10 }}
+                    initial={{ opacity: 0, x: -5 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-muted/50 transition-colors"
+                    transition={{ delay: index * 0.03 }}
+                    className="grid grid-cols-12 gap-3 px-4 py-2.5 items-center hover:bg-muted/50 transition-colors"
                   >
                     {/* Company */}
-                    <div className="col-span-4 flex items-center gap-3">
-                      <Avatar className="h-10 w-10 rounded-lg">
-                        <AvatarFallback className="rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+                    <div className="col-span-4 flex items-center gap-2">
+                      <Avatar className="h-7 w-7 rounded-md">
+                        <AvatarFallback className="rounded-md bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-[10px] font-semibold">
                           {getInitials(sale.razao_social)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
+                        <p className="text-xs font-medium text-foreground truncate">
                           {sale.nome_fantasia || sale.razao_social}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate">{sale.cnpj_cliente}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{sale.cnpj_cliente}</p>
                       </div>
                     </div>
 
                     {/* Status */}
                     <div className="col-span-2">
-                      <Badge className={cn("font-medium", statusStyle.bg, statusStyle.text)}>
+                      <Badge 
+                        variant="secondary" 
+                        className={cn('text-[10px] px-1.5 py-0 h-5', statusStyle.bg, statusStyle.text)}
+                      >
                         {statusStyle.label}
                       </Badge>
                     </div>
 
                     {/* Value */}
                     <div className="col-span-3">
-                      <p className="text-sm font-medium text-foreground">
+                      <p className="text-xs font-medium text-foreground">
                         {formatCurrency(Number(sale.valor_mensal))}
                       </p>
-                      <p className="text-xs text-muted-foreground">/mês</p>
+                      <p className="text-[10px] text-muted-foreground">/mês</p>
                     </div>
 
                     {/* Progress */}
                     <div className="col-span-2">
-                      <Progress value={getProgressValue(sale)} className="h-2" />
+                      <Progress value={getProgressValue(sale)} className="h-1.5" />
                     </div>
 
                     {/* Actions */}
@@ -433,10 +429,10 @@ const Dashboard = () => {
                       <Button 
                         variant="ghost" 
                         size="icon" 
-                        className="h-8 w-8"
+                        className="h-6 w-6"
                         onClick={() => navigate('/vendas')}
                       >
-                        <Eye className="h-4 w-4 text-muted-foreground" />
+                        <Eye className="h-3.5 w-3.5 text-muted-foreground" />
                       </Button>
                     </div>
                   </motion.div>
@@ -445,31 +441,31 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Pagination */}
+          {/* Pagination - Compact */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-muted/30">
+            <div className="flex items-center justify-between px-4 py-2.5 border-t border-border bg-muted/30">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="gap-1"
+                className="gap-1 h-7 text-xs"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-3.5 w-3.5" />
                 Anterior
               </Button>
-              <span className="text-sm text-muted-foreground">
-                Página {currentPage} de {totalPages}
+              <span className="text-xs text-muted-foreground">
+                {currentPage} / {totalPages}
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="gap-1"
+                className="gap-1 h-7 text-xs"
               >
                 Próximo
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-3.5 w-3.5" />
               </Button>
             </div>
           )}

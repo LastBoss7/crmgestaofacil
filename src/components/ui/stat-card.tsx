@@ -49,21 +49,21 @@ export function StatCard({
   
   return (
     <div className={cn(
-      'group relative overflow-hidden rounded-2xl border border-border/40 bg-card p-6 transition-all duration-300 ease-premium shadow-premium hover:shadow-premium-lg',
+      'group relative overflow-hidden rounded-xl border border-border/40 bg-card p-4 transition-all duration-300 ease-premium shadow-premium-sm hover:shadow-premium',
       className
     )}>
-      <div className="relative flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0 space-y-2">
-          <p className="text-xs font-medium text-muted-foreground tracking-wide">
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0 space-y-1">
+          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
             {title}
           </p>
-          <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-semibold text-foreground tracking-tight leading-none truncate max-w-full">
+          <div className="flex items-baseline gap-1.5">
+            <p className="text-xl font-semibold text-foreground tracking-tight leading-none truncate max-w-full">
               {value}
             </p>
             {trend && trendValue && (
               <span className={cn(
-                'text-xs font-medium flex-shrink-0 px-1.5 py-0.5 rounded-md',
+                'text-[10px] font-medium flex-shrink-0 px-1 py-0.5 rounded',
                 trend === 'up' && 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
                 trend === 'down' && 'bg-red-500/10 text-red-600 dark:text-red-400',
                 trend === 'neutral' && 'bg-secondary text-muted-foreground'
@@ -75,17 +75,17 @@ export function StatCard({
             )}
           </div>
           {description && (
-            <p className="text-sm text-muted-foreground truncate">{description}</p>
+            <p className="text-xs text-muted-foreground truncate">{description}</p>
           )}
         </div>
         
         {Icon && (
           <div className={cn(
-            "flex-shrink-0 p-3 rounded-xl transition-transform duration-300 group-hover:scale-105",
+            "flex-shrink-0 p-2 rounded-lg transition-transform duration-300 group-hover:scale-105",
             styles.icon,
             styles.iconDark
           )}>
-            <Icon className="h-5 w-5" strokeWidth={1.75} />
+            <Icon className="h-4 w-4" strokeWidth={1.75} />
           </div>
         )}
       </div>

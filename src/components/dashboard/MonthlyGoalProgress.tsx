@@ -205,24 +205,24 @@ export const MonthlyGoalProgress = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-primary" />
-          <h3 className="text-lg font-semibold">Meta de {monthNames[currentMonth - 1]}</h3>
+        <div className="flex items-center gap-1.5">
+          <Target className="h-4 w-4 text-primary" />
+          <h3 className="text-sm font-semibold">Meta de {monthNames[currentMonth - 1]}</h3>
         </div>
-        <Badge variant="outline" className="gap-1">
-          <Calendar className="h-3 w-3" />
-          {data.daysElapsed} de {data.totalDays} dias
+        <Badge variant="outline" className="gap-1 text-[10px] h-5 px-1.5">
+          <Calendar className="h-2.5 w-2.5" />
+          {data.daysElapsed}/{data.totalDays} dias
         </Badge>
       </div>
 
       {/* Main Progress Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-2">
         {/* Sales Goal */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
         >
           <Card className={cn(
@@ -231,72 +231,36 @@ export const MonthlyGoalProgress = () => {
               ? "border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-transparent"
               : "border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-transparent"
           )}>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-1 pt-3 px-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Zap className="h-4 w-4" />
-                  Meta de Vendas
+                <CardTitle className="text-xs flex items-center gap-1">
+                  <Zap className="h-3 w-3" />
+                  Vendas
                 </CardTitle>
                 {calculations.salesOnTrack ? (
-                  <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    No ritmo
+                  <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30 text-[9px] h-4 px-1">
+                    <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />
+                    OK
                   </Badge>
                 ) : (
-                  <Badge className="bg-orange-500/20 text-orange-600 border-orange-500/30">
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    Atenção
+                  <Badge className="bg-orange-500/20 text-orange-600 border-orange-500/30 text-[9px] h-4 px-1">
+                    <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                    !
                   </Badge>
                 )}
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Current Progress */}
+            <CardContent className="p-3 pt-0 space-y-2">
               <div>
-                <div className="flex items-baseline justify-between mb-2 gap-2">
-                  <span className="text-2xl font-bold">{data.currentSales}</span>
-                  <span className="text-xs text-muted-foreground">de {data.totalGoalSales}</span>
+                <div className="flex items-baseline justify-between mb-1">
+                  <span className="text-lg font-bold">{data.currentSales}</span>
+                  <span className="text-[10px] text-muted-foreground">de {data.totalGoalSales}</span>
                 </div>
-                <Progress 
-                  value={calculations.salesProgress} 
-                  className="h-2"
-                />
-                <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
+                <Progress value={calculations.salesProgress} className="h-1.5" />
+                <div className="flex justify-between mt-0.5 text-[9px] text-muted-foreground">
                   <span>{calculations.salesProgress.toFixed(0)}%</span>
-                  <span>Faltam {calculations.salesNeeded}</span>
+                  <span>-{calculations.salesNeeded}</span>
                 </div>
-              </div>
-
-              {/* Projection */}
-              <div className="p-3 rounded-lg bg-muted/50 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Projeção para fim do mês</span>
-                  <div className="flex items-center gap-1">
-                    {calculations.salesOnTrack ? (
-                      <TrendingUp className="h-4 w-4 text-emerald-500" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4 text-orange-500" />
-                    )}
-                    <span className={cn(
-                      "font-bold",
-                      calculations.salesOnTrack ? "text-emerald-500" : "text-orange-500"
-                    )}>
-                      {calculations.projectedSales} vendas
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Média diária atual</span>
-                  <span className="font-medium">{calculations.dailySalesAvg.toFixed(1)} vendas/dia</span>
-                </div>
-                {!calculations.salesOnTrack && data.daysRemaining > 0 && (
-                  <div className="flex items-center justify-between text-sm pt-2 border-t">
-                    <span className="text-orange-600">Ritmo necessário</span>
-                    <span className="font-bold text-orange-600">
-                      {calculations.requiredDailySales.toFixed(1)} vendas/dia
-                    </span>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
@@ -304,9 +268,9 @@ export const MonthlyGoalProgress = () => {
 
         {/* Value Goal */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.05 }}
         >
           <Card className={cn(
             "overflow-hidden",
@@ -314,198 +278,82 @@ export const MonthlyGoalProgress = () => {
               ? "border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-transparent"
               : "border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-transparent"
           )}>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-1 pt-3 px-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Target className="h-4 w-4" />
-                  Meta de Valor
+                <CardTitle className="text-xs flex items-center gap-1">
+                  <Target className="h-3 w-3" />
+                  Valor
                 </CardTitle>
                 {calculations.valueOnTrack ? (
-                  <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30">
-                    <CheckCircle2 className="h-3 w-3 mr-1" />
-                    No ritmo
+                  <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30 text-[9px] h-4 px-1">
+                    <CheckCircle2 className="h-2.5 w-2.5 mr-0.5" />
+                    OK
                   </Badge>
                 ) : (
-                  <Badge className="bg-orange-500/20 text-orange-600 border-orange-500/30">
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    Atenção
+                  <Badge className="bg-orange-500/20 text-orange-600 border-orange-500/30 text-[9px] h-4 px-1">
+                    <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                    !
                   </Badge>
                 )}
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Current Progress */}
+            <CardContent className="p-3 pt-0 space-y-2">
               <div>
-                <div className="flex items-baseline justify-between mb-2 gap-2">
-                  <span className="text-xl font-bold truncate">{formatCurrencyShort(data.currentValue)}</span>
-                  <span className="text-xs text-muted-foreground flex-shrink-0">de {formatCurrencyShort(data.totalGoalValue)}</span>
+                <div className="flex items-baseline justify-between mb-1">
+                  <span className="text-sm font-bold truncate">{formatCurrencyShort(data.currentValue)}</span>
+                  <span className="text-[10px] text-muted-foreground flex-shrink-0">de {formatCurrencyShort(data.totalGoalValue)}</span>
                 </div>
-                <Progress 
-                  value={calculations.valueProgress} 
-                  className="h-2"
-                />
-                <div className="flex justify-between mt-1 text-[10px] text-muted-foreground">
+                <Progress value={calculations.valueProgress} className="h-1.5" />
+                <div className="flex justify-between mt-0.5 text-[9px] text-muted-foreground">
                   <span>{calculations.valueProgress.toFixed(0)}%</span>
-                  <span>Faltam {formatCurrencyShort(calculations.valueNeeded)}</span>
+                  <span>-{formatCurrencyShort(calculations.valueNeeded)}</span>
                 </div>
-              </div>
-
-              {/* Projection */}
-              <div className="p-3 rounded-lg bg-muted/50 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Projeção para fim do mês</span>
-                  <div className="flex items-center gap-1">
-                    {calculations.valueOnTrack ? (
-                      <TrendingUp className="h-4 w-4 text-emerald-500" />
-                    ) : (
-                      <TrendingDown className="h-4 w-4 text-orange-500" />
-                    )}
-                    <span className={cn(
-                      "font-bold",
-                      calculations.valueOnTrack ? "text-emerald-500" : "text-orange-500"
-                    )}>
-                      {formatCurrencyShort(calculations.projectedValue)}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Média diária atual</span>
-                  <span className="font-medium">{formatCurrency(calculations.dailyValueAvg)}/dia</span>
-                </div>
-                {!calculations.valueOnTrack && data.daysRemaining > 0 && (
-                  <div className="flex items-center justify-between text-sm pt-2 border-t">
-                    <span className="text-orange-600">Ritmo necessário</span>
-                    <span className="font-bold text-orange-600">
-                      {formatCurrency(calculations.requiredDailyValue)}/dia
-                    </span>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
         </motion.div>
       </div>
 
-      {/* Timeline Progress */}
+      {/* Timeline Progress - Compact */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.1 }}
       >
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Progresso do Mês</span>
+          <CardContent className="py-3 px-4">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1.5">
+                <Clock className="h-3 w-3 text-muted-foreground" />
+                <span className="text-xs font-medium">Progresso</span>
               </div>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-[10px] text-muted-foreground">
                 {data.daysRemaining} dias restantes
               </span>
             </div>
 
             <div className="relative">
-              {/* Timeline bar */}
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
+              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                 <div 
                   className="h-full bg-primary transition-all"
                   style={{ width: `${calculations.timeProgress}%` }}
                 />
               </div>
 
-              {/* Markers */}
-              <div className="relative mt-2">
-                <div 
-                  className="absolute top-0 flex flex-col items-center"
-                  style={{ left: `${calculations.timeProgress}%`, transform: 'translateX(-50%)' }}
-                >
-                  <div className="w-0.5 h-2 bg-primary" />
-                  <span className="text-xs font-medium text-primary">Hoje</span>
-                </div>
-              </div>
-
-              {/* Progress indicators below */}
-              <div className="flex justify-between mt-6 text-xs">
-                <div className="flex items-center gap-2">
+              <div className="flex justify-between mt-1.5 text-[10px]">
+                <div className="flex items-center gap-1">
                   <div className={cn(
-                    "w-2 h-2 rounded-full",
+                    "w-1.5 h-1.5 rounded-full",
                     calculations.salesAheadOfSchedule ? "bg-emerald-500" : "bg-orange-500"
                   )} />
-                  <span>
-                    Vendas: {calculations.salesProgress.toFixed(0)}% 
-                    {calculations.salesAheadOfSchedule ? ' (adiantado)' : ' (atrasado)'}
-                  </span>
+                  <span>Vendas: {calculations.salesProgress.toFixed(0)}%</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <div className={cn(
-                    "w-2 h-2 rounded-full",
+                    "w-1.5 h-1.5 rounded-full",
                     calculations.valueAheadOfSchedule ? "bg-emerald-500" : "bg-orange-500"
                   )} />
-                  <span>
-                    Valor: {calculations.valueProgress.toFixed(0)}%
-                    {calculations.valueAheadOfSchedule ? ' (adiantado)' : ' (atrasado)'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Summary Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <Card className={cn(
-          "border-2",
-          calculations.salesOnTrack && calculations.valueOnTrack
-            ? "border-emerald-500/50 bg-gradient-to-r from-emerald-500/10 to-emerald-600/5"
-            : "border-amber-500/50 bg-gradient-to-r from-amber-500/10 to-amber-600/5"
-        )}>
-          <CardContent className="py-4">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex items-center gap-3">
-                {calculations.salesOnTrack && calculations.valueOnTrack ? (
-                  <>
-                    <div className="p-2 rounded-full bg-emerald-500/20">
-                      <CheckCircle2 className="h-6 w-6 text-emerald-500" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-emerald-700 dark:text-emerald-400">
-                        Equipe no caminho certo! 🎯
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Mantendo o ritmo atual, a meta será atingida até o fim do mês.
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="p-2 rounded-full bg-amber-500/20">
-                      <AlertTriangle className="h-6 w-6 text-amber-500" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-amber-700 dark:text-amber-400">
-                        Atenção: Meta em risco ⚠️
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        É necessário aumentar o ritmo para atingir a meta do mês.
-                      </p>
-                    </div>
-                  </>
-                )}
-              </div>
-              
-              <div className="flex gap-4">
-                <div className="text-center px-4 py-2 rounded-lg bg-background/50">
-                  <p className="text-xl font-bold">{data.approvedSales}</p>
-                  <p className="text-xs text-muted-foreground">Aprovadas</p>
-                </div>
-                <div className="text-center px-4 py-2 rounded-lg bg-background/50">
-                  <p className="text-xl font-bold">{formatCurrencyShort(data.currentValue)}</p>
-                  <p className="text-xs text-muted-foreground">Total Mês</p>
+                  <span>Valor: {calculations.valueProgress.toFixed(0)}%</span>
                 </div>
               </div>
             </div>

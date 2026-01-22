@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
+
 interface StatCardProps {
   title: string;
   value: string | number;
@@ -10,28 +11,30 @@ interface StatCardProps {
   className?: string;
   variant?: 'default' | 'primary' | 'success' | 'warning' | 'danger';
 }
+
 const variantStyles = {
   default: {
-    icon: 'from-violet-500 to-purple-600',
-    glow: 'shadow-violet-500/20'
+    icon: 'bg-primary/10 text-primary',
+    iconDark: 'dark:bg-primary/15'
   },
   primary: {
-    icon: 'from-violet-500 to-purple-600',
-    glow: 'shadow-violet-500/20'
+    icon: 'bg-primary/10 text-primary',
+    iconDark: 'dark:bg-primary/15'
   },
   success: {
-    icon: 'from-violet-500 to-purple-600',
-    glow: 'shadow-violet-500/20'
+    icon: 'bg-emerald-500/10 text-emerald-600',
+    iconDark: 'dark:bg-emerald-500/15 dark:text-emerald-400'
   },
   warning: {
-    icon: 'from-amber-500 to-orange-600',
-    glow: 'shadow-amber-500/20'
+    icon: 'bg-amber-500/10 text-amber-600',
+    iconDark: 'dark:bg-amber-500/15 dark:text-amber-400'
   },
   danger: {
-    icon: 'from-red-500 to-rose-600',
-    glow: 'shadow-red-500/20'
+    icon: 'bg-red-500/10 text-red-600',
+    iconDark: 'dark:bg-red-500/15 dark:text-red-400'
   }
 };
+
 export function StatCard({
   title,
   value,
@@ -43,49 +46,46 @@ export function StatCard({
   variant = 'default'
 }: StatCardProps) {
   const styles = variantStyles[variant];
+  
   return (
     <div className={cn(
-      'group relative overflow-hidden rounded-xl border border-border bg-card p-5 transition-all duration-300 hover:border-primary/20 hover:shadow-md',
+      'group relative overflow-hidden rounded-2xl border border-border/40 bg-card p-6 transition-all duration-300 ease-premium shadow-premium hover:shadow-premium-lg',
       className
     )}>
-      {/* Glow effect */}
-      <div className={cn(
-        "absolute -top-12 -right-12 w-32 h-32 rounded-full blur-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500",
-        `bg-gradient-to-br ${styles.icon}`
-      )} />
-      
-      <div className="relative flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0 space-y-1.5">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">
+      <div className="relative flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0 space-y-2">
+          <p className="text-xs font-medium text-muted-foreground tracking-wide">
             {title}
           </p>
           <div className="flex items-baseline gap-2">
-            <p className="text-2xl font-bold text-foreground tracking-tight leading-tight truncate max-w-full">
+            <p className="text-3xl font-semibold text-foreground tracking-tight leading-none truncate max-w-full">
               {value}
             </p>
             {trend && trendValue && (
               <span className={cn(
-                'text-xs font-medium flex-shrink-0',
-                trend === 'up' && 'text-emerald-500',
-                trend === 'down' && 'text-red-500',
-                trend === 'neutral' && 'text-muted-foreground'
+                'text-xs font-medium flex-shrink-0 px-1.5 py-0.5 rounded-md',
+                trend === 'up' && 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+                trend === 'down' && 'bg-red-500/10 text-red-600 dark:text-red-400',
+                trend === 'neutral' && 'bg-secondary text-muted-foreground'
               )}>
-                {trend === 'up' && '↑'}
-                {trend === 'down' && '↓'}
+                {trend === 'up' && '↑ '}
+                {trend === 'down' && '↓ '}
                 {trendValue}
               </span>
             )}
           </div>
-          {description && <p className="text-xs text-muted-foreground truncate">{description}</p>}
+          {description && (
+            <p className="text-sm text-muted-foreground truncate">{description}</p>
+          )}
         </div>
         
         {Icon && (
           <div className={cn(
-            "flex-shrink-0 p-2.5 rounded-lg bg-gradient-to-br",
+            "flex-shrink-0 p-3 rounded-xl transition-transform duration-300 group-hover:scale-105",
             styles.icon,
-            "text-white"
+            styles.iconDark
           )}>
-            <Icon className="h-4 w-4" />
+            <Icon className="h-5 w-5" strokeWidth={1.75} />
           </div>
         )}
       </div>

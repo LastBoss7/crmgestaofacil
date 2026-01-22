@@ -158,21 +158,21 @@ const Sidebar = () => {
         to={item.href}
         onClick={() => handleClick(item.name)}
         className={cn(
-          'group relative flex flex-col items-center justify-center w-10 h-10 rounded-lg transition-all duration-200',
+          'group relative flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ease-premium',
           active 
-            ? 'bg-primary/10 text-primary' 
-            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
+            ? 'bg-primary/10 text-primary shadow-sm' 
+            : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60',
           isClicked && 'scale-95'
         )}
       >
         <div className="relative">
           <Icon className={cn(
-            'w-4 h-4 transition-all duration-200',
+            'w-[18px] h-[18px] transition-all duration-200',
             active && 'text-primary'
-          )} strokeWidth={1.5} />
+          )} strokeWidth={1.75} />
           
           {item.badge && item.badge > 0 && (
-            <span className="absolute -top-1 -right-2 min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-medium bg-primary text-white rounded-full px-0.5">
+            <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-[16px] flex items-center justify-center text-[9px] font-semibold bg-primary text-primary-foreground rounded-full px-1 shadow-sm">
               {item.badge > 99 ? '99+' : item.badge}
             </span>
           )}
@@ -199,16 +199,16 @@ const Sidebar = () => {
     const content = (
       <div
         className={cn(
-          'group flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 cursor-pointer',
+          'group flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 ease-premium cursor-pointer',
           variant === 'danger' && 'hover:bg-destructive/10 hover:text-destructive',
-          variant === 'primary' && 'bg-gradient-to-br from-violet-500 to-purple-600 text-white hover:from-violet-400 hover:to-purple-500 shadow-sm',
+          variant === 'primary' && 'bg-primary text-primary-foreground shadow-premium hover:shadow-premium-lg hover:bg-primary/90',
           variant === 'default' && (active 
             ? 'bg-primary/10 text-primary' 
-            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50')
+            : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60')
         )}
         onClick={onClick}
       >
-        <Icon className="w-4 h-4" strokeWidth={1.5} />
+        <Icon className="w-[18px] h-[18px]" strokeWidth={1.75} />
       </div>
     );
 
@@ -226,7 +226,7 @@ const Sidebar = () => {
 
   return (
     <TooltipProvider delayDuration={100}>
-      <aside className="flex flex-col items-center w-14 min-h-screen py-2 bg-card/80 backdrop-blur-xl border-r border-border/50 overflow-y-auto">
+      <aside className="flex flex-col items-center w-16 min-h-screen py-3 bg-sidebar backdrop-blur-xl border-r border-sidebar-border shadow-premium-sm overflow-y-auto">
         {/* Logo */}
         <Link to="/dashboard" className="mb-2 shrink-0">
           <img 

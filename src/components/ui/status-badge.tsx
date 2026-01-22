@@ -21,66 +21,77 @@ interface StatusBadgeProps {
 }
 
 const statusConfig: Record<SaleStatus, { 
-  className: string; 
+  bg: string;
+  text: string;
+  border: string;
   icon: typeof FileSearch;
-  gradient: string;
 }> = {
   PRE_ANALISE: { 
-    className: 'status-pre_analise',
+    bg: 'bg-slate-100 dark:bg-slate-500/15',
+    text: 'text-slate-600 dark:text-slate-400',
+    border: 'border-slate-200 dark:border-slate-500/25',
     icon: FileSearch,
-    gradient: 'from-blue-500/20 to-blue-600/10'
   },
   AGUARDANDO_AUDITORIA: { 
-    className: 'status-aguardando_auditoria',
+    bg: 'bg-blue-50 dark:bg-blue-500/15',
+    text: 'text-blue-600 dark:text-blue-400',
+    border: 'border-blue-100 dark:border-blue-500/25',
     icon: Clock,
-    gradient: 'from-amber-500/20 to-amber-600/10'
   },
   PENDENCIA: { 
-    className: 'status-pendencia',
+    bg: 'bg-amber-50 dark:bg-amber-500/15',
+    text: 'text-amber-600 dark:text-amber-400',
+    border: 'border-amber-100 dark:border-amber-500/25',
     icon: AlertTriangle,
-    gradient: 'from-orange-500/20 to-orange-600/10'
   },
   VENDA_AUDITADA: { 
-    className: 'status-venda_auditada',
+    bg: 'bg-emerald-50 dark:bg-emerald-500/15',
+    text: 'text-emerald-600 dark:text-emerald-400',
+    border: 'border-emerald-100 dark:border-emerald-500/25',
     icon: CheckCircle2,
-    gradient: 'from-violet-500/20 to-violet-600/10'
   },
   INSTALACAO_MARCADA: { 
-    className: 'status-instalacao_marcada',
+    bg: 'bg-purple-50 dark:bg-purple-500/15',
+    text: 'text-purple-600 dark:text-purple-400',
+    border: 'border-purple-100 dark:border-purple-500/25',
     icon: Calendar,
-    gradient: 'from-purple-500/20 to-purple-600/10'
   },
   INSTALADA: { 
-    className: 'status-instalada',
+    bg: 'bg-teal-50 dark:bg-teal-500/15',
+    text: 'text-teal-600 dark:text-teal-400',
+    border: 'border-teal-100 dark:border-teal-500/25',
     icon: Zap,
-    gradient: 'from-purple-500/20 to-purple-600/10'
   },
   CANCELADA: { 
-    className: 'status-cancelada',
+    bg: 'bg-red-50 dark:bg-red-500/15',
+    text: 'text-red-600 dark:text-red-400',
+    border: 'border-red-100 dark:border-red-500/25',
     icon: XCircle,
-    gradient: 'from-red-500/20 to-red-600/10'
   },
   ACEITE_ENVIADO: { 
-    className: 'status-aceite_enviado',
+    bg: 'bg-cyan-50 dark:bg-cyan-500/15',
+    text: 'text-cyan-600 dark:text-cyan-400',
+    border: 'border-cyan-100 dark:border-cyan-500/25',
     icon: Send,
-    gradient: 'from-teal-500/20 to-teal-600/10'
   },
   CHAMADO_EM_ABERTO: { 
-    className: 'status-chamado_em_aberto',
+    bg: 'bg-orange-50 dark:bg-orange-500/15',
+    text: 'text-orange-600 dark:text-orange-400',
+    border: 'border-orange-100 dark:border-orange-500/25',
     icon: Headphones,
-    gradient: 'from-indigo-500/20 to-indigo-600/10'
   },
   DESCONECTADO: { 
-    className: 'status-desconectado',
+    bg: 'bg-gray-100 dark:bg-gray-500/15',
+    text: 'text-gray-600 dark:text-gray-400',
+    border: 'border-gray-200 dark:border-gray-500/25',
     icon: Unplug,
-    gradient: 'from-gray-500/20 to-gray-600/10'
   },
 };
 
 const sizeStyles = {
-  sm: 'text-xs px-2.5 py-1 gap-1',
-  md: 'text-xs px-3 py-1.5 gap-1.5',
-  lg: 'text-sm px-4 py-2 gap-2',
+  sm: 'text-[11px] px-2 py-0.5 gap-1',
+  md: 'text-xs px-2.5 py-1 gap-1.5',
+  lg: 'text-sm px-3 py-1.5 gap-2',
 };
 
 const iconSizes = {
@@ -96,14 +107,15 @@ export function StatusBadge({ status, className, size = 'md', showIcon = true }:
   return (
     <span
       className={cn(
-        'inline-flex items-center font-medium rounded-full border backdrop-blur-sm transition-all duration-200',
-        `bg-gradient-to-r ${config.gradient}`,
-        config.className,
+        'inline-flex items-center font-medium rounded-lg border transition-all duration-200',
+        config.bg,
+        config.text,
+        config.border,
         sizeStyles[size],
         className
       )}
     >
-      {showIcon && <Icon className={cn(iconSizes[size], 'opacity-80')} />}
+      {showIcon && <Icon className={iconSizes[size]} strokeWidth={1.75} />}
       {SALE_STATUS_LABELS[status]}
     </span>
   );

@@ -132,8 +132,9 @@ const Sales = () => {
   const fetchSales = async () => {
     if (!user) return;
 
+    // Use sales_secure view for reading - masks sensitive data based on user role
     let query = supabase
-      .from('sales')
+      .from('sales_secure')
       .select('*')
       .order('created_at', { ascending: false });
     

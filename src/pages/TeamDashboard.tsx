@@ -127,11 +127,11 @@ export default function TeamDashboard() {
 
       setMembers((membersData || []) as Profile[]);
 
-      // Fetch sales for team members
+      // Fetch sales for team members using secure view
       const memberIds = (membersData || []).map(m => m.id);
       if (memberIds.length > 0) {
         const { data: salesData } = await supabase
-          .from('sales')
+          .from('sales_secure')
           .select('*')
           .in('seller_id', memberIds)
           .order('created_at', { ascending: false });

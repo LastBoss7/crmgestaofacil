@@ -46,9 +46,9 @@ const SaleHistory = () => {
     const fetchData = async () => {
       if (!user || !saleId) return;
 
-      // Fetch sale details
+      // Fetch sale details using secure view
       const { data: saleData, error: saleError } = await supabase
-        .from('sales')
+        .from('sales_secure')
         .select('*')
         .eq('id', saleId)
         .single();

@@ -1135,6 +1135,7 @@ export type Database = {
       }
     }
     Functions: {
+      can_access_sale_document: { Args: { _sale_id: string }; Returns: boolean }
       can_view_sensitive_data: {
         Args: { _seller_id: string; _user_id: string }
         Returns: boolean

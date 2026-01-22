@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-all duration-200 ease-premium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 active:scale-[0.98]",
+  "relative overflow-hidden inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-all duration-200 ease-premium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:scale-[1.02] active:scale-[0.98]",
   {
     variants: {
       variant: {
@@ -39,7 +39,48 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+    const [ripples, setRipples] = React.useState<Array<{ id: number; x: number; y: number }>>([]);
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (asChild) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const id = Date.now();
+      
+      setRipples(prev => [...prev, { id, x, y }]);
+      setTimeout(() => {
+        setRipples(prev => prev.filter(r => r.id !== id));
+      }, 600);
+
+      props.onClick?.(e);
+    };
+
+    if (asChild) {
+      return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+    }
+
+    return (
+      <Comp 
+        className={cn(buttonVariants({ variant, size, className }))} 
+        ref={ref} 
+        {...props}
+        onClick={handleClick}
+      >
+        {ripples.map(ripple => (
+          <span
+            key={ripple.id}
+            className="absolute rounded-full bg-white/30 animate-ripple pointer-events-none"
+            style={{
+              left: ripple.x,
+              top: ripple.y,
+              transform: 'translate(-50%, -50%)',
+            }}
+          />
+        ))}
+        {props.children}
+      </Comp>
+    );
   },
 );
 Button.displayName = "Button";

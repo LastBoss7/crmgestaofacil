@@ -66,8 +66,9 @@ const Dashboard = () => {
     const fetchData = async () => {
       if (!user) return;
 
+      // Use secure view for masked sensitive data
       const { data: salesData } = await supabase
-        .from('sales')
+        .from('sales_secure')
         .select('*')
         .order('created_at', { ascending: false });
 

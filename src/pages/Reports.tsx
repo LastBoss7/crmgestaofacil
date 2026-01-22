@@ -75,9 +75,9 @@ const Reports = () => {
     const fetchData = async () => {
       if (!user) return;
 
-      // Fetch sales
+      // Fetch sales using secure view for masked sensitive data
       const { data: salesData, error: salesError } = await supabase
-        .from('sales')
+        .from('sales_secure')
         .select('*')
         .gte('created_at', dateRange.from.toISOString())
         .lte('created_at', dateRange.to.toISOString())

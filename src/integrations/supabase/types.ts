@@ -126,6 +126,13 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "callbacks_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales_secure"
+            referencedColumns: ["id"]
+          },
         ]
       }
       companies: {
@@ -507,6 +514,13 @@ export type Database = {
             referencedRelation: "sales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sale_comments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales_secure"
+            referencedColumns: ["id"]
+          },
         ]
       }
       sale_history: {
@@ -556,6 +570,13 @@ export type Database = {
             columns: ["sale_id"]
             isOneToOne: false
             referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_history_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales_secure"
             referencedColumns: ["id"]
           },
         ]
@@ -944,9 +965,180 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      sales_secure: {
+        Row: {
+          bl_valor: number | null
+          campaign_id: string | null
+          cedente_cpf: string | null
+          cedente_mae: string | null
+          cedente_nascimento: string | null
+          cedente_nome: string | null
+          cedente_rg: string | null
+          cnpj_cliente: string | null
+          company_id: string | null
+          contato_responsavel: string | null
+          created_at: string | null
+          data_venda: string | null
+          documentos: string[] | null
+          email: string | null
+          endereco_bairro: string | null
+          endereco_cep: string | null
+          endereco_cidade: string | null
+          endereco_numero: string | null
+          endereco_rua: string | null
+          equipe: string | null
+          gestor_cpf: string | null
+          gestor_mae: string | null
+          gestor_nascimento: string | null
+          gestor_nome: string | null
+          gestor_rg: string | null
+          id: string | null
+          motivo_pendencia: string | null
+          movel_valor: number | null
+          nome_fantasia: string | null
+          observacoes_vendedor: string | null
+          plano_contratado: string | null
+          produtos: string | null
+          proprietario_cpf: string | null
+          proprietario_mae: string | null
+          proprietario_nascimento: string | null
+          proprietario_nome: string | null
+          proprietario_rg: string | null
+          razao_social: string | null
+          seller_id: string | null
+          status: Database["public"]["Enums"]["sale_status"] | null
+          telefone_1: string | null
+          telefone_2: string | null
+          telefone_portabilidade: string | null
+          telefone_responsavel: string | null
+          tipo_negociacao: string | null
+          updated_at: string | null
+          valor_mensal: number | null
+          vivo_total_valor: number | null
+        }
+        Insert: {
+          bl_valor?: number | null
+          campaign_id?: string | null
+          cedente_cpf?: never
+          cedente_mae?: never
+          cedente_nascimento?: never
+          cedente_nome?: string | null
+          cedente_rg?: never
+          cnpj_cliente?: never
+          company_id?: string | null
+          contato_responsavel?: string | null
+          created_at?: string | null
+          data_venda?: string | null
+          documentos?: string[] | null
+          email?: never
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_numero?: string | null
+          endereco_rua?: string | null
+          equipe?: string | null
+          gestor_cpf?: never
+          gestor_mae?: never
+          gestor_nascimento?: never
+          gestor_nome?: string | null
+          gestor_rg?: never
+          id?: string | null
+          motivo_pendencia?: string | null
+          movel_valor?: number | null
+          nome_fantasia?: string | null
+          observacoes_vendedor?: string | null
+          plano_contratado?: string | null
+          produtos?: string | null
+          proprietario_cpf?: never
+          proprietario_mae?: never
+          proprietario_nascimento?: never
+          proprietario_nome?: string | null
+          proprietario_rg?: never
+          razao_social?: string | null
+          seller_id?: string | null
+          status?: Database["public"]["Enums"]["sale_status"] | null
+          telefone_1?: never
+          telefone_2?: never
+          telefone_portabilidade?: never
+          telefone_responsavel?: never
+          tipo_negociacao?: string | null
+          updated_at?: string | null
+          valor_mensal?: number | null
+          vivo_total_valor?: number | null
+        }
+        Update: {
+          bl_valor?: number | null
+          campaign_id?: string | null
+          cedente_cpf?: never
+          cedente_mae?: never
+          cedente_nascimento?: never
+          cedente_nome?: string | null
+          cedente_rg?: never
+          cnpj_cliente?: never
+          company_id?: string | null
+          contato_responsavel?: string | null
+          created_at?: string | null
+          data_venda?: string | null
+          documentos?: string[] | null
+          email?: never
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
+          endereco_cidade?: string | null
+          endereco_numero?: string | null
+          endereco_rua?: string | null
+          equipe?: string | null
+          gestor_cpf?: never
+          gestor_mae?: never
+          gestor_nascimento?: never
+          gestor_nome?: string | null
+          gestor_rg?: never
+          id?: string | null
+          motivo_pendencia?: string | null
+          movel_valor?: number | null
+          nome_fantasia?: string | null
+          observacoes_vendedor?: string | null
+          plano_contratado?: string | null
+          produtos?: string | null
+          proprietario_cpf?: never
+          proprietario_mae?: never
+          proprietario_nascimento?: never
+          proprietario_nome?: string | null
+          proprietario_rg?: never
+          razao_social?: string | null
+          seller_id?: string | null
+          status?: Database["public"]["Enums"]["sale_status"] | null
+          telefone_1?: never
+          telefone_2?: never
+          telefone_portabilidade?: never
+          telefone_responsavel?: never
+          tipo_negociacao?: string | null
+          updated_at?: string | null
+          valor_mensal?: number | null
+          vivo_total_valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "sales_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      can_view_sensitive_data: {
+        Args: { _seller_id: string; _user_id: string }
+        Returns: boolean
+      }
       cnpj_exists: { Args: { check_cnpj: string }; Returns: boolean }
       get_user_company_id: { Args: { _user_id?: string }; Returns: string }
       get_user_role: {
@@ -966,6 +1158,11 @@ export type Database = {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
+      mask_cnpj: { Args: { cnpj: string }; Returns: string }
+      mask_cpf: { Args: { cpf: string }; Returns: string }
+      mask_email: { Args: { email: string }; Returns: string }
+      mask_phone: { Args: { phone: string }; Returns: string }
+      mask_rg: { Args: { rg: string }; Returns: string }
       use_company_invite_code: {
         Args: { company_id: string; invite_code: string }
         Returns: boolean

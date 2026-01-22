@@ -72,9 +72,9 @@ export default function SellerDetails() {
         setSeller(profileData as Profile);
       }
 
-      // Fetch seller's sales
+      // Fetch seller's sales using secure view
       const { data: salesData } = await supabase
-        .from('sales')
+        .from('sales_secure')
         .select('*')
         .eq('seller_id', sellerId)
         .order('created_at', { ascending: false });

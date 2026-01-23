@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { useNotificationSound } from './useNotificationSound';
+import { useBrowserNotifications } from './useBrowserNotifications';
 import { toast } from 'sonner';
 
 export interface Notification {
@@ -21,6 +22,7 @@ export const useNotifications = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { playSound } = useNotificationSound();
+  const { showNotification: showBrowserNotification, requestPermission, permission } = useBrowserNotifications();
 
   // Buscar notificações iniciais
   const fetchNotifications = useCallback(async () => {
@@ -143,7 +145,7 @@ export const useNotifications = () => {
     }
   }, [user]);
 
-  // Mostrar notificação com toast e som
+  // Mostrar notificação com toast, som e push do navegador
   const showNotification = useCallback((notification: Notification) => {
     // Tocar som baseado no tipo
     const soundMap: Record<string, 'success' | 'warning' | 'error' | 'info' | 'sale'> = {
@@ -165,7 +167,14 @@ export const useNotifications = () => {
       description: notification.message,
       duration: 6000,
     });
-  }, [playSound]);
+
+    // Mostrar notificação push do navegador (quando aba não está em foco)
+    showBrowserNotification(notification.title, {
+      body: notification.message,
+      tag: notification.id, // Evita duplicatas
+      requireInteraction: notification.type === 'alert',
+    });
+  }, [playSound, showBrowserNotification]);
 
   // Escutar notificações em tempo real
   useEffect(() => {
@@ -208,5 +217,7 @@ export const useNotifications = () => {
     deleteNotification,
     clearAll,
     showNotification,
+    requestNotificationPermission: requestPermission,
+    notificationPermission: permission,
   };
 };

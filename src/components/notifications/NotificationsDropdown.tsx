@@ -1,4 +1,4 @@
-import { Bell, Check, Trash2, ShoppingCart, UserPlus, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { Bell, Check, Trash2, ShoppingCart, UserPlus, AlertCircle, CheckCircle2, Info, BellRing } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useNotifications, Notification } from '@/hooks/useNotifications';
+import { toast } from 'sonner';
 
 const NotificationsDropdown = () => {
   const { 
@@ -16,8 +17,19 @@ const NotificationsDropdown = () => {
     markAsRead, 
     markAllAsRead, 
     deleteNotification, 
-    clearAll 
+    clearAll,
+    requestNotificationPermission,
+    notificationPermission,
   } = useNotifications();
+
+  const handleEnablePush = async () => {
+    const granted = await requestNotificationPermission();
+    if (granted) {
+      toast.success('Notificações push ativadas!');
+    } else {
+      toast.error('Permissão de notificações negada');
+    }
+  };
 
   const getIcon = (type: Notification['type']) => {
     switch (type) {
@@ -183,19 +195,30 @@ const NotificationsDropdown = () => {
         </ScrollArea>
 
         {/* Footer */}
-        {notifications.length > 0 && (
-          <div className="p-3 border-t border-white/[0.06]">
+        <div className="p-3 border-t border-white/[0.06] space-y-2">
+          {notificationPermission !== 'granted' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleEnablePush}
+              className="w-full h-9 text-xs text-primary hover:text-primary/80 hover:bg-primary/10 rounded-xl"
+            >
+              <BellRing className="h-3 w-3 mr-2" />
+              Ativar notificações push
+            </Button>
+          )}
+          {notifications.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
               onClick={clearAll}
-              className="w-full h-9 text-xs text-white/40 hover:text-white/60 hover:bg-white/[0.04] rounded-xl"
+              className="w-full h-9 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl"
             >
               <Trash2 className="h-3 w-3 mr-2" />
               Limpar todas
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

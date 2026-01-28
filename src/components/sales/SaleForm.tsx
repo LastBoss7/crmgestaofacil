@@ -30,7 +30,6 @@ interface SaleFormProps {
 interface FormData {
   // Info básica
   data_venda: string;
-  equipe: string;
   tipo_negociacao: string;
   // Dados empresa
   cnpj_cliente: string;
@@ -79,7 +78,6 @@ interface FormData {
 
 const initialFormData: FormData = {
   data_venda: new Date().toISOString().split('T')[0],
-  equipe: '',
   tipo_negociacao: '',
   cnpj_cliente: '',
   razao_social: '',
@@ -423,7 +421,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         seller_id: userId,
         company_id: profile?.company_id || null,
         data_venda: form.data_venda || null,
-        equipe: form.equipe || null,
+        equipe: profile?.team_id || null, // Auto-set from seller's team
         tipo_negociacao: form.tipo_negociacao || null,
         cnpj_cliente: form.cnpj_cliente,
         razao_social: form.razao_social,
@@ -513,15 +511,6 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
               value={form.data_venda}
               onChange={(e) => updateForm('data_venda', e.target.value)}
               required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="equipe">Equipe</Label>
-            <Input
-              id="equipe"
-              placeholder="Nome da equipe"
-              value={form.equipe}
-              onChange={(e) => updateForm('equipe', e.target.value)}
             />
           </div>
           <div className="space-y-2">

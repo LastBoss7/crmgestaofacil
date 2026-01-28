@@ -217,7 +217,7 @@ const Sidebar = () => {
         <TooltipTrigger asChild>
           {href ? <Link to={href}>{content}</Link> : content}
         </TooltipTrigger>
-        <TooltipContent side="right" sideOffset={8} className="text-xs font-medium">
+        <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
           {label}
         </TooltipContent>
       </Tooltip>
@@ -225,8 +225,8 @@ const Sidebar = () => {
   };
 
   return (
-    <TooltipProvider delayDuration={100}>
-      <aside className="flex flex-col items-center w-16 min-h-screen py-3 bg-sidebar backdrop-blur-xl border-r border-sidebar-border shadow-premium-sm overflow-y-auto">
+    <TooltipProvider delayDuration={0} skipDelayDuration={0}>
+      <aside className="flex flex-col items-center w-16 min-h-screen py-3 bg-sidebar backdrop-blur-xl border-r border-sidebar-border shadow-premium-sm overflow-y-auto z-50">
         {/* Logo */}
         <Link to="/dashboard" className="mb-2 shrink-0">
           <img 
@@ -251,7 +251,7 @@ const Sidebar = () => {
               <TooltipTrigger asChild>
                 <div><NavItem item={item} /></div>
               </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8} className="text-xs font-medium">
+              <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
                 {item.name}
               </TooltipContent>
             </Tooltip>
@@ -267,7 +267,7 @@ const Sidebar = () => {
                   <TooltipTrigger asChild>
                     <div><NavItem item={item} /></div>
                   </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={8} className="text-xs font-medium">
+                  <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
                     {item.name}
                   </TooltipContent>
                 </Tooltip>
@@ -290,7 +290,7 @@ const Sidebar = () => {
                 <Search className="w-4 h-4" strokeWidth={1.5} />
               </div>
             </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={8} className="text-xs font-medium">
+            <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
               Buscar vendas
             </TooltipContent>
           </Tooltip>
@@ -311,7 +311,7 @@ const Sidebar = () => {
                       )}
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={8} className="text-xs font-medium">
+                  <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
                     Notificações {unreadCount > 0 && `(${unreadCount})`}
                   </TooltipContent>
                 </Tooltip>
@@ -391,7 +391,7 @@ const Sidebar = () => {
                 />
               </div>
             </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={8} className="text-xs">
+            <TooltipContent side="right" sideOffset={12} className="text-xs z-[100] bg-popover border shadow-lg">
               <div className="flex flex-col gap-0.5">
                 <span className="font-medium">{profile?.nome || 'Usuário'}</span>
                 <span className="text-muted-foreground">{role ? ROLE_LABELS[role] : ''}</span>

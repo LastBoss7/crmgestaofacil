@@ -110,6 +110,9 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
     setIsLoading(true);
 
     try {
+      // Store current session to verify it's preserved after user creation
+      const currentSession = session;
+      
       // Call edge function to create user (doesn't affect current session)
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: {
@@ -132,6 +135,16 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
         toast.error(data.error);
         setIsLoading(false);
         return;
+      }
+
+      // Verify that session was preserved (edge function shouldn't affect it)
+      const { data: { session: currentSessionCheck } } = await supabase.auth.getSession();
+      if (!currentSessionCheck || currentSessionCheck.user?.id !== currentSession?.user?.id) {
+        console.error('Session was unexpectedly changed after user creation');
+        // Attempt to restore session if somehow lost
+        if (currentSession) {
+          await supabase.auth.setSession(currentSession);
+        }
       }
 
       toast.success(`Usuário ${fullName} criado com sucesso!`);

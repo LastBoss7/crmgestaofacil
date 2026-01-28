@@ -126,6 +126,7 @@ serve(async (req) => {
     }
 
     // Create user using admin API (doesn't affect current session)
+    // IMPORTANT: Using admin.createUser() ensures no session is created for the new user
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,

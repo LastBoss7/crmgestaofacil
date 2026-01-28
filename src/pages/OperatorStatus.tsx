@@ -48,7 +48,7 @@ const CHART_COLORS = {
 };
 
 export default function OperatorStatusPage() {
-  const { isCEO, isBackoffice, canManageUsers } = useAuth();
+  const { isCEO, isBackoffice, canManageUsers, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { allStatuses, fetchAllStatuses } = useOperatorStatus();
   
@@ -59,11 +59,18 @@ export default function OperatorStatusPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!canManageUsers) {
+    // Wait for role to be loaded before checking permissions
+    if (!authLoading && role !== null && !canManageUsers) {
       navigate('/dashboard');
       toast.error('Acesso não autorizado');
       return;
     }
+    
+    // Only fetch data when user has permission
+    if (authLoading || role === null || !canManageUsers) {
+      return;
+    }
+    
     fetchData();
     fetchAllStatuses();
 
@@ -80,7 +87,7 @@ export default function OperatorStatusPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [canManageUsers, navigate]);
+  }, [canManageUsers, navigate, authLoading, role]);
 
   const fetchData = async () => {
     setLoading(true);

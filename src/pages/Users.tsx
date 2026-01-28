@@ -44,7 +44,7 @@ interface UserWithRole extends Profile {
 
 const Users = () => {
   const navigate = useNavigate();
-  const { canManageUsers, loading: authLoading, isCEO, isSupervisor } = useAuth();
+  const { canManageUsers, loading: authLoading, isCEO, isSupervisor, role } = useAuth();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,11 +61,13 @@ const Users = () => {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !canManageUsers) {
+    // Wait for both auth loading to complete AND role to be loaded
+    // Role is loaded asynchronously after auth, so we need to wait for it
+    if (!authLoading && role !== null && !canManageUsers) {
       navigate('/dashboard');
       toast.error('Acesso não autorizado');
     }
-  }, [canManageUsers, authLoading, navigate]);
+  }, [canManageUsers, authLoading, navigate, role]);
 
   const fetchUsers = async () => {
     // Fetch all profiles

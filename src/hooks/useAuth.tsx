@@ -13,6 +13,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, nome: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   isCEO: boolean;
+  isCoordinator: boolean;
   isBackoffice: boolean;
   isSupervisor: boolean;
   isSeller: boolean;
@@ -130,12 +131,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const isCEO = role === 'CEO';
+  const isCoordinator = role === 'COORDENADOR';
   const isBackoffice = role === 'BACKOFFICE';
   const isSupervisor = role === 'SUPERVISOR';
   const isSeller = role === 'SELLER';
-  const canManageUsers = isCEO || isSupervisor;
-  const canManageSaleStatus = isCEO || isBackoffice;
-  const canManageTeam = isCEO || isSupervisor;
+  const canManageUsers = isCEO || isCoordinator || isSupervisor;
+  const canManageSaleStatus = isCEO || isCoordinator || isBackoffice;
+  const canManageTeam = isCEO || isCoordinator || isSupervisor;
 
   return (
     <AuthContext.Provider
@@ -149,6 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signOut,
         isCEO,
+        isCoordinator,
         isBackoffice,
         isSupervisor,
         isSeller,

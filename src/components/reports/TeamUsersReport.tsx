@@ -38,6 +38,7 @@ interface UnassignedUser {
 
 const ROLE_COLORS: Record<AppRole, string> = {
   CEO: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+  COORDENADOR: 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20',
   SUPERVISOR: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
   BACKOFFICE: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
   SELLER: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
@@ -45,6 +46,7 @@ const ROLE_COLORS: Record<AppRole, string> = {
 
 const ROLE_ICONS: Record<AppRole, React.ReactNode> = {
   CEO: <Shield className="h-3 w-3" />,
+  COORDENADOR: <Shield className="h-3 w-3" />,
   SUPERVISOR: <Briefcase className="h-3 w-3" />,
   BACKOFFICE: <UserCheck className="h-3 w-3" />,
   SELLER: <Users className="h-3 w-3" />,

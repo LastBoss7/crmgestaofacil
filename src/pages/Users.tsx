@@ -4,8 +4,9 @@ import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, AppRole, ROLE_LABELS, UserRole } from '@/types/database';
-import { Plus, Search, UserCheck, UserX, Shield, UserPlus, Users2, KeyRound, Eye, EyeOff } from 'lucide-react';
+import { Plus, Search, UserCheck, UserX, Shield, UserPlus, Users2, KeyRound, Eye, EyeOff, Settings2 } from 'lucide-react';
 import { CreateUserDialog } from '@/components/users/CreateUserDialog';
+import { CoordinatorTeamsDialog } from '@/components/users/CoordinatorTeamsDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -52,6 +53,7 @@ const Users = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [isCoordinatorTeamsOpen, setIsCoordinatorTeamsOpen] = useState(false);
   const [newRole, setNewRole] = useState<AppRole | ''>('');
   const [newTeamId, setNewTeamId] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
@@ -423,12 +425,31 @@ const Users = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {isCEO && <SelectItem value="CEO">CEO (Super Admin)</SelectItem>}
+                    {isCEO && <SelectItem value="COORDENADOR">Coordenador</SelectItem>}
                     {(isCEO || isSupervisor) && <SelectItem value="SUPERVISOR">Supervisor</SelectItem>}
                     {(isCEO || isSupervisor) && <SelectItem value="BACKOFFICE">Qualidade</SelectItem>}
                     <SelectItem value="SELLER">Vendedor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Coordinator teams management button */}
+              {newRole === 'COORDENADOR' && selectedUser && isCEO && (
+                <div className="space-y-2">
+                  <Label>Equipes do Coordenador</Label>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setIsCoordinatorTeamsOpen(true)}
+                  >
+                    <Settings2 className="h-4 w-4 mr-2" />
+                    Gerenciar Equipes do Coordenador
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Defina quais equipes o coordenador terá acesso
+                  </p>
+                </div>
+              )}
 
               {/* Team selector for SUPERVISOR, BACKOFFICE and SELLER */}
               {(newRole === 'SUPERVISOR' || newRole === 'BACKOFFICE' || newRole === 'SELLER') && (
@@ -474,6 +495,15 @@ const Users = () => {
                       <li>• Gerenciar usuários e funções</li>
                       <li>• Ver todas as vendas</li>
                       <li>• Alterar status de vendas</li>
+                    </>
+                  )}
+                  {newRole === 'COORDENADOR' && (
+                    <>
+                      <li>• Ver vendas das equipes atribuídas</li>
+                      <li>• Alterar status de vendas</li>
+                      <li>• Gerenciar usuários das equipes</li>
+                      <li>• Gerenciar metas e feedbacks</li>
+                      <li>• Enviar broadcasts para equipes</li>
                     </>
                   )}
                   {newRole === 'SUPERVISOR' && (
@@ -600,6 +630,17 @@ const Users = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Coordinator Teams Dialog */}
+        {selectedUser && (
+          <CoordinatorTeamsDialog
+            open={isCoordinatorTeamsOpen}
+            onOpenChange={setIsCoordinatorTeamsOpen}
+            coordinatorId={selectedUser.id}
+            coordinatorName={selectedUser.nome}
+            onTeamsUpdated={fetchUsers}
+          />
+        )}
       </div>
     </Layout>
   );

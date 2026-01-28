@@ -209,6 +209,45 @@ export type Database = {
           },
         ]
       }
+      coordinator_teams: {
+        Row: {
+          company_id: string
+          coordinator_id: string
+          created_at: string
+          id: string
+          team_id: string
+        }
+        Insert: {
+          company_id: string
+          coordinator_id: string
+          created_at?: string
+          id?: string
+          team_id: string
+        }
+        Update: {
+          company_id?: string
+          coordinator_id?: string
+          created_at?: string
+          id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coordinator_teams_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coordinator_teams_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       direct_messages: {
         Row: {
           company_id: string
@@ -1141,6 +1180,10 @@ export type Database = {
         Returns: boolean
       }
       cnpj_exists: { Args: { check_cnpj: string }; Returns: boolean }
+      get_coordinator_team_ids: {
+        Args: { _user_id: string }
+        Returns: string[]
+      }
       get_user_company_id: { Args: { _user_id?: string }; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
@@ -1153,6 +1196,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_coordinator_for_team: {
+        Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
       is_super_admin: { Args: { _user_id?: string }; Returns: boolean }

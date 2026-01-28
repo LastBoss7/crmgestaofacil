@@ -5,7 +5,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon, TrendingUp, Users, DollarSign, Target, FileSpreadsheet, FileText, Download } from 'lucide-react';
+import { Calendar as CalendarIcon, TrendingUp, Users, DollarSign, Target, FileSpreadsheet, FileText, Download, XCircle, AlertTriangle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -109,24 +119,33 @@ const Reports = () => {
     return sales.filter(s => s.seller_id === selectedSeller);
   }, [sales, selectedSeller]);
 
-  // Stats
-  const stats = useMemo(() => {
-    const total = filteredSales.length;
-    const valorTotal = filteredSales.reduce((acc, s) => acc + Number(s.valor_mensal), 0);
-    const aprovadas = filteredSales.filter(s => s.status === 'VENDA_AUDITADA' || s.status === 'INSTALACAO_MARCADA' || s.status === 'INSTALADA').length;
-    const taxaConversao = total > 0 ? ((aprovadas / total) * 100).toFixed(1) : '0';
-    const ticketMedio = total > 0 ? valorTotal / total : 0;
-
-    return { total, valorTotal, aprovadas, taxaConversao, ticketMedio };
+  // Separate active and cancelled sales
+  const { activeSales, cancelledSales } = useMemo(() => {
+    const active = filteredSales.filter(s => s.status !== 'CANCELADA');
+    const cancelled = filteredSales.filter(s => s.status === 'CANCELADA');
+    return { activeSales: active, cancelledSales: cancelled };
   }, [filteredSales]);
 
-  // Daily sales data for area chart
+  // Stats - EXCLUDING cancelled sales
+  const stats = useMemo(() => {
+    const total = activeSales.length;
+    const valorTotal = activeSales.reduce((acc, s) => acc + Number(s.valor_mensal), 0);
+    const aprovadas = activeSales.filter(s => s.status === 'VENDA_AUDITADA' || s.status === 'INSTALACAO_MARCADA' || s.status === 'INSTALADA').length;
+    const taxaConversao = total > 0 ? ((aprovadas / total) * 100).toFixed(1) : '0';
+    const ticketMedio = total > 0 ? valorTotal / total : 0;
+    const totalCanceladas = cancelledSales.length;
+    const valorCancelado = cancelledSales.reduce((acc, s) => acc + Number(s.valor_mensal), 0);
+
+    return { total, valorTotal, aprovadas, taxaConversao, ticketMedio, totalCanceladas, valorCancelado };
+  }, [activeSales, cancelledSales]);
+
+  // Daily sales data for area chart - EXCLUDING cancelled
   const dailyData = useMemo(() => {
     const days = eachDayOfInterval({ start: dateRange.from, end: dateRange.to });
     
     return days.map(day => {
       const dayStr = format(day, 'yyyy-MM-dd');
-      const daySales = filteredSales.filter(s => 
+      const daySales = activeSales.filter(s => 
         format(parseISO(s.created_at), 'yyyy-MM-dd') === dayStr
       );
       
@@ -136,9 +155,9 @@ const Reports = () => {
         valor: daySales.reduce((acc, s) => acc + Number(s.valor_mensal), 0),
       };
     });
-  }, [filteredSales, dateRange]);
+  }, [activeSales, dateRange]);
 
-  // Sales by status for pie chart
+  // Sales by status for pie chart - showing all including cancelled for reference
   const statusData = useMemo(() => {
     const counts: Record<SaleStatus, number> = {
       PRE_ANALISE: 0, AGUARDANDO_AUDITORIA: 0, PENDENCIA: 0, VENDA_AUDITADA: 0, INSTALACAO_MARCADA: 0, INSTALADA: 0, CANCELADA: 0, ACEITE_ENVIADO: 0, CHAMADO_EM_ABERTO: 0, DESCONECTADO: 0
@@ -157,13 +176,13 @@ const Reports = () => {
       }));
   }, [filteredSales]);
 
-  // Sales by seller for bar chart
+  // Sales by seller for bar chart - EXCLUDING cancelled
   const sellerData = useMemo(() => {
     if (isSeller) return [];
     
     const sellerStats: Record<string, { nome: string; vendas: number; valor: number }> = {};
     
-    filteredSales.forEach(sale => {
+    activeSales.forEach(sale => {
       if (!sale.seller_id) return;
       
       if (!sellerStats[sale.seller_id]) {
@@ -182,7 +201,7 @@ const Reports = () => {
     return Object.values(sellerStats)
       .sort((a, b) => b.valor - a.valor)
       .slice(0, 10);
-  }, [filteredSales, sellers, isSeller]);
+  }, [activeSales, sellers, isSeller]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -342,34 +361,46 @@ const Reports = () => {
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
           </div>
         ) : (
-          <>
-            {/* Stats Cards */}
-            <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-              <StatCard
-                title="Total Vendas"
-                value={stats.total}
-                icon={TrendingUp}
-                description="Período selecionado"
-              />
-              <StatCard
-                title="Valor Total"
-                value={formatCurrencyShort(stats.valorTotal)}
-                icon={DollarSign}
-                description="Receita recorrente"
-              />
-              <StatCard
-                title="Conversão"
-                value={`${stats.taxaConversao}%`}
-                icon={Target}
-                description="Aprovadas"
-              />
-              <StatCard
-                title="Ticket Médio"
-                value={formatCurrency(stats.ticketMedio)}
-                icon={Users}
-                description="Por venda"
-              />
-            </div>
+          <Tabs defaultValue="vendas" className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="vendas" className="gap-1.5">
+                <TrendingUp className="h-4 w-4" />
+                Vendas Ativas ({stats.total})
+              </TabsTrigger>
+              <TabsTrigger value="canceladas" className="gap-1.5">
+                <XCircle className="h-4 w-4" />
+                Canceladas ({stats.totalCanceladas})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="vendas" className="space-y-4">
+              {/* Stats Cards */}
+              <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+                <StatCard
+                  title="Total Vendas"
+                  value={stats.total}
+                  icon={TrendingUp}
+                  description="Excluindo canceladas"
+                />
+                <StatCard
+                  title="Valor Total"
+                  value={formatCurrencyShort(stats.valorTotal)}
+                  icon={DollarSign}
+                  description="Receita recorrente"
+                />
+                <StatCard
+                  title="Conversão"
+                  value={`${stats.taxaConversao}%`}
+                  icon={Target}
+                  description="Aprovadas"
+                />
+                <StatCard
+                  title="Ticket Médio"
+                  value={formatCurrency(stats.ticketMedio)}
+                  icon={Users}
+                  description="Por venda"
+                />
+              </div>
 
             {/* Charts Grid */}
             <div className="grid gap-4 lg:grid-cols-2">
@@ -549,7 +580,91 @@ const Reports = () => {
                 </Card>
               )}
             </div>
-          </>
+            </TabsContent>
+
+            {/* Tab de Vendas Canceladas */}
+            <TabsContent value="canceladas" className="space-y-4">
+              {/* Stats Cards for Cancelled */}
+              <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
+                <StatCard
+                  title="Total Canceladas"
+                  value={stats.totalCanceladas}
+                  icon={XCircle}
+                  variant="danger"
+                  description="Período selecionado"
+                />
+                <StatCard
+                  title="Valor Perdido"
+                  value={formatCurrencyShort(stats.valorCancelado)}
+                  icon={AlertTriangle}
+                  variant="warning"
+                  description="Receita não realizada"
+                />
+                <StatCard
+                  title="Taxa Cancelamento"
+                  value={`${filteredSales.length > 0 ? ((stats.totalCanceladas / filteredSales.length) * 100).toFixed(1) : 0}%`}
+                  icon={Target}
+                  description="Do total de vendas"
+                />
+              </div>
+
+              {/* Cancelled Sales Table */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <XCircle className="h-4 w-4 text-destructive" />
+                    Vendas Canceladas
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Lista de vendas canceladas no período ({cancelledSales.length} vendas)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {cancelledSales.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                      <XCircle className="h-12 w-12 mb-4 opacity-30" />
+                      <p className="text-sm font-medium">Nenhuma venda cancelada</p>
+                      <p className="text-xs mt-1">Não há vendas canceladas no período selecionado</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-xs">Empresa</TableHead>
+                            <TableHead className="text-xs">Vendedor</TableHead>
+                            <TableHead className="text-xs">Data Venda</TableHead>
+                            <TableHead className="text-xs text-right">Valor</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {cancelledSales.map((sale) => {
+                            const seller = sellers.find(s => s.id === sale.seller_id);
+                            return (
+                              <TableRow key={sale.id}>
+                                <TableCell className="text-xs font-medium">
+                                  {sale.nome_fantasia || sale.razao_social}
+                                </TableCell>
+                                <TableCell className="text-xs text-muted-foreground">
+                                  {seller?.nome || 'N/A'}
+                                </TableCell>
+                                <TableCell className="text-xs text-muted-foreground">
+                                  {sale.data_venda ? format(parseISO(sale.data_venda), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
+                                </TableCell>
+                                <TableCell className="text-xs text-right font-medium text-destructive">
+                                  {formatCurrency(Number(sale.valor_mensal))}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         )}
       </div>
     </Layout>

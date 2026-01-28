@@ -6,17 +6,18 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 const TeamReport = () => {
-  const { isCEO, isSupervisor, loading } = useAuth();
+  const { isCEO, isSupervisor, loading, role } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !isCEO && !isSupervisor) {
+    // Wait for role to be loaded before checking permissions
+    if (!loading && role !== null && !isCEO && !isSupervisor) {
       toast.error('Acesso não autorizado');
       navigate('/dashboard');
     }
-  }, [isCEO, isSupervisor, loading, navigate]);
+  }, [isCEO, isSupervisor, loading, navigate, role]);
 
-  if (loading || (!isCEO && !isSupervisor)) {
+  if (loading || role === null || (!isCEO && !isSupervisor)) {
     return null;
   }
 

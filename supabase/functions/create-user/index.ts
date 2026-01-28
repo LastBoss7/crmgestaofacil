@@ -193,11 +193,13 @@ serve(async (req) => {
       );
     }
 
+    // Return success without any auth data (prevents client-side session interference)
     return new Response(
       JSON.stringify({ 
         success: true, 
         userId: newUserId,
-        message: `User ${nome} created successfully` 
+        userName: nome,
+        message: `Usuário ${nome} criado com sucesso`
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

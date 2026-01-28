@@ -1173,6 +1173,10 @@ export type Database = {
         Args: { _company_id: string; _user_id: string }
         Returns: boolean
       }
+      users_in_same_company: {
+        Args: { _user_id_1: string; _user_id_2: string }
+        Returns: boolean
+      }
       validate_company_invite_code: {
         Args: { invite_code: string }
         Returns: boolean

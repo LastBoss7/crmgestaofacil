@@ -73,6 +73,7 @@ const STATUS_COLORS: Record<SaleStatus, string> = {
 const Reports = () => {
   const { user, isSeller } = useAuth();
   const [sales, setSales] = useState<Sale[]>([]);
+  const [allCancelledSales, setAllCancelledSales] = useState<Sale[]>([]);
   const [sellers, setSellers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
@@ -86,10 +87,11 @@ const Reports = () => {
     const fetchData = async () => {
       if (!user) return;
 
-      // Fetch sales using secure view for masked sensitive data
+      // Fetch sales within date range (for active sales metrics)
       const { data: salesData, error: salesError } = await supabase
         .from('sales_secure')
         .select('*')
+        .neq('status', 'CANCELADA')
         .gte('created_at', dateRange.from.toISOString())
         .lte('created_at', dateRange.to.toISOString())
         .order('created_at', { ascending: true });
@@ -98,6 +100,19 @@ const Reports = () => {
         console.error('Error fetching sales:', salesError);
       } else {
         setSales((salesData || []) as Sale[]);
+      }
+
+      // Fetch ALL cancelled sales (regardless of date) for cancelled tab
+      const { data: cancelledData, error: cancelledError } = await supabase
+        .from('sales_secure')
+        .select('*')
+        .eq('status', 'CANCELADA')
+        .order('created_at', { ascending: false });
+
+      if (cancelledError) {
+        console.error('Error fetching cancelled sales:', cancelledError);
+      } else {
+        setAllCancelledSales((cancelledData || []) as Sale[]);
       }
 
       // Fetch sellers (profiles)
@@ -114,16 +129,20 @@ const Reports = () => {
     fetchData();
   }, [user, dateRange, isSeller]);
 
-  // Filter by seller
-  const filteredSales = useMemo(() => {
+  // Filter active sales by seller (date range already applied in fetch)
+  const activeSales = useMemo(() => {
     if (selectedSeller === 'ALL') return sales;
     return sales.filter(s => s.seller_id === selectedSeller);
   }, [sales, selectedSeller]);
 
-  // Separate active and cancelled sales
-  const { activeSales, cancelledSales } = useMemo(() => {
-    const active = filteredSales.filter(s => s.status !== 'CANCELADA');
-    let cancelled = filteredSales.filter(s => s.status === 'CANCELADA');
+  // Filter cancelled sales by seller and reason
+  const cancelledSales = useMemo(() => {
+    let cancelled = allCancelledSales;
+    
+    // Filter by seller
+    if (selectedSeller !== 'ALL') {
+      cancelled = cancelled.filter(s => s.seller_id === selectedSeller);
+    }
     
     // Apply cancel reason filter
     if (selectedCancelReason !== 'ALL') {
@@ -134,29 +153,33 @@ const Reports = () => {
       }
     }
     
-    return { activeSales: active, cancelledSales: cancelled };
-  }, [filteredSales, selectedCancelReason]);
+    return cancelled;
+  }, [allCancelledSales, selectedSeller, selectedCancelReason]);
+
+  // For chart data, use all cancelled (before reason filter)
+  const allFilteredCancelled = useMemo(() => {
+    if (selectedSeller === 'ALL') return allCancelledSales;
+    return allCancelledSales.filter(s => s.seller_id === selectedSeller);
+  }, [allCancelledSales, selectedSeller]);
 
   // Get unique cancel reasons for filter dropdown
   const cancelReasons = useMemo(() => {
-    const allCancelled = filteredSales.filter(s => s.status === 'CANCELADA');
     const reasons = new Set<string>();
     
-    allCancelled.forEach(sale => {
+    allFilteredCancelled.forEach(sale => {
       if (sale.motivo_pendencia && sale.motivo_pendencia.trim()) {
         reasons.add(sale.motivo_pendencia);
       }
     });
     
     return Array.from(reasons).sort();
-  }, [filteredSales]);
+  }, [allFilteredCancelled]);
 
   // Data for cancelled sales pie chart by reason
   const cancelReasonChartData = useMemo(() => {
-    const allCancelled = filteredSales.filter(s => s.status === 'CANCELADA');
     const reasonCounts: Record<string, { count: number; value: number }> = {};
     
-    allCancelled.forEach(sale => {
+    allFilteredCancelled.forEach(sale => {
       const reason = sale.motivo_pendencia?.trim() || 'Sem motivo informado';
       if (!reasonCounts[reason]) {
         reasonCounts[reason] = { count: 0, value: 0 };
@@ -181,7 +204,7 @@ const Reports = () => {
         color: colors[index % colors.length],
       }))
       .sort((a, b) => b.value - a.value);
-  }, [filteredSales]);
+  }, [allFilteredCancelled]);
 
   // Stats - EXCLUDING cancelled sales
   const stats = useMemo(() => {
@@ -190,11 +213,11 @@ const Reports = () => {
     const aprovadas = activeSales.filter(s => s.status === 'VENDA_AUDITADA' || s.status === 'INSTALACAO_MARCADA' || s.status === 'INSTALADA').length;
     const taxaConversao = total > 0 ? ((aprovadas / total) * 100).toFixed(1) : '0';
     const ticketMedio = total > 0 ? valorTotal / total : 0;
-    const totalCanceladas = cancelledSales.length;
-    const valorCancelado = cancelledSales.reduce((acc, s) => acc + Number(s.valor_mensal), 0);
+    const totalCanceladas = allFilteredCancelled.length;
+    const valorCancelado = allFilteredCancelled.reduce((acc, s) => acc + Number(s.valor_mensal), 0);
 
     return { total, valorTotal, aprovadas, taxaConversao, ticketMedio, totalCanceladas, valorCancelado };
-  }, [activeSales, cancelledSales]);
+  }, [activeSales, allFilteredCancelled]);
 
   // Daily sales data for area chart - EXCLUDING cancelled
   const dailyData = useMemo(() => {
@@ -214,15 +237,19 @@ const Reports = () => {
     });
   }, [activeSales, dateRange]);
 
-  // Sales by status for pie chart - showing all including cancelled for reference
+  // Sales by status for pie chart - showing active sales only
   const statusData = useMemo(() => {
     const counts: Record<SaleStatus, number> = {
       PRE_ANALISE: 0, AGUARDANDO_AUDITORIA: 0, PENDENCIA: 0, VENDA_AUDITADA: 0, INSTALACAO_MARCADA: 0, INSTALADA: 0, CANCELADA: 0, ACEITE_ENVIADO: 0, CHAMADO_EM_ABERTO: 0, DESCONECTADO: 0
     };
     
-    filteredSales.forEach(s => {
+    // Count active sales by status
+    activeSales.forEach(s => {
       counts[s.status]++;
     });
+    
+    // Add cancelled count from all cancelled sales
+    counts['CANCELADA'] = allFilteredCancelled.length;
 
     return Object.entries(counts)
       .filter(([_, value]) => value > 0)
@@ -231,7 +258,7 @@ const Reports = () => {
         value,
         color: STATUS_COLORS[status as SaleStatus],
       }));
-  }, [filteredSales]);
+  }, [activeSales, allFilteredCancelled]);
 
   // Sales by seller for bar chart - EXCLUDING cancelled
   const sellerData = useMemo(() => {
@@ -281,25 +308,25 @@ const Reports = () => {
   }, [sellers]);
 
   const handleExportExcel = () => {
-    if (filteredSales.length === 0) {
+    if (activeSales.length === 0) {
       toast.error('Não há vendas para exportar no período selecionado');
       return;
     }
     
     const periodStr = `${format(dateRange.from, 'dd-MM-yyyy')}_${format(dateRange.to, 'dd-MM-yyyy')}`;
-    exportToExcel(filteredSales, sellersMap, `relatorio-vendas_${periodStr}`);
+    exportToExcel(activeSales, sellersMap, `relatorio-vendas_${periodStr}`);
     toast.success('Relatório Excel gerado com sucesso!');
   };
 
   const handleExportPDF = () => {
-    if (filteredSales.length === 0) {
+    if (activeSales.length === 0) {
       toast.error('Não há vendas para exportar no período selecionado');
       return;
     }
     
     const periodLabel = `${format(dateRange.from, 'dd/MM/yyyy', { locale: ptBR })} a ${format(dateRange.to, 'dd/MM/yyyy', { locale: ptBR })}`;
     const periodStr = `${format(dateRange.from, 'dd-MM-yyyy')}_${format(dateRange.to, 'dd-MM-yyyy')}`;
-    exportToPDF(filteredSales, sellersMap, periodLabel, `relatorio-vendas_${periodStr}`);
+    exportToPDF(activeSales, sellersMap, periodLabel, `relatorio-vendas_${periodStr}`);
     toast.success('Relatório PDF gerado com sucesso!');
   };
 
@@ -325,7 +352,8 @@ const Reports = () => {
 
     const periodLabel = `${format(dateRange.from, 'dd/MM/yyyy', { locale: ptBR })} a ${format(dateRange.to, 'dd/MM/yyyy', { locale: ptBR })}`;
     const periodStr = `${format(dateRange.from, 'dd-MM-yyyy')}_${format(dateRange.to, 'dd-MM-yyyy')}`;
-    const cancellationRate = filteredSales.length > 0 ? (stats.totalCanceladas / filteredSales.length) * 100 : 0;
+    const totalSales = activeSales.length + allFilteredCancelled.length;
+    const cancellationRate = totalSales > 0 ? (stats.totalCanceladas / totalSales) * 100 : 0;
     const reasonLabel = selectedCancelReason === 'ALL' ? 'Todos os motivos' : 
                         selectedCancelReason === 'SEM_MOTIVO' ? 'Sem motivo informado' : selectedCancelReason;
 
@@ -362,8 +390,9 @@ const Reports = () => {
 
     const periodLabel = `${format(dateRange.from, 'dd/MM/yyyy', { locale: ptBR })} a ${format(dateRange.to, 'dd/MM/yyyy', { locale: ptBR })}`;
     const periodStr = `${format(dateRange.from, 'dd-MM-yyyy')}_${format(dateRange.to, 'dd-MM-yyyy')}`;
-    const cancellationRate = filteredSales.length > 0 ? (stats.totalCanceladas / filteredSales.length) * 100 : 0;
-    const reasonLabel = selectedCancelReason === 'ALL' ? 'Todos os motivos' : 
+    const totalSales = activeSales.length + allFilteredCancelled.length;
+    const cancellationRate = totalSales > 0 ? (stats.totalCanceladas / totalSales) * 100 : 0;
+    const reasonLabel = selectedCancelReason === 'ALL' ? 'Todos os motivos' :
                         selectedCancelReason === 'SEM_MOTIVO' ? 'Sem motivo informado' : selectedCancelReason;
 
     exportCancelledSalesToPDF(
@@ -733,7 +762,7 @@ const Reports = () => {
                 />
                 <StatCard
                   title="Taxa Cancelamento"
-                  value={`${filteredSales.length > 0 ? ((stats.totalCanceladas / filteredSales.length) * 100).toFixed(1) : 0}%`}
+                  value={`${(activeSales.length + allFilteredCancelled.length) > 0 ? ((stats.totalCanceladas / (activeSales.length + allFilteredCancelled.length)) * 100).toFixed(1) : 0}%`}
                   icon={Target}
                   description="Do total de vendas"
                 />

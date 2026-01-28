@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, Building2, Phone, MapPin, User, Users, FileText, DollarSign, Loader2, Upload, X, File, Target } from 'lucide-react';
+import { Calendar, Building2, Phone, MapPin, User, Users, FileText, DollarSign, Loader2, Upload, X, File, Target, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -131,6 +131,9 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   const [documents, setDocuments] = useState<File[]>([]);
   const [uploadingDocs, setUploadingDocs] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Multiple portability phone numbers state
+  const [portabilityPhones, setPortabilityPhones] = useState<string[]>(['']);
 
   // Fetch active campaigns
   const { data: activeCampaigns = [] } = useQuery({
@@ -282,6 +285,34 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   const handlePhoneChange = (field: 'telefone_1' | 'telefone_2' | 'telefone_portabilidade', value: string) => {
     const maskedValue = maskPhone(value);
     updateForm(field, maskedValue);
+  };
+
+  // Portability phones handlers
+  const handlePortabilityPhoneChange = (index: number, value: string) => {
+    const maskedValue = maskPhone(value);
+    setPortabilityPhones(prev => {
+      const updated = [...prev];
+      updated[index] = maskedValue;
+      return updated;
+    });
+    // Update form field with all phones joined by " | "
+    const allPhones = [...portabilityPhones];
+    allPhones[index] = maskedValue;
+    updateForm('telefone_portabilidade', allPhones.filter(p => p.trim()).join(' | '));
+  };
+
+  const addPortabilityPhone = () => {
+    setPortabilityPhones(prev => [...prev, '']);
+  };
+
+  const removePortabilityPhone = (index: number) => {
+    if (portabilityPhones.length <= 1) return;
+    setPortabilityPhones(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      // Update form field with remaining phones
+      updateForm('telefone_portabilidade', updated.filter(p => p.trim()).join(' | '));
+      return updated;
+    });
   };
 
   const handleCpfChange = (field: 'proprietario_cpf' | 'gestor_cpf' | 'cedente_cpf', value: string) => {
@@ -623,14 +654,46 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
             />
             {errors.telefone_2 && <p className="text-sm text-destructive">{errors.telefone_2}</p>}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="telport">Telefone Portabilidade + Operadora</Label>
-            <Input
-              id="telport"
-              placeholder="(00) 00000-0000 - CLARO"
-              value={form.telefone_portabilidade}
-              onChange={(e) => handlePhoneChange('telefone_portabilidade', e.target.value)}
-            />
+          <div className="space-y-2 sm:col-span-2">
+            <div className="flex items-center justify-between">
+              <Label>Telefone Portabilidade + Operadora</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addPortabilityPhone}
+                className="h-7 gap-1 text-xs"
+              >
+                <Plus className="h-3 w-3" />
+                Adicionar
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {portabilityPhones.map((phone, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-md bg-muted text-muted-foreground text-xs font-medium shrink-0">
+                    {index + 1}
+                  </div>
+                  <Input
+                    placeholder="(00) 00000-0000 - OPERADORA"
+                    value={phone}
+                    onChange={(e) => handlePortabilityPhoneChange(index, e.target.value)}
+                    className="flex-1"
+                  />
+                  {portabilityPhones.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removePortabilityPhone(index)}
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

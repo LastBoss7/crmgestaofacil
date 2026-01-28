@@ -15,6 +15,7 @@ import { SaleForm } from '@/components/sales/SaleForm';
 import { SaleDetails } from '@/components/sales/SaleDetails';
 import { PendingSalesAlert } from '@/components/sales/PendingSalesAlert';
 import { exportToExcel, exportToPDF, exportSaleDetailsToPDF, getPeriodLabel } from '@/lib/export-utils';
+import { MultiSelectFilter } from '@/components/ui/multi-select-filter';
 import {
   Select,
   SelectContent,
@@ -59,7 +60,7 @@ const Sales = () => {
   const [sellers, setSellers] = useState<Record<string, Profile>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<SaleStatus | 'ALL'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<SaleStatus[]>([]);
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSeller | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -186,7 +187,8 @@ const Sales = () => {
         sale.cnpj_cliente.includes(searchTerm) ||
         (sale.nome_fantasia?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
       
-      const matchesStatus = statusFilter === 'ALL' || sale.status === statusFilter;
+      // Multi-select filter: if no status selected, show all
+      const matchesStatus = statusFilter.length === 0 || statusFilter.includes(sale.status);
       
       return matchesSearch && matchesStatus;
     });
@@ -315,20 +317,18 @@ const Sales = () => {
                   className="pl-10"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as SaleStatus | 'ALL')}>
-                <SelectTrigger className="w-full sm:w-48">
-                  <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Filtrar status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">Todos os status</SelectItem>
-                  {(Object.entries(SALE_STATUS_LABELS) as [SaleStatus, string][]).map(([status, label]) => (
-                    <SelectItem key={status} value={status}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <MultiSelectFilter
+                options={(Object.entries(SALE_STATUS_LABELS) as [SaleStatus, string][]).map(([value, label]) => ({
+                  value,
+                  label,
+                }))}
+                selected={statusFilter}
+                onChange={(selected) => setStatusFilter(selected as SaleStatus[])}
+                placeholder="Filtrar status"
+                title="Filtrar por Status"
+                icon={<Filter className="h-4 w-4" />}
+                className="w-full sm:w-auto"
+              />
             </div>
           </CardContent>
         </Card>

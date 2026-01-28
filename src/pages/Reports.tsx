@@ -80,6 +80,7 @@ const Reports = () => {
     to: endOfMonth(new Date()),
   });
   const [selectedSeller, setSelectedSeller] = useState<string>('ALL');
+  const [selectedCancelReason, setSelectedCancelReason] = useState<string>('ALL');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -122,8 +123,32 @@ const Reports = () => {
   // Separate active and cancelled sales
   const { activeSales, cancelledSales } = useMemo(() => {
     const active = filteredSales.filter(s => s.status !== 'CANCELADA');
-    const cancelled = filteredSales.filter(s => s.status === 'CANCELADA');
+    let cancelled = filteredSales.filter(s => s.status === 'CANCELADA');
+    
+    // Apply cancel reason filter
+    if (selectedCancelReason !== 'ALL') {
+      if (selectedCancelReason === 'SEM_MOTIVO') {
+        cancelled = cancelled.filter(s => !s.motivo_pendencia || s.motivo_pendencia.trim() === '');
+      } else {
+        cancelled = cancelled.filter(s => s.motivo_pendencia === selectedCancelReason);
+      }
+    }
+    
     return { activeSales: active, cancelledSales: cancelled };
+  }, [filteredSales, selectedCancelReason]);
+
+  // Get unique cancel reasons for filter dropdown
+  const cancelReasons = useMemo(() => {
+    const allCancelled = filteredSales.filter(s => s.status === 'CANCELADA');
+    const reasons = new Set<string>();
+    
+    allCancelled.forEach(sale => {
+      if (sale.motivo_pendencia && sale.motivo_pendencia.trim()) {
+        reasons.add(sale.motivo_pendencia);
+      }
+    });
+    
+    return Array.from(reasons).sort();
   }, [filteredSales]);
 
   // Stats - EXCLUDING cancelled sales
@@ -608,6 +633,34 @@ const Reports = () => {
                 />
               </div>
 
+              {/* Filter by Cancel Reason */}
+              <div className="flex flex-wrap items-center gap-3">
+                <Select value={selectedCancelReason} onValueChange={setSelectedCancelReason}>
+                  <SelectTrigger className="w-64 bg-card">
+                    <SelectValue placeholder="Filtrar por motivo" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border border-border z-50">
+                    <SelectItem value="ALL">Todos os motivos</SelectItem>
+                    <SelectItem value="SEM_MOTIVO">Sem motivo informado</SelectItem>
+                    {cancelReasons.map(reason => (
+                      <SelectItem key={reason} value={reason}>
+                        {reason}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {selectedCancelReason !== 'ALL' && (
+                  <Badge 
+                    variant="secondary" 
+                    className="cursor-pointer gap-1"
+                    onClick={() => setSelectedCancelReason('ALL')}
+                  >
+                    {selectedCancelReason === 'SEM_MOTIVO' ? 'Sem motivo' : selectedCancelReason}
+                    <XCircle className="h-3 w-3" />
+                  </Badge>
+                )}
+              </div>
+
               {/* Cancelled Sales Table */}
               <Card>
                 <CardHeader className="pb-2">
@@ -617,6 +670,7 @@ const Reports = () => {
                   </CardTitle>
                   <CardDescription className="text-xs">
                     Lista de vendas canceladas no período ({cancelledSales.length} vendas)
+                    {selectedCancelReason !== 'ALL' && ' - Filtrado'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -624,7 +678,11 @@ const Reports = () => {
                     <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                       <XCircle className="h-12 w-12 mb-4 opacity-30" />
                       <p className="text-sm font-medium">Nenhuma venda cancelada</p>
-                      <p className="text-xs mt-1">Não há vendas canceladas no período selecionado</p>
+                      <p className="text-xs mt-1">
+                        {selectedCancelReason !== 'ALL' 
+                          ? 'Tente remover o filtro de motivo' 
+                          : 'Não há vendas canceladas no período selecionado'}
+                      </p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -634,6 +692,7 @@ const Reports = () => {
                             <TableHead className="text-xs">Empresa</TableHead>
                             <TableHead className="text-xs">Vendedor</TableHead>
                             <TableHead className="text-xs">Data Venda</TableHead>
+                            <TableHead className="text-xs">Motivo</TableHead>
                             <TableHead className="text-xs text-right">Valor</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -650,6 +709,11 @@ const Reports = () => {
                                 </TableCell>
                                 <TableCell className="text-xs text-muted-foreground">
                                   {sale.data_venda ? format(parseISO(sale.data_venda), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
+                                </TableCell>
+                                <TableCell className="text-xs max-w-[200px] truncate" title={sale.motivo_pendencia || ''}>
+                                  {sale.motivo_pendencia || (
+                                    <span className="text-muted-foreground italic">Não informado</span>
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-xs text-right font-medium text-destructive">
                                   {formatCurrency(Number(sale.valor_mensal))}

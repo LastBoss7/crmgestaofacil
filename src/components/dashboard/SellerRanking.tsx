@@ -163,6 +163,15 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
       if (!sale.seller_id || !metricsMap[sale.seller_id]) return;
 
       const metrics = metricsMap[sale.seller_id];
+      
+      // Contabilizar canceladas separadamente
+      if (sale.status === 'CANCELADA') {
+        metrics.canceledSales++;
+        // NÃO adicionar ao totalSales e totalValue para vendas canceladas
+        return;
+      }
+
+      // Apenas vendas não canceladas contam para totais
       metrics.totalSales++;
       metrics.totalValue += Number(sale.valor_mensal);
 
@@ -174,9 +183,6 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
       }
       if (sale.status === 'PENDENCIA') {
         metrics.pendingSales++;
-      }
-      if (sale.status === 'CANCELADA') {
-        metrics.canceledSales++;
       }
 
       if (sale.status === 'VENDA_AUDITADA' || sale.status === 'INSTALACAO_MARCADA' || sale.status === 'INSTALADA') {
@@ -244,10 +250,12 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
       dailyData[day] = {};
     }
     
-    // Filter sales for current month
+    // Filter sales for current month (excluding cancelled)
     const currentMonthSales = sales.filter(sale => {
       const saleDate = new Date(sale.created_at);
-      return saleDate.getMonth() + 1 === currentMonth && saleDate.getFullYear() === currentYear;
+      return saleDate.getMonth() + 1 === currentMonth && 
+             saleDate.getFullYear() === currentYear &&
+             sale.status !== 'CANCELADA';
     });
     
     // Aggregate daily revenue per seller

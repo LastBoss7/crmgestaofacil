@@ -74,17 +74,20 @@ export const MonthlyGoalProgress = () => {
         .gte('data_venda', monthStartStr)
         .lte('data_venda', monthEndStr);
 
-      // Calculate totals
+      // Calculate totals - EXCLUDING cancelled sales
       const totalGoalSales = goalsData?.reduce((sum, g) => sum + (g.target_sales || 0), 0) || 0;
       const totalGoalValue = goalsData?.reduce((sum, g) => sum + Number(g.target_value || 0), 0) || 0;
       
-      const currentSales = salesData?.length || 0;
-      const currentValue = salesData?.reduce((sum, s) => sum + Number(s.valor_mensal), 0) || 0;
-      const approvedSales = salesData?.filter(s => 
+      // Filter out cancelled sales from counts and values
+      const activeSales = salesData?.filter(s => s.status !== 'CANCELADA') || [];
+      
+      const currentSales = activeSales.length;
+      const currentValue = activeSales.reduce((sum, s) => sum + Number(s.valor_mensal), 0);
+      const approvedSales = activeSales.filter(s => 
         s.status === 'VENDA_AUDITADA' || 
         s.status === 'INSTALACAO_MARCADA' || 
         s.status === 'INSTALADA'
-      ).length || 0;
+      ).length;
 
       setData({
         totalGoalSales,

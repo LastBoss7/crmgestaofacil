@@ -151,6 +151,38 @@ const Reports = () => {
     return Array.from(reasons).sort();
   }, [filteredSales]);
 
+  // Data for cancelled sales pie chart by reason
+  const cancelReasonChartData = useMemo(() => {
+    const allCancelled = filteredSales.filter(s => s.status === 'CANCELADA');
+    const reasonCounts: Record<string, { count: number; value: number }> = {};
+    
+    allCancelled.forEach(sale => {
+      const reason = sale.motivo_pendencia?.trim() || 'Sem motivo informado';
+      if (!reasonCounts[reason]) {
+        reasonCounts[reason] = { count: 0, value: 0 };
+      }
+      reasonCounts[reason].count++;
+      reasonCounts[reason].value += Number(sale.valor_mensal);
+    });
+
+    // Generate colors for each reason
+    const colors = [
+      '#EF4444', '#F97316', '#F59E0B', '#EAB308', '#84CC16',
+      '#22C55E', '#14B8A6', '#06B6D4', '#0EA5E9', '#3B82F6',
+      '#6366F1', '#8B5CF6', '#A855F7', '#D946EF', '#EC4899',
+    ];
+
+    return Object.entries(reasonCounts)
+      .map(([reason, data], index) => ({
+        name: reason.length > 25 ? reason.substring(0, 25) + '...' : reason,
+        fullName: reason,
+        value: data.count,
+        valorTotal: data.value,
+        color: colors[index % colors.length],
+      }))
+      .sort((a, b) => b.value - a.value);
+  }, [filteredSales]);
+
   // Stats - EXCLUDING cancelled sales
   const stats = useMemo(() => {
     const total = activeSales.length;
@@ -631,6 +663,111 @@ const Reports = () => {
                   icon={Target}
                   description="Do total de vendas"
                 />
+              </div>
+
+              {/* Charts Grid for Cancelled */}
+              <div className="grid gap-4 lg:grid-cols-2">
+                {/* Pie Chart - Cancelled by Reason */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Distribuição por Motivo</CardTitle>
+                    <CardDescription className="text-xs">Quantidade de cancelamentos por motivo</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-64">
+                      {cancelReasonChartData.length === 0 ? (
+                        <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+                          Nenhum cancelamento
+                        </div>
+                      ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={cancelReasonChartData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={50}
+                              outerRadius={80}
+                              paddingAngle={2}
+                              dataKey="value"
+                              label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                              labelLine={false}
+                            >
+                              {cancelReasonChartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'hsl(var(--card))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                              }}
+                              formatter={(value: number, name: string, props: any) => [
+                                `${value} vendas (${formatCurrency(props.payload.valorTotal)})`,
+                                props.payload.fullName
+                              ]}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Bar Chart - Value by Reason */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Valor Perdido por Motivo</CardTitle>
+                    <CardDescription className="text-xs">Top motivos por valor cancelado</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-64">
+                      {cancelReasonChartData.length === 0 ? (
+                        <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+                          Nenhum cancelamento
+                        </div>
+                      ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart 
+                            data={cancelReasonChartData.slice(0, 5).map(d => ({ ...d, valor: d.valorTotal }))} 
+                            layout="vertical"
+                          >
+                            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                            <XAxis 
+                              type="number" 
+                              className="text-[10px] fill-muted-foreground"
+                              tickFormatter={(value) => formatCurrencyShort(value)}
+                            />
+                            <YAxis 
+                              type="category" 
+                              dataKey="name" 
+                              className="text-[10px] fill-muted-foreground"
+                              width={100}
+                              tickLine={false}
+                            />
+                            <Tooltip
+                              contentStyle={{
+                                backgroundColor: 'hsl(var(--card))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                              }}
+                              formatter={(value: number) => [formatCurrency(value), 'Valor Perdido']}
+                            />
+                            <Bar 
+                              dataKey="valor" 
+                              name="Valor Perdido"
+                              fill="hsl(var(--destructive))" 
+                              radius={[0, 4, 4, 0]}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
               {/* Filter by Cancel Reason */}

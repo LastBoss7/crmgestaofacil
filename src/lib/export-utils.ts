@@ -569,6 +569,208 @@ export const exportBandaLargaToPDF = (
   doc.save(`${filename}.pdf`);
 };
 
+// Cancelled Sales export types
+export interface CancelledSaleExportData {
+  id: string;
+  empresa: string;
+  cnpj: string;
+  vendedor: string;
+  dataVenda: string;
+  motivo: string;
+  valorMensal: number;
+}
+
+export const exportCancelledSalesToExcel = (
+  sales: CancelledSaleExportData[],
+  periodLabel: string,
+  totalValue: number,
+  cancellationRate: number,
+  selectedReason: string = 'Todos',
+  filename: string = 'relatorio-vendas-canceladas'
+) => {
+  const wb = XLSX.utils.book_new();
+
+  // Summary sheet
+  const summaryData = [
+    { 'Métrica': 'Total de Vendas Canceladas', 'Valor': sales.length },
+    { 'Métrica': 'Valor Total Perdido', 'Valor': formatCurrency(totalValue) },
+    { 'Métrica': 'Taxa de Cancelamento', 'Valor': `${cancellationRate.toFixed(1)}%` },
+    { 'Métrica': 'Período', 'Valor': periodLabel },
+    { 'Métrica': 'Filtro de Motivo', 'Valor': selectedReason },
+    { 'Métrica': 'Gerado em', 'Valor': formatDateTime(new Date().toISOString()) },
+  ];
+
+  const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+  wsSummary['!cols'] = [{ wch: 30 }, { wch: 40 }];
+  XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumo');
+
+  // Detail sheet
+  const detailData = sales.map((sale) => ({
+    'Empresa': sale.empresa,
+    'CNPJ': sale.cnpj,
+    'Vendedor': sale.vendedor,
+    'Data da Venda': sale.dataVenda,
+    'Motivo do Cancelamento': sale.motivo || 'Não informado',
+    'Valor Mensal': Number(sale.valorMensal),
+  }));
+
+  const wsDetail = XLSX.utils.json_to_sheet(detailData);
+  wsDetail['!cols'] = [
+    { wch: 35 }, // Empresa
+    { wch: 18 }, // CNPJ
+    { wch: 25 }, // Vendedor
+    { wch: 15 }, // Data
+    { wch: 40 }, // Motivo
+    { wch: 15 }, // Valor
+  ];
+  XLSX.utils.book_append_sheet(wb, wsDetail, 'Vendas Canceladas');
+
+  // Reason breakdown sheet
+  const reasonCounts: Record<string, { count: number; value: number }> = {};
+  sales.forEach(sale => {
+    const reason = sale.motivo || 'Sem motivo informado';
+    if (!reasonCounts[reason]) {
+      reasonCounts[reason] = { count: 0, value: 0 };
+    }
+    reasonCounts[reason].count++;
+    reasonCounts[reason].value += sale.valorMensal;
+  });
+
+  const reasonData = Object.entries(reasonCounts)
+    .map(([reason, data]) => ({
+      'Motivo': reason,
+      'Quantidade': data.count,
+      'Valor Perdido': Number(data.value),
+      '% do Total': `${sales.length > 0 ? ((data.count / sales.length) * 100).toFixed(1) : 0}%`,
+    }))
+    .sort((a, b) => b.Quantidade - a.Quantidade);
+
+  const wsReasons = XLSX.utils.json_to_sheet(reasonData);
+  wsReasons['!cols'] = [
+    { wch: 40 }, // Motivo
+    { wch: 12 }, // Quantidade
+    { wch: 18 }, // Valor
+    { wch: 12 }, // %
+  ];
+  XLSX.utils.book_append_sheet(wb, wsReasons, 'Por Motivo');
+
+  XLSX.writeFile(wb, `${filename}.xlsx`);
+};
+
+export const exportCancelledSalesToPDF = (
+  sales: CancelledSaleExportData[],
+  periodLabel: string,
+  totalValue: number,
+  cancellationRate: number,
+  selectedReason: string = 'Todos',
+  filename: string = 'relatorio-vendas-canceladas'
+) => {
+  const doc = new jsPDF('landscape');
+  
+  // Title
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(220, 53, 69); // Destructive color
+  doc.text('Relatório de Vendas Canceladas', 14, 20);
+  
+  // Info
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(100);
+  doc.text(`Período: ${periodLabel}`, 14, 28);
+  doc.text(`Filtro: ${selectedReason}`, 14, 34);
+  doc.text(`Gerado em: ${formatDateTime(new Date().toISOString())}`, 14, 40);
+  
+  // Summary box
+  doc.setTextColor(0);
+  doc.setFillColor(254, 242, 242); // Light red background
+  doc.roundedRect(14, 46, 270, 24, 3, 3, 'F');
+  
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Total Canceladas:', 20, 54);
+  doc.text('Valor Perdido:', 90, 54);
+  doc.text('Taxa de Cancelamento:', 180, 54);
+  
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(220, 53, 69);
+  doc.text(String(sales.length), 20, 62);
+  doc.text(formatCurrency(totalValue), 90, 62);
+  doc.text(`${cancellationRate.toFixed(1)}%`, 180, 62);
+  
+  // Table
+  doc.setTextColor(0);
+  const tableData = sales.map((sale) => [
+    (sale.empresa.length > 30 ? sale.empresa.substring(0, 30) + '...' : sale.empresa),
+    sale.vendedor,
+    sale.dataVenda,
+    (sale.motivo?.length > 35 ? sale.motivo.substring(0, 35) + '...' : sale.motivo) || 'Não informado',
+    formatCurrency(sale.valorMensal),
+  ]);
+
+  autoTable(doc, {
+    startY: 76,
+    head: [['Empresa', 'Vendedor', 'Data', 'Motivo', 'Valor']],
+    body: tableData,
+    styles: { fontSize: 8, cellPadding: 2 },
+    headStyles: { fillColor: [220, 53, 69] },
+    alternateRowStyles: { fillColor: [254, 242, 242] },
+    columnStyles: {
+      0: { cellWidth: 70 },
+      1: { cellWidth: 45 },
+      2: { cellWidth: 30 },
+      3: { cellWidth: 80 },
+      4: { cellWidth: 35, halign: 'right' },
+    },
+  });
+
+  // Add reason breakdown on second page if there are many reasons
+  const reasonCounts: Record<string, { count: number; value: number }> = {};
+  sales.forEach(sale => {
+    const reason = sale.motivo || 'Sem motivo informado';
+    if (!reasonCounts[reason]) {
+      reasonCounts[reason] = { count: 0, value: 0 };
+    }
+    reasonCounts[reason].count++;
+    reasonCounts[reason].value += sale.valorMensal;
+  });
+
+  const reasonData = Object.entries(reasonCounts)
+    .map(([reason, data]) => [
+      reason.length > 50 ? reason.substring(0, 50) + '...' : reason,
+      String(data.count),
+      formatCurrency(data.value),
+      `${sales.length > 0 ? ((data.count / sales.length) * 100).toFixed(1) : 0}%`,
+    ])
+    .sort((a, b) => parseInt(b[1]) - parseInt(a[1]));
+
+  if (reasonData.length > 0) {
+    doc.addPage();
+    
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(220, 53, 69);
+    doc.text('Análise por Motivo de Cancelamento', 14, 20);
+
+    autoTable(doc, {
+      startY: 28,
+      head: [['Motivo', 'Quantidade', 'Valor Perdido', '% do Total']],
+      body: reasonData,
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [220, 53, 69] },
+      alternateRowStyles: { fillColor: [254, 242, 242] },
+      columnStyles: {
+        0: { cellWidth: 120 },
+        1: { cellWidth: 35, halign: 'center' },
+        2: { cellWidth: 45, halign: 'right' },
+        3: { cellWidth: 35, halign: 'center' },
+      },
+    });
+  }
+  
+  doc.save(`${filename}.pdf`);
+};
+
 // Campaign Rankings export types
 export interface CampaignRankingExportData {
   sellerId: string;

@@ -6,6 +6,7 @@ import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database'
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar as CalendarIcon, TrendingUp, Users, DollarSign, Target, FileSpreadsheet, FileText, Download, XCircle, AlertTriangle } from 'lucide-react';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -523,14 +524,32 @@ const Reports = () => {
         ) : (
           <Tabs defaultValue="vendas" className="w-full">
             <TabsList className="mb-4">
-              <TabsTrigger value="vendas" className="gap-1.5">
-                <TrendingUp className="h-4 w-4" />
-                Vendas Ativas ({stats.total})
-              </TabsTrigger>
-              <TabsTrigger value="canceladas" className="gap-1.5">
-                <XCircle className="h-4 w-4" />
-                Canceladas ({stats.totalCanceladas})
-              </TabsTrigger>
+              <TooltipProvider>
+                <UITooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger value="vendas" className="gap-1.5">
+                      <TrendingUp className="h-4 w-4" />
+                      Vendas Ativas ({stats.total})
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Vendas em andamento do período selecionado (exclui canceladas)</p>
+                  </TooltipContent>
+                </UITooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <UITooltip>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger value="canceladas" className="gap-1.5">
+                      <XCircle className="h-4 w-4" />
+                      Canceladas ({stats.totalCanceladas})
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Histórico completo de todas as vendas canceladas</p>
+                  </TooltipContent>
+                </UITooltip>
+              </TooltipProvider>
             </TabsList>
 
             <TabsContent value="vendas" className="space-y-4">

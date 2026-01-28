@@ -403,6 +403,12 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
       }
     }
 
+    // Validate documents are required
+    if (documents.length === 0) {
+      toast.error('É obrigatório anexar pelo menos um documento para cadastrar a venda');
+      return;
+    }
+
     if (hasErrors) {
       setErrors(newErrors);
       setTouched(requiredFields.reduce((acc, field) => ({ ...acc, [field]: true }), {}));
@@ -1021,18 +1027,24 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
 
       {/* Documentos */}
       <div>
-        <SectionHeader icon={Upload} title="Documentos (Opcional)" />
+        <SectionHeader icon={Upload} title="Documentos *" />
         <p className="text-sm text-muted-foreground mb-4">
-          Anexe documentos relacionados à venda (PDF, imagens). Máximo 10MB por arquivo.
+          <span className="text-destructive font-medium">Obrigatório:</span> Anexe pelo menos um documento relacionado à venda (PDF, imagens). Máximo 10MB por arquivo.
         </p>
         <div className="space-y-4">
           <div 
-            className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer"
+            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
+              documents.length === 0 
+                ? 'border-destructive/50 hover:border-destructive bg-destructive/5' 
+                : 'border-muted-foreground/25 hover:border-primary/50'
+            }`}
             onClick={() => fileInputRef.current?.click()}
           >
-            <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">
-              Clique para selecionar arquivos ou arraste aqui
+            <Upload className={`h-8 w-8 mx-auto mb-2 ${documents.length === 0 ? 'text-destructive' : 'text-muted-foreground'}`} />
+            <p className={`text-sm ${documents.length === 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+              {documents.length === 0 
+                ? 'Clique para adicionar documentos (obrigatório)' 
+                : 'Clique para adicionar mais documentos'}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               PDF, JPG, PNG, WebP

@@ -33,7 +33,7 @@ const createUserSchema = z.object({
   sobrenome: z.string().trim().min(2, 'Sobrenome deve ter no mínimo 2 caracteres').max(100, 'Sobrenome muito longo'),
   email: z.string().trim().email('E-mail inválido').max(255, 'E-mail muito longo'),
   password: z.string().min(6, 'Senha deve ter no mínimo 6 caracteres').max(50, 'Senha muito longa'),
-  role: z.enum(['CEO', 'BACKOFFICE', 'SUPERVISOR', 'SELLER']),
+  role: z.enum(['CEO', 'COORDENADOR', 'BACKOFFICE', 'SUPERVISOR', 'SELLER']),
 });
 
 interface CreateUserDialogProps {
@@ -76,7 +76,7 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
     }
   };
 
-  // Roles that require a team
+  // Roles that require a team (COORDENADOR doesn't require team - CEO assigns teams separately)
   const rolesRequiringTeam: AppRole[] = ['SUPERVISOR', 'BACKOFFICE', 'SELLER'];
   const requiresTeam = rolesRequiringTeam.includes(formData.role);
 
@@ -180,10 +180,11 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
     toast.success('Senha gerada! Anote antes de salvar.');
   };
 
-  // CEO can create all roles, Supervisor can create SELLER, BACKOFFICE, SUPERVISOR
+  // CEO can create all roles, Coordinator can create SELLER, BACKOFFICE, SUPERVISOR, Supervisor can create SELLER, BACKOFFICE, SUPERVISOR
+  const { isCoordinator } = useAuth();
   const availableRoles: AppRole[] = isCEO 
-    ? ['CEO', 'BACKOFFICE', 'SUPERVISOR', 'SELLER'] 
-    : isSupervisor
+    ? ['CEO', 'COORDENADOR', 'BACKOFFICE', 'SUPERVISOR', 'SELLER'] 
+    : (isSupervisor || isCoordinator)
     ? ['SELLER', 'BACKOFFICE', 'SUPERVISOR']
     : ['SELLER'];
 

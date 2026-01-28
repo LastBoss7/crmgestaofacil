@@ -45,9 +45,9 @@ serve(async (req) => {
       .eq("user_id", caller.id)
       .single();
 
-    if (!callerRole || (callerRole.role !== "CEO" && callerRole.role !== "SUPERVISOR")) {
+    if (!callerRole || (callerRole.role !== "CEO" && callerRole.role !== "COORDENADOR" && callerRole.role !== "SUPERVISOR")) {
       return new Response(
-        JSON.stringify({ error: "Forbidden: Only CEO or SUPERVISOR can create users" }),
+        JSON.stringify({ error: "Forbidden: Only CEO, COORDENADOR or SUPERVISOR can create users" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -77,8 +77,9 @@ serve(async (req) => {
     }
 
     // Validate role permissions
+    // CEO can create any role, COORDENADOR and SUPERVISOR can create SELLER, BACKOFFICE, SUPERVISOR
     const allowedRoles = callerRole.role === "CEO" 
-      ? ["CEO", "SUPERVISOR", "BACKOFFICE", "SELLER"]
+      ? ["CEO", "COORDENADOR", "SUPERVISOR", "BACKOFFICE", "SELLER"]
       : ["SELLER", "BACKOFFICE", "SUPERVISOR"];
 
     if (!allowedRoles.includes(role)) {
@@ -88,11 +89,11 @@ serve(async (req) => {
       );
     }
 
-    // Roles that require a team_id
+    // Roles that require a team_id (COORDENADOR does not require team - CEO assigns teams separately)
     const rolesRequiringTeam = ["SUPERVISOR", "BACKOFFICE", "SELLER"];
     if (rolesRequiringTeam.includes(role) && !teamId) {
-      // For SUPERVISOR creating SELLER, use their own team if not specified
-      if (callerRole.role === "SUPERVISOR" && role === "SELLER" && callerProfile.team_id) {
+      // For SUPERVISOR/COORDENADOR creating SELLER, use their own team if not specified
+      if ((callerRole.role === "SUPERVISOR" || callerRole.role === "COORDENADOR") && role === "SELLER" && callerProfile.team_id) {
         // Will use caller's team_id below
       } else {
         return new Response(
@@ -159,7 +160,7 @@ serve(async (req) => {
 
     // Determine team_id
     let finalTeamId = teamId || null;
-    if (!finalTeamId && callerRole.role === "SUPERVISOR" && role === "SELLER") {
+    if (!finalTeamId && (callerRole.role === "SUPERVISOR" || callerRole.role === "COORDENADOR") && role === "SELLER") {
       finalTeamId = callerProfile.team_id;
     }
 

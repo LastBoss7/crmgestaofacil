@@ -39,7 +39,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatCard } from '@/components/ui/stat-card';
 import { cn } from '@/lib/utils';
-import { exportToExcel, exportToPDF } from '@/lib/export-utils';
+import { exportToExcel, exportToPDF, exportCancelledSalesToExcel, exportCancelledSalesToPDF, CancelledSaleExportData } from '@/lib/export-utils';
 import { toast } from 'sonner';
 import {
   AreaChart,
@@ -301,6 +301,80 @@ const Reports = () => {
     const periodStr = `${format(dateRange.from, 'dd-MM-yyyy')}_${format(dateRange.to, 'dd-MM-yyyy')}`;
     exportToPDF(filteredSales, sellersMap, periodLabel, `relatorio-vendas_${periodStr}`);
     toast.success('Relatório PDF gerado com sucesso!');
+  };
+
+  // Export cancelled sales to Excel
+  const handleExportCancelledExcel = () => {
+    if (cancelledSales.length === 0) {
+      toast.error('Não há vendas canceladas para exportar');
+      return;
+    }
+
+    const exportData: CancelledSaleExportData[] = cancelledSales.map(sale => {
+      const seller = sellers.find(s => s.id === sale.seller_id);
+      return {
+        id: sale.id,
+        empresa: sale.nome_fantasia || sale.razao_social,
+        cnpj: sale.cnpj_cliente,
+        vendedor: seller?.nome || 'N/A',
+        dataVenda: sale.data_venda ? format(parseISO(sale.data_venda), 'dd/MM/yyyy', { locale: ptBR }) : '-',
+        motivo: sale.motivo_pendencia || '',
+        valorMensal: Number(sale.valor_mensal),
+      };
+    });
+
+    const periodLabel = `${format(dateRange.from, 'dd/MM/yyyy', { locale: ptBR })} a ${format(dateRange.to, 'dd/MM/yyyy', { locale: ptBR })}`;
+    const periodStr = `${format(dateRange.from, 'dd-MM-yyyy')}_${format(dateRange.to, 'dd-MM-yyyy')}`;
+    const cancellationRate = filteredSales.length > 0 ? (stats.totalCanceladas / filteredSales.length) * 100 : 0;
+    const reasonLabel = selectedCancelReason === 'ALL' ? 'Todos os motivos' : 
+                        selectedCancelReason === 'SEM_MOTIVO' ? 'Sem motivo informado' : selectedCancelReason;
+
+    exportCancelledSalesToExcel(
+      exportData,
+      periodLabel,
+      stats.valorCancelado,
+      cancellationRate,
+      reasonLabel,
+      `vendas-canceladas_${periodStr}`
+    );
+    toast.success('Relatório de canceladas Excel gerado com sucesso!');
+  };
+
+  // Export cancelled sales to PDF
+  const handleExportCancelledPDF = () => {
+    if (cancelledSales.length === 0) {
+      toast.error('Não há vendas canceladas para exportar');
+      return;
+    }
+
+    const exportData: CancelledSaleExportData[] = cancelledSales.map(sale => {
+      const seller = sellers.find(s => s.id === sale.seller_id);
+      return {
+        id: sale.id,
+        empresa: sale.nome_fantasia || sale.razao_social,
+        cnpj: sale.cnpj_cliente,
+        vendedor: seller?.nome || 'N/A',
+        dataVenda: sale.data_venda ? format(parseISO(sale.data_venda), 'dd/MM/yyyy', { locale: ptBR }) : '-',
+        motivo: sale.motivo_pendencia || '',
+        valorMensal: Number(sale.valor_mensal),
+      };
+    });
+
+    const periodLabel = `${format(dateRange.from, 'dd/MM/yyyy', { locale: ptBR })} a ${format(dateRange.to, 'dd/MM/yyyy', { locale: ptBR })}`;
+    const periodStr = `${format(dateRange.from, 'dd-MM-yyyy')}_${format(dateRange.to, 'dd-MM-yyyy')}`;
+    const cancellationRate = filteredSales.length > 0 ? (stats.totalCanceladas / filteredSales.length) * 100 : 0;
+    const reasonLabel = selectedCancelReason === 'ALL' ? 'Todos os motivos' : 
+                        selectedCancelReason === 'SEM_MOTIVO' ? 'Sem motivo informado' : selectedCancelReason;
+
+    exportCancelledSalesToPDF(
+      exportData,
+      periodLabel,
+      stats.valorCancelado,
+      cancellationRate,
+      reasonLabel,
+      `vendas-canceladas_${periodStr}`
+    );
+    toast.success('Relatório de canceladas PDF gerado com sucesso!');
   };
 
   return (
@@ -770,32 +844,54 @@ const Reports = () => {
                 </Card>
               </div>
 
-              {/* Filter by Cancel Reason */}
-              <div className="flex flex-wrap items-center gap-3">
-                <Select value={selectedCancelReason} onValueChange={setSelectedCancelReason}>
-                  <SelectTrigger className="w-64 bg-card">
-                    <SelectValue placeholder="Filtrar por motivo" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border border-border z-50">
-                    <SelectItem value="ALL">Todos os motivos</SelectItem>
-                    <SelectItem value="SEM_MOTIVO">Sem motivo informado</SelectItem>
-                    {cancelReasons.map(reason => (
-                      <SelectItem key={reason} value={reason}>
-                        {reason}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedCancelReason !== 'ALL' && (
-                  <Badge 
-                    variant="secondary" 
-                    className="cursor-pointer gap-1"
-                    onClick={() => setSelectedCancelReason('ALL')}
-                  >
-                    {selectedCancelReason === 'SEM_MOTIVO' ? 'Sem motivo' : selectedCancelReason}
-                    <XCircle className="h-3 w-3" />
-                  </Badge>
-                )}
+              {/* Filter by Cancel Reason and Export */}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <Select value={selectedCancelReason} onValueChange={setSelectedCancelReason}>
+                    <SelectTrigger className="w-64 bg-card">
+                      <SelectValue placeholder="Filtrar por motivo" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border border-border z-50">
+                      <SelectItem value="ALL">Todos os motivos</SelectItem>
+                      <SelectItem value="SEM_MOTIVO">Sem motivo informado</SelectItem>
+                      {cancelReasons.map(reason => (
+                        <SelectItem key={reason} value={reason}>
+                          {reason}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedCancelReason !== 'ALL' && (
+                    <Badge 
+                      variant="secondary" 
+                      className="cursor-pointer gap-1"
+                      onClick={() => setSelectedCancelReason('ALL')}
+                    >
+                      {selectedCancelReason === 'SEM_MOTIVO' ? 'Sem motivo' : selectedCancelReason}
+                      <XCircle className="h-3 w-3" />
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Export Cancelled Sales */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="destructive" className="gap-2">
+                      <Download className="h-4 w-4" />
+                      Exportar Canceladas
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleExportCancelledExcel} className="gap-2 cursor-pointer">
+                      <FileSpreadsheet className="h-4 w-4 text-green-600" />
+                      Exportar Excel (.xlsx)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportCancelledPDF} className="gap-2 cursor-pointer">
+                      <FileText className="h-4 w-4 text-red-600" />
+                      Exportar PDF
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               {/* Cancelled Sales Table */}

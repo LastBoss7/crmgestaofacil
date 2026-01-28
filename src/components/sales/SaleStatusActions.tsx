@@ -33,7 +33,7 @@ interface SaleStatusActionsProps {
 }
 
 export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatusActionsProps) {
-  const { isCEO, isBackoffice, isSeller, user, profile, role } = useAuth();
+  const { isCEO, isBackoffice, isSupervisor, isSeller, user, profile, role } = useAuth();
   const { recordStatusChange } = useSaleHistory();
   const [statusUpdate, setStatusUpdate] = useState({
     status: sale.status,
@@ -47,7 +47,7 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
     action: 'VENDA_AUDITADA' | 'CANCELADA' | null;
   }>({ open: false, action: null });
 
-  const canApprove = isCEO || isBackoffice;
+  const canApprove = isCEO || isBackoffice || isSupervisor;
   const isOwner = sale.seller_id === user?.id;
 
   // Workflow status options based on role
@@ -59,6 +59,10 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
     if (isBackoffice) {
       // Backoffice analisa, aprova ou devolve
       return ['AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO'];
+    }
+    if (isSupervisor) {
+      // Supervisor pode gerenciar vendas da equipe
+      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO'];
     }
     if (isSeller && isOwner) {
       // Vendedor pode usar: Pré-Análise, Aguardando Auditoria, Aceite Enviado, Chamado em Aberto, Desconectado
@@ -408,8 +412,8 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
     );
   }
 
-  // CEO/Backoffice full control select
-  if (isCEO || isBackoffice) {
+  // CEO/Backoffice/Supervisor full control select
+  if (isCEO || isBackoffice || isSupervisor) {
     return (
       <div className="space-y-4 border-t pt-4">
         <h3 className="font-semibold text-sm">Alterar Status</h3>

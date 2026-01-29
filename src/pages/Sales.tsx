@@ -58,6 +58,7 @@ const Sales = () => {
   const { user, profile, isSeller, isCEO, isBackoffice } = useAuth();
   const [sales, setSales] = useState<SaleWithSeller[]>([]);
   const [sellers, setSellers] = useState<Record<string, Profile>>({});
+  const [teams, setTeams] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<SaleStatus[]>([]);
@@ -170,8 +171,20 @@ const Sales = () => {
     setLoading(false);
   };
 
+  const fetchTeams = async () => {
+    const { data } = await supabase.from('teams').select('id, name');
+    if (data) {
+      const teamsMap: Record<string, string> = {};
+      data.forEach((t: { id: string; name: string }) => {
+        teamsMap[t.id] = t.name;
+      });
+      setTeams(teamsMap);
+    }
+  };
+
   useEffect(() => {
     fetchSales();
+    fetchTeams();
   }, [user, profile?.company_id]);
 
   const handleSaleCreated = () => {
@@ -560,10 +573,15 @@ const Sales = () => {
                     className="gap-2"
                     onClick={() => {
                       const sellerName = selectedSale.seller_id ? sellers[selectedSale.seller_id]?.nome : undefined;
+                      // Resolve team name from UUID or use existing name
+                      const teamName = selectedSale.equipe 
+                        ? (teams[selectedSale.equipe] || selectedSale.equipe) 
+                        : undefined;
                       exportSaleDetailsToPDF(
                         selectedSale, 
                         sellerName,
-                        `venda-${selectedSale.cnpj_cliente.replace(/\D/g, '')}-${new Date().toISOString().split('T')[0]}`
+                        `venda-${selectedSale.cnpj_cliente.replace(/\D/g, '')}-${new Date().toISOString().split('T')[0]}`,
+                        teamName
                       );
                       toast.success('PDF gerado com sucesso!');
                     }}

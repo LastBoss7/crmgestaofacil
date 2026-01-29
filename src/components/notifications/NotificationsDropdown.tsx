@@ -1,4 +1,4 @@
-import { Bell, Check, Trash2, ShoppingCart, UserPlus, AlertCircle, CheckCircle2, Info, BellRing } from 'lucide-react';
+import { Bell, Check, Trash2, ShoppingCart, UserPlus, AlertCircle, CheckCircle2, Info, BellRing, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
@@ -18,6 +18,9 @@ const NotificationsDropdown = () => {
     markAllAsRead, 
     deleteNotification, 
     clearAll,
+    loadMore,
+    loadingMore,
+    hasMore,
     requestNotificationPermission,
     notificationPermission,
   } = useNotifications();
@@ -190,6 +193,26 @@ const NotificationsDropdown = () => {
                   </div>
                 );
               })}
+              
+              {/* Load More Button */}
+              {hasMore && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="w-full mt-2 h-9 text-xs text-violet-400 hover:text-violet-300 hover:bg-violet-500/10 rounded-xl"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                      Carregando...
+                    </>
+                  ) : (
+                    'Carregar mais antigas'
+                  )}
+                </Button>
+              )}
             </div>
           )}
         </ScrollArea>

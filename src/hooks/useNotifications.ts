@@ -17,9 +17,13 @@ export interface Notification {
   created_at: string;
 }
 
+const PAGE_SIZE = 20;
+
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const { user } = useAuth();
   const { playSound } = useNotificationSound();
   const { showNotification: showBrowserNotification, requestPermission, permission } = useBrowserNotifications();
@@ -34,16 +38,44 @@ export const useNotifications = () => {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(PAGE_SIZE);
 
       if (error) throw error;
-      setNotifications((data as Notification[]) || []);
+      const notifs = (data as Notification[]) || [];
+      setNotifications(notifs);
+      setHasMore(notifs.length === PAGE_SIZE);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
       setLoading(false);
     }
   }, [user]);
+
+  // Carregar mais notificações antigas
+  const loadMore = useCallback(async () => {
+    if (!user || loadingMore || !hasMore || notifications.length === 0) return;
+
+    setLoadingMore(true);
+    try {
+      const lastNotification = notifications[notifications.length - 1];
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .lt('created_at', lastNotification.created_at)
+        .order('created_at', { ascending: false })
+        .limit(PAGE_SIZE);
+
+      if (error) throw error;
+      const newNotifs = (data as Notification[]) || [];
+      setNotifications(prev => [...prev, ...newNotifs]);
+      setHasMore(newNotifs.length === PAGE_SIZE);
+    } catch (error) {
+      console.error('Error loading more notifications:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [user, loadingMore, hasMore, notifications]);
 
   // Criar nova notificação
   const createNotification = useCallback(async (
@@ -210,12 +242,15 @@ export const useNotifications = () => {
   return {
     notifications,
     loading,
+    loadingMore,
+    hasMore,
     unreadCount,
     createNotification,
     markAsRead,
     markAllAsRead,
     deleteNotification,
     clearAll,
+    loadMore,
     showNotification,
     requestNotificationPermission: requestPermission,
     notificationPermission: permission,

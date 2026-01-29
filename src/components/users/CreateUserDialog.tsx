@@ -201,18 +201,20 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden" autoComplete="off">
           <div className="flex-1 overflow-y-auto space-y-4 pr-1">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="nome" className="text-sm">Nome</Label>
                 <Input
                   id="nome"
+                  name="new-user-nome"
                   placeholder="João"
                   value={formData.nome}
                   onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
                   disabled={isLoading}
                   required
+                  autoComplete="off"
                   className="h-9"
                 />
               </div>
@@ -220,26 +222,30 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
                 <Label htmlFor="sobrenome" className="text-sm">Sobrenome</Label>
                 <Input
                   id="sobrenome"
+                  name="new-user-sobrenome"
                   placeholder="Silva"
                   value={formData.sobrenome}
                   onChange={(e) => setFormData(prev => ({ ...prev, sobrenome: e.target.value }))}
                   disabled={isLoading}
                   required
+                  autoComplete="off"
                   className="h-9"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-sm">E-mail</Label>
+              <Label htmlFor="new-user-email" className="text-sm">E-mail</Label>
               <Input
-                id="email"
+                id="new-user-email"
+                name="new-user-email"
                 type="email"
                 placeholder="joao.silva@empresa.com"
                 value={formData.email}
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 disabled={isLoading}
                 required
+                autoComplete="new-password"
                 className="h-9"
               />
             </div>
@@ -259,13 +265,15 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
               </div>
               <div className="relative">
                 <Input
-                  id="password"
+                  id="new-user-password"
+                  name="new-user-password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Mínimo 6 caracteres"
                   value={formData.password}
                   onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                   disabled={isLoading}
                   required
+                  autoComplete="new-password"
                   className="h-9 pr-10"
                 />
                 <button

@@ -40,6 +40,7 @@ import { Loader2 } from 'lucide-react';
 interface UserWithRole extends Profile {
   role?: AppRole;
   team_name?: string;
+  coordinator_team_names?: string[]; // For coordinators who manage multiple teams
 }
 
 const Users = () => {
@@ -101,6 +102,15 @@ const Users = () => {
       console.error('Error fetching teams:', teamsError);
     }
 
+    // Fetch coordinator team assignments
+    const { data: coordinatorTeamsData, error: coordTeamsError } = await supabase
+      .from('coordinator_teams')
+      .select('coordinator_id, team_id');
+
+    if (coordTeamsError) {
+      console.error('Error fetching coordinator teams:', coordTeamsError);
+    }
+
     setTeams(teamsData || []);
 
     // Create maps
@@ -114,10 +124,23 @@ const Users = () => {
       teamsMap[t.id] = t.name;
     });
 
+    // Create coordinator teams map (coordinator_id -> array of team names)
+    const coordinatorTeamsMap: Record<string, string[]> = {};
+    (coordinatorTeamsData || []).forEach((ct) => {
+      const teamName = teamsMap[ct.team_id];
+      if (teamName) {
+        if (!coordinatorTeamsMap[ct.coordinator_id]) {
+          coordinatorTeamsMap[ct.coordinator_id] = [];
+        }
+        coordinatorTeamsMap[ct.coordinator_id].push(teamName);
+      }
+    });
+
     const usersWithRoles: UserWithRole[] = (profiles || []).map((p: Profile) => ({
       ...p,
       role: rolesMap[p.id],
       team_name: p.team_id ? teamsMap[p.team_id] : undefined,
+      coordinator_team_names: rolesMap[p.id] === 'COORDENADOR' ? coordinatorTeamsMap[p.id] : undefined,
     }));
 
     setUsers(usersWithRoles);
@@ -345,11 +368,23 @@ const Users = () => {
                           )}
                         </TableCell>
                         <TableCell>
-                          {user.team_name ? (
+                          {/* Show coordinator teams if user is a coordinator */}
+                          {user.role === 'COORDENADOR' && user.coordinator_team_names && user.coordinator_team_names.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {user.coordinator_team_names.map((teamName, idx) => (
+                                <Badge key={idx} variant="secondary" className="gap-1">
+                                  <Users2 className="h-3 w-3" />
+                                  {teamName}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : user.team_name ? (
                             <Badge variant="secondary" className="gap-1">
                               <Users2 className="h-3 w-3" />
                               {user.team_name}
                             </Badge>
+                          ) : user.role === 'COORDENADOR' ? (
+                            <span className="text-muted-foreground text-sm italic">Sem equipes atribuídas</span>
                           ) : (
                             <span className="text-muted-foreground text-sm">-</span>
                           )}

@@ -162,7 +162,7 @@ const Sidebar = () => {
         to={item.href}
         onClick={() => handleClick(item.name)}
         className={cn(
-          'group relative flex items-center gap-3 rounded-xl transition-all duration-200 ease-premium',
+          'group relative flex items-center gap-3 rounded-xl transition-all duration-300 ease-premium',
           isCollapsed ? 'w-10 h-10 justify-center' : 'w-full h-10 px-3',
           active 
             ? 'bg-primary/10 text-primary shadow-sm' 
@@ -170,28 +170,31 @@ const Sidebar = () => {
           isClicked && 'scale-95'
         )}
       >
-        <div className="relative flex-shrink-0">
+        <div className="relative flex-shrink-0 transition-transform duration-300">
           <Icon className={cn(
-            'w-[18px] h-[18px] transition-all duration-200',
-            active && 'text-primary'
+            'w-[18px] h-[18px] transition-all duration-300',
+            active && 'text-primary',
+            'group-hover:scale-110'
           )} strokeWidth={1.75} />
           
           {item.badge && item.badge > 0 && isCollapsed && (
-            <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-[16px] flex items-center justify-center text-[9px] font-semibold bg-primary text-primary-foreground rounded-full px-1 shadow-sm">
+            <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-[16px] flex items-center justify-center text-[9px] font-semibold bg-primary text-primary-foreground rounded-full px-1 shadow-sm transition-transform duration-300">
               {item.badge > 99 ? '99+' : item.badge}
             </span>
           )}
         </div>
         
-        {!isCollapsed && (
-          <>
-            <span className="text-sm font-medium truncate">{item.name}</span>
-            {item.badge && item.badge > 0 && (
-              <span className="ml-auto min-w-[20px] h-[20px] flex items-center justify-center text-[10px] font-semibold bg-primary text-primary-foreground rounded-full px-1.5">
-                {item.badge > 99 ? '99+' : item.badge}
-              </span>
-            )}
-          </>
+        <span className={cn(
+          "text-sm font-medium truncate transition-all duration-300",
+          isCollapsed ? "w-0 opacity-0" : "w-auto opacity-100"
+        )}>
+          {item.name}
+        </span>
+        
+        {!isCollapsed && item.badge && item.badge > 0 && (
+          <span className="ml-auto min-w-[20px] h-[20px] flex items-center justify-center text-[10px] font-semibold bg-primary text-primary-foreground rounded-full px-1.5 transition-opacity duration-300">
+            {item.badge > 99 ? '99+' : item.badge}
+          </span>
         )}
       </Link>
     );
@@ -352,31 +355,6 @@ const Sidebar = () => {
 
         {/* Secondary Actions */}
         <div className={cn("flex flex-col gap-1 shrink-0", isCollapsed ? "items-center" : "w-full px-3")}>
-          {/* Search */}
-          {isCollapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div
-                  className="group flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                  onClick={() => navigate('/vendas?search=true')}
-                >
-                  <Search className="w-4 h-4" strokeWidth={1.5} />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
-                Buscar vendas
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <div
-              className="group flex items-center gap-3 w-full h-8 px-3 rounded-lg transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              onClick={() => navigate('/vendas?search=true')}
-            >
-              <Search className="w-4 h-4" strokeWidth={1.5} />
-              <span className="text-sm">Buscar</span>
-            </div>
-          )}
-          
           {/* Notifications */}
           <Popover>
             <PopoverTrigger asChild>
@@ -384,8 +362,8 @@ const Sidebar = () => {
                 {isCollapsed ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="group flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50">
-                        <Bell className="w-4 h-4" strokeWidth={1.5} />
+                      <div className="group flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50">
+                        <Bell className="w-4 h-4 transition-transform duration-300" strokeWidth={1.5} />
                         {unreadCount > 0 && (
                           <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-medium bg-primary text-white rounded-full px-0.5">
                             {unreadCount > 99 ? '99+' : unreadCount}

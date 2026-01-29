@@ -190,8 +190,8 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="h-5 w-5" />
             Cadastrar Novo Usuário
@@ -201,175 +201,188 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="nome">Nome</Label>
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="nome" className="text-sm">Nome</Label>
+                <Input
+                  id="nome"
+                  placeholder="João"
+                  value={formData.nome}
+                  onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                  disabled={isLoading}
+                  required
+                  className="h-9"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="sobrenome" className="text-sm">Sobrenome</Label>
+                <Input
+                  id="sobrenome"
+                  placeholder="Silva"
+                  value={formData.sobrenome}
+                  onChange={(e) => setFormData(prev => ({ ...prev, sobrenome: e.target.value }))}
+                  disabled={isLoading}
+                  required
+                  className="h-9"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm">E-mail</Label>
               <Input
-                id="nome"
-                placeholder="João"
-                value={formData.nome}
-                onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                id="email"
+                type="email"
+                placeholder="joao.silva@empresa.com"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 disabled={isLoading}
                 required
+                className="h-9"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="sobrenome">Sobrenome</Label>
-              <Input
-                id="sobrenome"
-                placeholder="Silva"
-                value={formData.sobrenome}
-                onChange={(e) => setFormData(prev => ({ ...prev, sobrenome: e.target.value }))}
-                disabled={isLoading}
-                required
-              />
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-sm">Senha</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto p-0 text-xs text-primary hover:text-primary/80"
+                  onClick={generatePassword}
+                >
+                  Gerar senha
+                </Button>
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Mínimo 6 caracteres"
+                  value={formData.password}
+                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                  disabled={isLoading}
+                  required
+                  className="h-9 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="joao.silva@empresa.com"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              disabled={isLoading}
-              required
-            />
-          </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="role" className="text-sm">Função</Label>
+                <Select 
+                  value={formData.role} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, role: v as AppRole, teamId: null }))}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableRoles.map((role) => (
+                      <SelectItem key={role} value={role}>
+                        {ROLE_LABELS[role]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Senha</Label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-auto p-0 text-xs text-primary hover:text-primary/80"
-                onClick={generatePassword}
-              >
-                Gerar senha
-              </Button>
+              {/* Team selector - required for SUPERVISOR, BACKOFFICE and SELLER */}
+              {requiresTeam && (
+                <div className="space-y-1.5">
+                  <Label htmlFor="team" className="text-sm flex items-center gap-1">
+                    Equipe
+                    <span className="text-destructive">*</span>
+                  </Label>
+                  <Select 
+                    value={formData.teamId || ''} 
+                    onValueChange={(v) => setFormData(prev => ({ ...prev, teamId: v || null }))}
+                    disabled={isLoading}
+                    required
+                  >
+                    <SelectTrigger className={`h-9 ${!formData.teamId ? 'border-destructive/50' : ''}`}>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {teams.map((team) => (
+                        <SelectItem key={team.id} value={team.id}>
+                          {team.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Mínimo 6 caracteres"
-                value={formData.password}
-                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                disabled={isLoading}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="role">Função</Label>
-            <Select 
-              value={formData.role} 
-              onValueChange={(v) => setFormData(prev => ({ ...prev, role: v as AppRole, teamId: null }))}
-              disabled={isLoading}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a função" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableRoles.map((role) => (
-                  <SelectItem key={role} value={role}>
-                    {ROLE_LABELS[role]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Team selector - required for SUPERVISOR, BACKOFFICE and SELLER */}
-          {requiresTeam && (
-            <div className="space-y-2">
-              <Label htmlFor="team" className="flex items-center gap-1">
-                Equipe
-                <span className="text-destructive">*</span>
-              </Label>
-              <Select 
-                value={formData.teamId || ''} 
-                onValueChange={(v) => setFormData(prev => ({ ...prev, teamId: v || null }))}
-                disabled={isLoading}
-                required
-              >
-                <SelectTrigger className={!formData.teamId ? 'border-destructive/50' : ''}>
-                  <SelectValue placeholder="Selecione a equipe (obrigatório)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {teams.map((team) => (
-                    <SelectItem key={team.id} value={team.id}>
-                      {team.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
+            {requiresTeam && (
+              <p className="text-xs text-muted-foreground -mt-2">
                 {formData.role === 'BACKOFFICE' && 'O usuário Qualidade só verá vendas desta equipe'}
                 {formData.role === 'SUPERVISOR' && 'O supervisor gerenciará esta equipe'}
                 {formData.role === 'SELLER' && 'O vendedor pertencerá a esta equipe'}
               </p>
-            </div>
-          )}
+            )}
 
-          <div className="rounded-lg border bg-muted/50 p-3 space-y-1">
-            <p className="text-xs font-medium text-muted-foreground">Permissões da função:</p>
-            <ul className="text-xs text-muted-foreground space-y-0.5">
-              {formData.role === 'CEO' && (
-                <>
-                  <li>• Acesso total ao sistema</li>
-                  <li>• Gerenciar usuários e funções</li>
-                  <li>• Ver e editar todas as vendas</li>
-                </>
-              )}
-              {formData.role === 'BACKOFFICE' && (
-                <>
-                  <li>• Ver todas as vendas da empresa</li>
-                  <li>• Alterar status e dados de vendas (Qualidade)</li>
-                  <li>• Auditar vendas</li>
-                </>
-              )}
-              {formData.role === 'SUPERVISOR' && (
-                <>
-                  <li>• Gerenciar equipe de vendedores</li>
-                  <li>• Ver todas as vendas</li>
-                  <li>• Cadastrar vendedores na própria equipe</li>
-                  <li>• Enviar feedbacks</li>
-                </>
-              )}
-              {formData.role === 'SELLER' && (
-                <>
-                  <li>• Cadastrar novas vendas</li>
-                  <li>• Ver apenas suas próprias vendas</li>
-                  <li>• Acompanhar status das vendas</li>
-                </>
-              )}
-            </ul>
+            <div className="rounded-lg border bg-muted/50 p-2.5 space-y-1">
+              <p className="text-xs font-medium text-muted-foreground">Permissões:</p>
+              <ul className="text-xs text-muted-foreground space-y-0.5">
+                {formData.role === 'CEO' && (
+                  <>
+                    <li>• Acesso total ao sistema</li>
+                    <li>• Gerenciar usuários e funções</li>
+                  </>
+                )}
+                {formData.role === 'COORDENADOR' && (
+                  <>
+                    <li>• Gerenciar equipes atribuídas pelo CEO</li>
+                    <li>• Ver vendas das equipes atribuídas</li>
+                  </>
+                )}
+                {formData.role === 'BACKOFFICE' && (
+                  <>
+                    <li>• Auditar vendas da equipe</li>
+                    <li>• Alterar status de vendas</li>
+                  </>
+                )}
+                {formData.role === 'SUPERVISOR' && (
+                  <>
+                    <li>• Gerenciar equipe de vendedores</li>
+                    <li>• Cadastrar vendedores</li>
+                  </>
+                )}
+                {formData.role === 'SELLER' && (
+                  <>
+                    <li>• Cadastrar novas vendas</li>
+                    <li>• Ver suas próprias vendas</li>
+                  </>
+                )}
+              </ul>
+            </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2 pt-4 flex-shrink-0 border-t mt-4">
             <Button 
               type="button" 
               variant="outline" 
+              size="sm"
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" size="sm" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

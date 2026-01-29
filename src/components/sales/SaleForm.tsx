@@ -130,8 +130,8 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   const [uploadingDocs, setUploadingDocs] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Multiple portability phone numbers state
-  const [portabilityPhones, setPortabilityPhones] = useState<string[]>(['']);
+  // Multiple portability phone numbers state (with operator)
+  const [portabilityPhones, setPortabilityPhones] = useState<{ phone: string; operator: string }[]>([{ phone: '', operator: '' }]);
 
   // Fetch active campaigns
   const { data: activeCampaigns = [] } = useQuery({
@@ -290,17 +290,37 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
     const maskedValue = maskPhone(value);
     setPortabilityPhones(prev => {
       const updated = [...prev];
-      updated[index] = maskedValue;
+      updated[index] = { ...updated[index], phone: maskedValue };
       return updated;
     });
     // Update form field with all phones joined by " | "
     const allPhones = [...portabilityPhones];
-    allPhones[index] = maskedValue;
-    updateForm('telefone_portabilidade', allPhones.filter(p => p.trim()).join(' | '));
+    allPhones[index] = { ...allPhones[index], phone: maskedValue };
+    const formattedPhones = allPhones
+      .filter(p => p.phone.trim())
+      .map(p => p.operator ? `${p.phone} - ${p.operator}` : p.phone)
+      .join(' | ');
+    updateForm('telefone_portabilidade', formattedPhones);
+  };
+
+  const handlePortabilityOperatorChange = (index: number, value: string) => {
+    setPortabilityPhones(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], operator: value };
+      return updated;
+    });
+    // Update form field with all phones joined by " | "
+    const allPhones = [...portabilityPhones];
+    allPhones[index] = { ...allPhones[index], operator: value };
+    const formattedPhones = allPhones
+      .filter(p => p.phone.trim())
+      .map(p => p.operator ? `${p.phone} - ${p.operator}` : p.phone)
+      .join(' | ');
+    updateForm('telefone_portabilidade', formattedPhones);
   };
 
   const addPortabilityPhone = () => {
-    setPortabilityPhones(prev => [...prev, '']);
+    setPortabilityPhones(prev => [...prev, { phone: '', operator: '' }]);
   };
 
   const removePortabilityPhone = (index: number) => {
@@ -308,7 +328,11 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
     setPortabilityPhones(prev => {
       const updated = prev.filter((_, i) => i !== index);
       // Update form field with remaining phones
-      updateForm('telefone_portabilidade', updated.filter(p => p.trim()).join(' | '));
+      const formattedPhones = updated
+        .filter(p => p.phone.trim())
+        .map(p => p.operator ? `${p.phone} - ${p.operator}` : p.phone)
+        .join(' | ');
+      updateForm('telefone_portabilidade', formattedPhones);
       return updated;
     });
   };
@@ -664,24 +688,41 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
               </Button>
             </div>
             <div className="space-y-2">
-              {portabilityPhones.map((phone, index) => (
+              {portabilityPhones.map((item, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-md bg-muted text-muted-foreground text-xs font-medium shrink-0">
+                  <div className="flex items-center justify-center h-9 w-9 rounded-md bg-muted text-muted-foreground text-xs font-medium shrink-0">
                     {index + 1}
                   </div>
                   <Input
-                    placeholder="(00) 00000-0000 - OPERADORA"
-                    value={phone}
+                    placeholder="(00) 00000-0000"
+                    value={item.phone}
                     onChange={(e) => handlePortabilityPhoneChange(index, e.target.value)}
                     className="flex-1"
                   />
+                  <Select
+                    value={item.operator}
+                    onValueChange={(value) => handlePortabilityOperatorChange(index, value)}
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Operadora" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="VIVO">Vivo</SelectItem>
+                      <SelectItem value="CLARO">Claro</SelectItem>
+                      <SelectItem value="TIM">TIM</SelectItem>
+                      <SelectItem value="OI">Oi</SelectItem>
+                      <SelectItem value="NEXTEL">Nextel</SelectItem>
+                      <SelectItem value="ALGAR">Algar</SelectItem>
+                      <SelectItem value="OUTRA">Outra</SelectItem>
+                    </SelectContent>
+                  </Select>
                   {portabilityPhones.length > 1 && (
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
                       onClick={() => removePortabilityPhone(index)}
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive shrink-0"
+                      className="h-9 w-9 text-muted-foreground hover:text-destructive shrink-0"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

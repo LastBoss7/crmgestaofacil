@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -82,6 +83,7 @@ const NEGOTIATION_TYPES = [
 const FALLBACK_COLORS = ['#3b82f6', '#06b6d4', '#a855f7', '#f97316', '#10b981', '#ec4899', '#8b5cf6', '#14b8a6'];
 
 const BandaLargaReport = () => {
+  const { user, profile, role, isSeller } = useAuth();
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
   const [selectedSeller, setSelectedSeller] = useState<string>('all');
   const [sellers, setSellers] = useState<Seller[]>([]);
@@ -92,10 +94,42 @@ const BandaLargaReport = () => {
   const [previousMonthStats, setPreviousMonthStats] = useState<{ total: number; value: number }>({ total: 0, value: 0 });
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [userTeamName, setUserTeamName] = useState<string | null>(null);
 
-  // Fetch sellers list
+  // If seller, force filter to their own ID only
+  useEffect(() => {
+    if (isSeller && user?.id) {
+      setSelectedSeller(user.id);
+    }
+  }, [isSeller, user?.id]);
+
+  // Fetch user's team name for export info
+  useEffect(() => {
+    const fetchTeamName = async () => {
+      if (profile?.team_id) {
+        const { data } = await supabase
+          .from('teams')
+          .select('name')
+          .eq('id', profile.team_id)
+          .maybeSingle();
+        if (data) {
+          setUserTeamName(data.name);
+        }
+      }
+    };
+    fetchTeamName();
+  }, [profile?.team_id]);
+
+  // Fetch sellers list - sellers only see themselves
   useEffect(() => {
     const fetchSellers = async () => {
+      // Sellers should only see themselves
+      if (isSeller && user?.id && profile?.nome) {
+        setSellers([{ id: user.id, nome: profile.nome }]);
+        return;
+      }
+
+      // Other roles can see all sellers from their company via RLS
       const { data } = await supabase
         .from('profiles')
         .select('id, nome')
@@ -107,7 +141,7 @@ const BandaLargaReport = () => {
       }
     };
     fetchSellers();
-  }, []);
+  }, [isSeller, user?.id, profile?.nome]);
 
   const fetchStats = useCallback(async () => {
     setIsLoading(true);
@@ -270,7 +304,11 @@ const BandaLargaReport = () => {
       return;
     }
     const filename = `banda-larga-${format(selectedMonth, 'yyyy-MM')}`;
-    exportBandaLargaToExcel(stats, total, totalValue, periodLabel, sellerName, filename);
+    const exportedBy = {
+      name: profile?.nome || 'Usuário',
+      team: userTeamName || undefined,
+    };
+    exportBandaLargaToExcel(stats, total, totalValue, periodLabel, sellerName, filename, exportedBy);
     toast.success('Relatório exportado em Excel!');
   };
 
@@ -280,7 +318,11 @@ const BandaLargaReport = () => {
       return;
     }
     const filename = `banda-larga-${format(selectedMonth, 'yyyy-MM')}`;
-    exportBandaLargaToPDF(stats, total, totalValue, periodLabel, sellerName, filename);
+    const exportedBy = {
+      name: profile?.nome || 'Usuário',
+      team: userTeamName || undefined,
+    };
+    exportBandaLargaToPDF(stats, total, totalValue, periodLabel, sellerName, filename, exportedBy);
     toast.success('Relatório exportado em PDF!');
   };
 
@@ -319,26 +361,28 @@ const BandaLargaReport = () => {
 
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-2">
-            {/* Seller Filter */}
-            <Select value={selectedSeller} onValueChange={setSelectedSeller}>
-              <SelectTrigger className="w-[180px]">
-                <User className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Vendedor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Todos os vendedores
-                  </div>
-                </SelectItem>
-                {sellers.map((seller) => (
-                  <SelectItem key={seller.id} value={seller.id}>
-                    {seller.nome}
+            {/* Seller Filter - Hidden for sellers */}
+            {!isSeller && (
+              <Select value={selectedSeller} onValueChange={setSelectedSeller}>
+                <SelectTrigger className="w-[180px]">
+                  <User className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Vendedor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Todos os vendedores
+                    </div>
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  {sellers.map((seller) => (
+                    <SelectItem key={seller.id} value={seller.id}>
+                      {seller.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             {/* Month Selector */}
             <Button 

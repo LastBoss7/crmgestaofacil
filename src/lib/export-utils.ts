@@ -271,7 +271,8 @@ export const exportFeedbacksToPDF = (
 export const exportSaleDetailsToPDF = (
   sale: Sale,
   sellerName?: string,
-  filename: string = 'detalhes-venda'
+  filename: string = 'detalhes-venda',
+  teamName?: string
 ) => {
   const doc = new jsPDF('portrait');
   
@@ -358,7 +359,7 @@ export const exportSaleDetailsToPDF = (
     ['CNPJ', sale.cnpj_cliente],
     ['Data da Venda', sale.data_venda ? formatDate(sale.data_venda) : '-'],
     ['Vendedor', sellerName || '-'],
-    ['Equipe', sale.equipe],
+    ['Equipe', teamName || sale.equipe || '-'],
     ['Tipo Negociação', NEGOTIATION_TYPE_LABELS[sale.tipo_negociacao || ''] || sale.tipo_negociacao],
   ]);
   

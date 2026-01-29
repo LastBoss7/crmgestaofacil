@@ -2,26 +2,29 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { 
-  LayoutDashboard, 
-  ShoppingBag, 
-  Users2, 
+  LayoutGrid, 
+  Receipt, 
+  Users, 
   LogOut, 
-  PieChart, 
-  Cog,
-  Plus,
-  UserCircle,
+  BarChart2, 
+  Settings,
+  PlusCircle,
+  User,
   Bell,
   Search,
-  MessageSquare,
-  BarChart3,
-  Activity,
-  Clock,
+  MessageCircle,
+  TrendingUp,
+  Gauge,
+  Timer,
   ShieldCheck,
-  MessageSquareText,
-  Wifi,
-  Target,
-  PhoneCall,
-  Trophy
+  MessageSquareMore,
+  Radio,
+  Megaphone,
+  Phone,
+  Award,
+  ChevronLeft,
+  ChevronRight,
+  UsersRound
 } from 'lucide-react';
 import { ROLE_LABELS } from '@/types/database';
 import { useState, useEffect } from 'react';
@@ -36,6 +39,7 @@ import { useUnreadFeedbacks } from '@/hooks/useUnreadFeedbacks';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 import logo from '@/assets/logo.png';
 
 interface SalesStats {
@@ -52,6 +56,7 @@ interface SalesStats {
 const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isCollapsed, toggle } = useSidebarCollapse();
   const [salesStats, setSalesStats] = useState<SalesStats>({
     total: 0,
     preAnalise: 0,
@@ -75,7 +80,7 @@ const Sidebar = () => {
   } = useAuth();
   
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
-  const { isOnline, onlineCount, sessionDuration } = usePresence();
+  const { isOnline } = usePresence();
   const { isSuperAdmin } = useSuperAdmin();
   const { unreadCount: unreadFeedbacksCount } = useUnreadFeedbacks();
 
@@ -116,26 +121,25 @@ const Sidebar = () => {
   }, [user]);
 
   const mainNavigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Vendas', href: '/vendas', icon: ShoppingBag, badge: salesStats.total > 0 ? salesStats.total : undefined },
-    { name: 'Campanhas', href: '/campanhas', icon: Target },
-    { name: 'Rankings', href: '/rankings', icon: Trophy },
-    { name: 'Retornos', href: '/retornos', icon: PhoneCall },
-    { name: 'Relatórios', href: '/relatorios', icon: PieChart },
-    { name: 'Banda Larga', href: '/relatorios/banda-larga', icon: Wifi },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
+    { name: 'Vendas', href: '/vendas', icon: Receipt, badge: salesStats.total > 0 ? salesStats.total : undefined },
+    { name: 'Campanhas', href: '/campanhas', icon: Megaphone },
+    { name: 'Rankings', href: '/rankings', icon: Award },
+    { name: 'Retornos', href: '/retornos', icon: Phone },
+    { name: 'Relatórios', href: '/relatorios', icon: BarChart2 },
+    { name: 'Banda Larga', href: '/relatorios/banda-larga', icon: Radio },
   ];
 
   const managementNavigation = [
-    ...(canManageUsers ? [{ name: 'Usuários', href: '/usuarios', icon: Users2 }] : []),
-    ...(isCEO || isSupervisor ? [{ name: 'Equipes', href: '/equipes', icon: Users2 }] : []),
-    ...(isCEO || isSupervisor ? [{ name: 'Relatório Equipes', href: '/relatorio-equipes', icon: BarChart3 }] : []),
-    ...(isSupervisor ? [{ name: 'Minha Equipe', href: '/minha-equipe', icon: BarChart3 }] : []),
-    ...(isCEO || isSupervisor || isBackoffice ? [{ name: 'Monitoramento', href: '/monitoramento', icon: Activity }] : []),
-    ...(isCEO || isSupervisor ? [{ name: 'Pausas', href: '/pausas', icon: Clock }] : []),
-    { name: 'Feedbacks', href: '/feedbacks', icon: MessageSquareText, badge: unreadFeedbacksCount > 0 ? unreadFeedbacksCount : undefined },
-    ...(isCEO ? [{ name: 'Monitor Chats', href: '/monitor-chats', icon: MessageSquare }] : []),
-    
-    ...(isCEO ? [{ name: 'Configurações', href: '/configuracoes', icon: Cog }] : []),
+    ...(canManageUsers ? [{ name: 'Usuários', href: '/usuarios', icon: Users }] : []),
+    ...(isCEO || isSupervisor ? [{ name: 'Equipes', href: '/equipes', icon: UsersRound }] : []),
+    ...(isCEO || isSupervisor ? [{ name: 'Relatório Equipes', href: '/relatorio-equipes', icon: TrendingUp }] : []),
+    ...(isSupervisor ? [{ name: 'Minha Equipe', href: '/minha-equipe', icon: TrendingUp }] : []),
+    ...(isCEO || isSupervisor || isBackoffice ? [{ name: 'Monitoramento', href: '/monitoramento', icon: Gauge }] : []),
+    ...(isCEO || isSupervisor ? [{ name: 'Pausas', href: '/pausas', icon: Timer }] : []),
+    { name: 'Feedbacks', href: '/feedbacks', icon: MessageSquareMore, badge: unreadFeedbacksCount > 0 ? unreadFeedbacksCount : undefined },
+    ...(isCEO ? [{ name: 'Monitor Chats', href: '/monitor-chats', icon: MessageCircle }] : []),
+    ...(isCEO ? [{ name: 'Configurações', href: '/configuracoes', icon: Settings }] : []),
     ...(isSuperAdmin ? [{ name: 'Admin', href: '/admin', icon: ShieldCheck }] : []),
   ];
 
@@ -146,7 +150,7 @@ const Sidebar = () => {
     setTimeout(() => setClickedItem(null), 200);
   };
 
-  type NavItemType = { name: string; href: string; icon: typeof LayoutDashboard; badge?: number };
+  type NavItemType = { name: string; href: string; icon: typeof LayoutGrid; badge?: number };
   
   const NavItem = ({ item }: { item: NavItemType }) => {
     const Icon = item.icon;
@@ -158,25 +162,37 @@ const Sidebar = () => {
         to={item.href}
         onClick={() => handleClick(item.name)}
         className={cn(
-          'group relative flex flex-col items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ease-premium',
+          'group relative flex items-center gap-3 rounded-xl transition-all duration-200 ease-premium',
+          isCollapsed ? 'w-10 h-10 justify-center' : 'w-full h-10 px-3',
           active 
             ? 'bg-primary/10 text-primary shadow-sm' 
             : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60',
           isClicked && 'scale-95'
         )}
       >
-        <div className="relative">
+        <div className="relative flex-shrink-0">
           <Icon className={cn(
             'w-[18px] h-[18px] transition-all duration-200',
             active && 'text-primary'
           )} strokeWidth={1.75} />
           
-          {item.badge && item.badge > 0 && (
+          {item.badge && item.badge > 0 && isCollapsed && (
             <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-[16px] flex items-center justify-center text-[9px] font-semibold bg-primary text-primary-foreground rounded-full px-1 shadow-sm">
               {item.badge > 99 ? '99+' : item.badge}
             </span>
           )}
         </div>
+        
+        {!isCollapsed && (
+          <>
+            <span className="text-sm font-medium truncate">{item.name}</span>
+            {item.badge && item.badge > 0 && (
+              <span className="ml-auto min-w-[20px] h-[20px] flex items-center justify-center text-[10px] font-semibold bg-primary text-primary-foreground rounded-full px-1.5">
+                {item.badge > 99 ? '99+' : item.badge}
+              </span>
+            )}
+          </>
+        )}
       </Link>
     );
   };
@@ -189,7 +205,7 @@ const Sidebar = () => {
     active,
     variant = 'default'
   }: { 
-    icon: typeof LayoutDashboard; 
+    icon: typeof LayoutGrid; 
     label: string; 
     onClick?: () => void;
     href?: string;
@@ -199,7 +215,8 @@ const Sidebar = () => {
     const content = (
       <div
         className={cn(
-          'group flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200 ease-premium cursor-pointer',
+          'group flex items-center justify-center rounded-xl transition-all duration-200 ease-premium cursor-pointer',
+          isCollapsed ? 'w-9 h-9' : 'w-full h-9 px-3 gap-3',
           variant === 'danger' && 'hover:bg-destructive/10 hover:text-destructive',
           variant === 'primary' && 'bg-primary text-primary-foreground shadow-premium hover:shadow-premium-lg hover:bg-primary/90',
           variant === 'default' && (active 
@@ -208,70 +225,124 @@ const Sidebar = () => {
         )}
         onClick={onClick}
       >
-        <Icon className="w-[18px] h-[18px]" strokeWidth={1.75} />
+        <Icon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.75} />
+        {!isCollapsed && variant !== 'primary' && (
+          <span className="text-sm font-medium truncate">{label}</span>
+        )}
       </div>
     );
 
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          {href ? <Link to={href}>{content}</Link> : content}
-        </TooltipTrigger>
-        <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
-          {label}
-        </TooltipContent>
-      </Tooltip>
-    );
+    if (isCollapsed) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {href ? <Link to={href}>{content}</Link> : content}
+          </TooltipTrigger>
+          <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
+            {label}
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return href ? <Link to={href}>{content}</Link> : content;
+  };
+
+  const renderNavItem = (item: NavItemType) => {
+    if (isCollapsed) {
+      return (
+        <Tooltip key={item.name}>
+          <TooltipTrigger asChild>
+            <div><NavItem item={item} /></div>
+          </TooltipTrigger>
+          <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
+            {item.name}
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+    return <NavItem key={item.name} item={item} />;
   };
 
   return (
     <TooltipProvider delayDuration={0} skipDelayDuration={0}>
-      <aside className="flex flex-col items-center w-16 min-h-screen py-3 bg-sidebar backdrop-blur-xl border-r border-sidebar-border shadow-premium-sm overflow-y-auto z-50">
-        {/* Logo */}
-        <Link to="/dashboard" className="mb-2 shrink-0">
-          <img 
-            src={logo} 
-            alt="Logo" 
-            className="w-7 h-7 object-contain opacity-90 hover:opacity-100 transition-opacity"
-          />
-        </Link>
+      <aside 
+        className={cn(
+          "flex flex-col items-center min-h-screen py-3 bg-sidebar backdrop-blur-xl border-r border-sidebar-border shadow-premium-sm overflow-y-auto z-50 transition-all duration-300 ease-premium",
+          isCollapsed ? "w-16" : "w-52"
+        )}
+      >
+        {/* Header with Logo and Toggle */}
+        <div className={cn(
+          "flex items-center mb-2 shrink-0 w-full",
+          isCollapsed ? "justify-center px-0" : "justify-between px-3"
+        )}>
+          <Link to="/dashboard" className="flex items-center gap-2">
+            <img 
+              src={logo} 
+              alt="Logo" 
+              className="w-7 h-7 object-contain opacity-90 hover:opacity-100 transition-opacity"
+            />
+            {!isCollapsed && (
+              <span className="text-sm font-semibold text-foreground">CRM</span>
+            )}
+          </Link>
+          
+          {!isCollapsed && (
+            <button
+              onClick={toggle}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Expand button when collapsed */}
+        {isCollapsed && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={toggle}
+                className="w-9 h-9 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all mb-2"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
+              Expandir menu
+            </TooltipContent>
+          </Tooltip>
+        )}
 
         {/* New Sale Button */}
-        <div className="mb-2 shrink-0">
-          <IconButton icon={Plus} label="Nova Venda" href="/vendas" variant="primary" />
+        <div className={cn("mb-2 shrink-0", isCollapsed ? "" : "w-full px-3")}>
+          {isCollapsed ? (
+            <IconButton icon={PlusCircle} label="Nova Venda" href="/vendas" variant="primary" />
+          ) : (
+            <Link
+              to="/vendas"
+              className="flex items-center justify-center gap-2 w-full h-9 rounded-xl bg-primary text-primary-foreground shadow-premium hover:shadow-premium-lg hover:bg-primary/90 transition-all"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">Nova Venda</span>
+            </Link>
+          )}
         </div>
 
         {/* Divider */}
-        <div className="w-6 h-px bg-border/50 mb-2 shrink-0" />
+        <div className={cn("h-px bg-border/50 mb-2 shrink-0", isCollapsed ? "w-6" : "w-[calc(100%-24px)]")} />
 
         {/* Main Navigation */}
-        <nav className="flex flex-col items-center gap-1 shrink-0">
-          {mainNavigation.map((item) => (
-            <Tooltip key={item.name}>
-              <TooltipTrigger asChild>
-                <div><NavItem item={item} /></div>
-              </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
-                {item.name}
-              </TooltipContent>
-            </Tooltip>
-          ))}
+        <nav className={cn("flex flex-col gap-1 shrink-0", isCollapsed ? "items-center" : "w-full px-3")}>
+          {mainNavigation.map(renderNavItem)}
         </nav>
         
         {managementNavigation.length > 0 && (
           <>
-            <div className="w-6 h-px bg-border/50 my-2 shrink-0" />
-            <nav className="flex flex-col items-center gap-1 shrink-0">
-              {managementNavigation.map((item) => (
-                <Tooltip key={item.name}>
-                  <TooltipTrigger asChild>
-                    <div><NavItem item={item} /></div>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
-                    {item.name}
-                  </TooltipContent>
-                </Tooltip>
-              ))}
+            <div className={cn("h-px bg-border/50 my-2 shrink-0", isCollapsed ? "w-6" : "w-[calc(100%-24px)]")} />
+            <nav className={cn("flex flex-col gap-1 shrink-0", isCollapsed ? "items-center" : "w-full px-3")}>
+              {managementNavigation.map(renderNavItem)}
             </nav>
           </>
         )}
@@ -280,41 +351,63 @@ const Sidebar = () => {
         <div className="flex-1 min-h-4" />
 
         {/* Secondary Actions */}
-        <div className="flex flex-col items-center gap-1 shrink-0">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                className="group flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                onClick={() => navigate('/vendas?search=true')}
-              >
-                <Search className="w-4 h-4" strokeWidth={1.5} />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
-              Buscar vendas
-            </TooltipContent>
-          </Tooltip>
+        <div className={cn("flex flex-col gap-1 shrink-0", isCollapsed ? "items-center" : "w-full px-3")}>
+          {/* Search */}
+          {isCollapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className="group flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  onClick={() => navigate('/vendas?search=true')}
+                >
+                  <Search className="w-4 h-4" strokeWidth={1.5} />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
+                Buscar vendas
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <div
+              className="group flex items-center gap-3 w-full h-8 px-3 rounded-lg transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              onClick={() => navigate('/vendas?search=true')}
+            >
+              <Search className="w-4 h-4" strokeWidth={1.5} />
+              <span className="text-sm">Buscar</span>
+            </div>
+          )}
           
+          {/* Notifications */}
           <Popover>
             <PopoverTrigger asChild>
               <div className="relative">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div
-                      className="group flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    >
-                      <Bell className="w-4 h-4" strokeWidth={1.5} />
-                      {unreadCount > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-medium bg-primary text-white rounded-full px-0.5">
-                          {unreadCount > 99 ? '99+' : unreadCount}
-                        </span>
-                      )}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
-                    Notificações {unreadCount > 0 && `(${unreadCount})`}
-                  </TooltipContent>
-                </Tooltip>
+                {isCollapsed ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="group flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50">
+                        <Bell className="w-4 h-4" strokeWidth={1.5} />
+                        {unreadCount > 0 && (
+                          <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-[14px] flex items-center justify-center text-[8px] font-medium bg-primary text-white rounded-full px-0.5">
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </span>
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" sideOffset={12} className="text-xs font-medium z-[100] bg-popover border shadow-lg">
+                      Notificações {unreadCount > 0 && `(${unreadCount})`}
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <div className="group flex items-center gap-3 w-full h-8 px-3 rounded-lg transition-all duration-200 cursor-pointer text-muted-foreground hover:text-foreground hover:bg-muted/50">
+                    <Bell className="w-4 h-4" strokeWidth={1.5} />
+                    <span className="text-sm">Notificações</span>
+                    {unreadCount > 0 && (
+                      <span className="ml-auto min-w-[18px] h-[18px] flex items-center justify-center text-[9px] font-medium bg-primary text-white rounded-full px-1">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </PopoverTrigger>
             <PopoverContent side="right" sideOffset={12} className="w-80 p-0">
@@ -360,12 +453,12 @@ const Sidebar = () => {
         </div>
 
         {/* Divider */}
-        <div className="w-6 h-px bg-border/50 my-2 shrink-0" />
+        <div className={cn("h-px bg-border/50 my-2 shrink-0", isCollapsed ? "w-6" : "w-[calc(100%-24px)]")} />
 
         {/* Profile */}
-        <div className="shrink-0">
+        <div className={cn("shrink-0", isCollapsed ? "" : "w-full px-3")}>
           <IconButton 
-            icon={UserCircle} 
+            icon={User} 
             label="Meu Perfil" 
             href="/perfil" 
             active={isActive('/perfil')}
@@ -374,37 +467,62 @@ const Sidebar = () => {
 
         {/* User Avatar */}
         <OnlineUsersDrawer>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="relative cursor-pointer mt-1 shrink-0">
-                <Avatar className="w-7 h-7 ring-1 ring-border/50 hover:ring-primary/30 transition-all">
-                  <AvatarImage src={profile?.avatar_url || ''} alt={profile?.nome || 'Usuário'} />
-                  <AvatarFallback className="bg-muted text-muted-foreground text-[9px] font-medium">
-                    {profile?.nome?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <span 
-                  className={cn(
-                    "absolute -bottom-0.5 -right-0.5 w-2 h-2 border border-card rounded-full",
-                    isOnline ? "bg-emerald-500" : "bg-muted-foreground"
-                  )} 
-                />
+          {isCollapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="relative cursor-pointer mt-1 shrink-0">
+                  <Avatar className="w-7 h-7 ring-1 ring-border/50 hover:ring-primary/30 transition-all">
+                    <AvatarImage src={profile?.avatar_url || ''} alt={profile?.nome || 'Usuário'} />
+                    <AvatarFallback className="bg-muted text-muted-foreground text-[9px] font-medium">
+                      {profile?.nome?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span 
+                    className={cn(
+                      "absolute -bottom-0.5 -right-0.5 w-2 h-2 border border-card rounded-full",
+                      isOnline ? "bg-emerald-500" : "bg-muted-foreground"
+                    )} 
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={12} className="text-xs z-[100] bg-popover border shadow-lg">
+                <div className="flex flex-col gap-0.5">
+                  <span className="font-medium">{profile?.nome || 'Usuário'}</span>
+                  <span className="text-muted-foreground">{role ? ROLE_LABELS[role] : ''}</span>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <div className="relative cursor-pointer mt-1 shrink-0 w-full px-3">
+              <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-secondary/60 transition-all">
+                <div className="relative">
+                  <Avatar className="w-8 h-8 ring-1 ring-border/50">
+                    <AvatarImage src={profile?.avatar_url || ''} alt={profile?.nome || 'Usuário'} />
+                    <AvatarFallback className="bg-muted text-muted-foreground text-[10px] font-medium">
+                      {profile?.nome?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span 
+                    className={cn(
+                      "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 border-2 border-sidebar rounded-full",
+                      isOnline ? "bg-emerald-500" : "bg-muted-foreground"
+                    )} 
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{profile?.nome || 'Usuário'}</p>
+                  <p className="text-xs text-muted-foreground truncate">{role ? ROLE_LABELS[role] : ''}</p>
+                </div>
               </div>
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={12} className="text-xs z-[100] bg-popover border shadow-lg">
-              <div className="flex flex-col gap-0.5">
-                <span className="font-medium">{profile?.nome || 'Usuário'}</span>
-                <span className="text-muted-foreground">{role ? ROLE_LABELS[role] : ''}</span>
-              </div>
-            </TooltipContent>
-          </Tooltip>
+            </div>
+          )}
         </OnlineUsersDrawer>
 
         {/* Divider */}
-        <div className="w-6 h-px bg-border/50 my-2 shrink-0" />
+        <div className={cn("h-px bg-border/50 my-2 shrink-0", isCollapsed ? "w-6" : "w-[calc(100%-24px)]")} />
 
         {/* Logout */}
-        <div className="shrink-0">
+        <div className={cn("shrink-0", isCollapsed ? "" : "w-full px-3")}>
           <IconButton icon={LogOut} label="Sair" onClick={signOut} variant="danger" />
         </div>
       </aside>

@@ -399,14 +399,14 @@ const Sidebar = () => {
                   )}
                 </div>
               </div>
-              <ScrollArea className="max-h-[300px]">
+              <ScrollArea className="h-[350px]">
                 {notifications.length === 0 ? (
                   <div className="p-6 text-center text-sm text-muted-foreground">
                     Nenhuma notificação
                   </div>
                 ) : (
                   <div className="p-2 space-y-1">
-                    {notifications.slice(0, 10).map((notification) => (
+                    {notifications.map((notification) => (
                       <div
                         key={notification.id}
                         className={cn(

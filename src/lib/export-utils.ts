@@ -32,12 +32,27 @@ const formatDateTime = (date: string) => {
   }).format(new Date(date));
 };
 
+export interface ExportedByInfo {
+  name: string;
+  team?: string;
+}
+
 export const exportToExcel = (
   sales: ExportSale[],
   sellers: Record<string, Profile>,
-  filename: string = 'relatorio-vendas'
+  filename: string = 'relatorio-vendas',
+  exportedBy?: ExportedByInfo
 ) => {
-  const data = sales.map((sale) => ({
+  // Summary data with exporter info
+  const summaryData = [
+    { 'Métrica': 'Exportado por', 'Valor': exportedBy?.name || '-' },
+    { 'Métrica': 'Equipe do Exportador', 'Valor': exportedBy?.team || '-' },
+    { 'Métrica': 'Data de Exportação', 'Valor': formatDateTime(new Date().toISOString()) },
+    { 'Métrica': 'Total de Vendas', 'Valor': sales.length },
+    { 'Métrica': 'Valor Total', 'Valor': formatCurrency(sales.reduce((acc, s) => acc + Number(s.valor_mensal), 0)) },
+  ];
+
+  const salesData = sales.map((sale) => ({
     'Data': formatDate(sale.created_at),
     'CNPJ': sale.cnpj_cliente,
     'Razão Social': sale.razao_social,
@@ -51,9 +66,15 @@ export const exportToExcel = (
     'Motivo Pendência': sale.motivo_pendencia || '-',
   }));
 
-  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
   
-  // Set column widths
+  // Summary sheet
+  const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+  wsSummary['!cols'] = [{ wch: 25 }, { wch: 35 }];
+  XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumo');
+  
+  // Sales sheet
+  const ws = XLSX.utils.json_to_sheet(salesData);
   ws['!cols'] = [
     { wch: 12 }, // Data
     { wch: 18 }, // CNPJ
@@ -67,8 +88,6 @@ export const exportToExcel = (
     { wch: 20 }, // Vendedor
     { wch: 30 }, // Motivo Pendência
   ];
-
-  const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Vendas');
   
   XLSX.writeFile(wb, `${filename}.xlsx`);
@@ -78,7 +97,8 @@ export const exportToPDF = (
   sales: ExportSale[],
   sellers: Record<string, Profile>,
   periodLabel: string,
-  filename: string = 'relatorio-vendas'
+  filename: string = 'relatorio-vendas',
+  exportedBy?: ExportedByInfo
 ) => {
   const doc = new jsPDF('landscape');
   
@@ -86,11 +106,13 @@ export const exportToPDF = (
   doc.setFontSize(18);
   doc.text('Relatório de Vendas', 14, 20);
   
-  // Period info
+  // Period and exporter info
   doc.setFontSize(11);
   doc.setTextColor(100);
   doc.text(`Período: ${periodLabel}`, 14, 28);
-  doc.text(`Gerado em: ${formatDate(new Date().toISOString())}`, 14, 34);
+  doc.text(`Gerado em: ${formatDateTime(new Date().toISOString())}`, 14, 34);
+  doc.setFontSize(9);
+  doc.text(`Exportado por: ${exportedBy?.name || '-'}${exportedBy?.team ? ` | Equipe: ${exportedBy.team}` : ''}`, 14, 40);
   
   // Summary
   const totalVendas = sales.length;
@@ -99,9 +121,9 @@ export const exportToPDF = (
   
   doc.setTextColor(0);
   doc.setFontSize(10);
-  doc.text(`Total de Vendas: ${totalVendas}`, 14, 42);
-  doc.text(`Valor Total Mensal: ${formatCurrency(valorTotal)}`, 80, 42);
-  doc.text(`Aprovadas: ${aprovadas}`, 180, 42);
+  doc.text(`Total de Vendas: ${totalVendas}`, 14, 48);
+  doc.text(`Valor Total Mensal: ${formatCurrency(valorTotal)}`, 80, 48);
+  doc.text(`Aprovadas: ${aprovadas}`, 180, 48);
   
   // Table
   const tableData = sales.map((sale) => [
@@ -117,7 +139,7 @@ export const exportToPDF = (
   ]);
 
   autoTable(doc, {
-    startY: 48,
+    startY: 54,
     head: [['Data', 'CNPJ', 'Cliente', 'Produtos', 'Valor', 'Status', 'Vendedor']],
     body: tableData,
     styles: { fontSize: 8, cellPadding: 2 },
@@ -272,7 +294,8 @@ export const exportSaleDetailsToPDF = (
   sale: Sale,
   sellerName?: string,
   filename: string = 'detalhes-venda',
-  teamName?: string
+  teamName?: string,
+  exportedBy?: ExportedByInfo
 ) => {
   const doc = new jsPDF('portrait');
   
@@ -296,11 +319,13 @@ export const exportSaleDetailsToPDF = (
   doc.text('Detalhes da Venda', leftMargin, yPos);
   yPos += 10;
   
-  // Date info
+  // Date and exporter info
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100);
   doc.text(`Gerado em: ${formatDateTime(new Date().toISOString())}`, leftMargin, yPos);
+  yPos += 5;
+  doc.text(`Exportado por: ${exportedBy?.name || '-'}${exportedBy?.team ? ` | Equipe: ${exportedBy.team}` : ''}`, leftMargin, yPos);
   yPos += 8;
   
   // Status badge
@@ -454,7 +479,8 @@ export const exportBandaLargaToExcel = (
   totalValue: number,
   periodLabel: string,
   sellerName?: string,
-  filename: string = 'relatorio-banda-larga'
+  filename: string = 'relatorio-banda-larga',
+  exportedBy?: ExportedByInfo
 ) => {
   // Summary sheet data
   const summaryData = [
@@ -462,7 +488,11 @@ export const exportBandaLargaToExcel = (
     { 'Métrica': 'Valor Total', 'Valor': formatCurrency(totalValue) },
     { 'Métrica': 'Ticket Médio', 'Valor': formatCurrency(total > 0 ? totalValue / total : 0) },
     { 'Métrica': 'Período', 'Valor': periodLabel },
-    { 'Métrica': 'Vendedor', 'Valor': sellerName || 'Todos os vendedores' },
+    { 'Métrica': 'Vendedor Filtrado', 'Valor': sellerName || 'Todos os vendedores' },
+    { 'Métrica': '', 'Valor': '' },
+    { 'Métrica': 'Exportado por', 'Valor': exportedBy?.name || '-' },
+    { 'Métrica': 'Equipe do Exportador', 'Valor': exportedBy?.team || '-' },
+    { 'Métrica': 'Data de Exportação', 'Valor': formatDateTime(new Date().toISOString()) },
   ];
 
   // Detail sheet data
@@ -478,7 +508,7 @@ export const exportBandaLargaToExcel = (
   
   // Summary sheet
   const wsSummary = XLSX.utils.json_to_sheet(summaryData);
-  wsSummary['!cols'] = [{ wch: 20 }, { wch: 30 }];
+  wsSummary['!cols'] = [{ wch: 25 }, { wch: 35 }];
   XLSX.utils.book_append_sheet(wb, wsSummary, 'Resumo');
   
   // Detail sheet
@@ -501,7 +531,8 @@ export const exportBandaLargaToPDF = (
   totalValue: number,
   periodLabel: string,
   sellerName?: string,
-  filename: string = 'relatorio-banda-larga'
+  filename: string = 'relatorio-banda-larga',
+  exportedBy?: ExportedByInfo
 ) => {
   const doc = new jsPDF('portrait');
   
@@ -510,29 +541,33 @@ export const exportBandaLargaToPDF = (
   doc.setFont('helvetica', 'bold');
   doc.text('Relatório de Banda Larga', 14, 20);
   
-  // Period info
+  // Period and filter info
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(100);
   doc.text(`Período: ${periodLabel}`, 14, 28);
-  doc.text(`Vendedor: ${sellerName || 'Todos os vendedores'}`, 14, 34);
-  doc.text(`Gerado em: ${formatDate(new Date().toISOString())}`, 14, 40);
+  doc.text(`Vendedor Filtrado: ${sellerName || 'Todos os vendedores'}`, 14, 34);
+  doc.text(`Gerado em: ${formatDateTime(new Date().toISOString())}`, 14, 40);
+  
+  // Exporter info
+  doc.setFontSize(9);
+  doc.text(`Exportado por: ${exportedBy?.name || '-'}${exportedBy?.team ? ` | Equipe: ${exportedBy.team}` : ''}`, 14, 46);
   
   // Summary box
   doc.setTextColor(0);
   doc.setFillColor(245, 245, 245);
-  doc.roundedRect(14, 46, 180, 30, 3, 3, 'F');
+  doc.roundedRect(14, 52, 180, 30, 3, 3, 'F');
   
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
-  doc.text('Total de Vendas:', 20, 56);
-  doc.text('Valor Total:', 80, 56);
-  doc.text('Ticket Médio:', 140, 56);
+  doc.text('Total de Vendas:', 20, 62);
+  doc.text('Valor Total:', 80, 62);
+  doc.text('Ticket Médio:', 140, 62);
   
   doc.setFont('helvetica', 'normal');
-  doc.text(String(total), 20, 66);
-  doc.text(formatCurrency(totalValue), 80, 66);
-  doc.text(formatCurrency(total > 0 ? totalValue / total : 0), 140, 66);
+  doc.text(String(total), 20, 72);
+  doc.text(formatCurrency(totalValue), 80, 72);
+  doc.text(formatCurrency(total > 0 ? totalValue / total : 0), 140, 72);
   
   // Table
   const tableData = stats.map((stat) => [
@@ -544,7 +579,7 @@ export const exportBandaLargaToPDF = (
   ]);
 
   autoTable(doc, {
-    startY: 84,
+    startY: 90,
     head: [['Tipo', 'Qtd', 'Valor Total', '% do Total', 'Ticket Médio']],
     body: tableData,
     foot: [[

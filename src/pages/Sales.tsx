@@ -59,6 +59,7 @@ const Sales = () => {
   const [sales, setSales] = useState<SaleWithSeller[]>([]);
   const [sellers, setSellers] = useState<Record<string, Profile>>({});
   const [teams, setTeams] = useState<Record<string, string>>({});
+  const [userTeamName, setUserTeamName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<SaleStatus[]>([]);
@@ -72,6 +73,23 @@ const Sales = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+
+  // Fetch user's team name for export info
+  useEffect(() => {
+    const fetchUserTeamName = async () => {
+      if (profile?.team_id) {
+        const { data } = await supabase
+          .from('teams')
+          .select('name')
+          .eq('id', profile.team_id)
+          .maybeSingle();
+        if (data) {
+          setUserTeamName(data.name);
+        }
+      }
+    };
+    fetchUserTeamName();
+  }, [profile?.team_id]);
 
   const handleDocumentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -266,7 +284,11 @@ const Sales = () => {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onClick={() => {
-                    exportToExcel(filteredSales, sellers, `vendas-${new Date().toISOString().split('T')[0]}`);
+                    const exportedBy = {
+                      name: profile?.nome || 'Usuário',
+                      team: userTeamName || undefined,
+                    };
+                    exportToExcel(filteredSales, sellers, `vendas-${new Date().toISOString().split('T')[0]}`, exportedBy);
                     toast.success('Arquivo Excel exportado!');
                   }}
                   className="gap-2"
@@ -276,7 +298,11 @@ const Sales = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
-                    exportToPDF(filteredSales, sellers, getPeriodLabel('all'), `vendas-${new Date().toISOString().split('T')[0]}`);
+                    const exportedBy = {
+                      name: profile?.nome || 'Usuário',
+                      team: userTeamName || undefined,
+                    };
+                    exportToPDF(filteredSales, sellers, getPeriodLabel('all'), `vendas-${new Date().toISOString().split('T')[0]}`, exportedBy);
                     toast.success('Arquivo PDF exportado!');
                   }}
                   className="gap-2"
@@ -577,11 +603,16 @@ const Sales = () => {
                       const teamName = selectedSale.equipe 
                         ? (teams[selectedSale.equipe] || selectedSale.equipe) 
                         : undefined;
+                      const exportedBy = {
+                        name: profile?.nome || 'Usuário',
+                        team: userTeamName || undefined,
+                      };
                       exportSaleDetailsToPDF(
                         selectedSale, 
                         sellerName,
                         `venda-${selectedSale.cnpj_cliente.replace(/\D/g, '')}-${new Date().toISOString().split('T')[0]}`,
-                        teamName
+                        teamName,
+                        exportedBy
                       );
                       toast.success('PDF gerado com sucesso!');
                     }}

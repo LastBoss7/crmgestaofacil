@@ -293,7 +293,7 @@ export default function Campaigns() {
                   Nova Campanha
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Criar Nova Campanha</DialogTitle>
                 </DialogHeader>
@@ -302,7 +302,7 @@ export default function Campaigns() {
                     e.preventDefault();
                     createCampaignMutation.mutate(formData);
                   }}
-                  className="space-y-4"
+                  className="space-y-4 pb-2"
                 >
                   <div className="space-y-2">
                     <Label htmlFor="name">Nome da Campanha</Label>

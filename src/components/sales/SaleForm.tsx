@@ -441,6 +441,11 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
     setLoading(true);
 
     try {
+      // Combine plano_contratado with produtos - plano comes first
+      const produtosFinal = [form.plano_contratado, form.produtos]
+        .filter(Boolean)
+        .join(' | ') || null;
+
       const { data: saleData, error } = await supabase.from('sales').insert({
         seller_id: userId,
         company_id: profile?.company_id || null,
@@ -479,7 +484,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         vivo_total_valor: parseFloat(form.vivo_total_valor) || 0,
         movel_valor: parseFloat(form.movel_valor) || 0,
         valor_mensal: parseFloat(form.valor_mensal) || parseFloat(totalPlano) || 0,
-        produtos: form.produtos || null,
+        produtos: produtosFinal,
         observacoes_vendedor: form.observacoes_vendedor || null,
         status: 'PRE_ANALISE',
         campaign_id: form.campaign_id || null,

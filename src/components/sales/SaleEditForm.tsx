@@ -337,8 +337,15 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
       Object.keys(form).forEach((key) => {
         const formKey = key as keyof FormData;
         const saleKey = key as keyof Sale;
-        const formValue = form[formKey];
+        let formValue = form[formKey];
         const saleValue = sale[saleKey];
+        
+        // For produtos field, combine with plano_contratado
+        if (key === 'produtos') {
+          formValue = [form.plano_contratado, form.produtos]
+            .filter(Boolean)
+            .join(' | ') || '';
+        }
         
         // Convert both to strings for comparison
         const formStr = formValue?.toString() || '';
@@ -347,9 +354,12 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
         if (formStr !== saleStr) {
           // Handle numeric fields
           if (['bl_valor', 'vivo_total_valor', 'movel_valor', 'valor_mensal'].includes(key)) {
-            updates[key] = parseFloat(formValue) || 0;
-          } else {
+            updates[key] = parseFloat(form[formKey]) || 0;
+          } else if (key === 'produtos') {
+            // Use the combined value for produtos
             updates[key] = formValue || null;
+          } else {
+            updates[key] = form[formKey] || null;
           }
           
           changedFields.push({

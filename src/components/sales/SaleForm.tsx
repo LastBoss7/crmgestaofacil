@@ -548,6 +548,16 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
       {/* Informações Básicas */}
       <div>
         <SectionHeader icon={Calendar} title="Informações da Venda" />
+        
+        {/* Team info badge */}
+        {teamData?.name && (
+          <div className="mb-4 flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+            <Users className="h-4 w-4 text-primary" />
+            <span className="text-sm text-muted-foreground">Equipe:</span>
+            <span className="text-sm font-medium text-primary">{teamData.name}</span>
+          </div>
+        )}
+        
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="data_venda">Data da Venda *</Label>

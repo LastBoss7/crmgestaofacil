@@ -5,7 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
-import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X, Printer, Pencil } from 'lucide-react';
+import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X, Printer, Pencil, Package } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,6 +64,7 @@ const Sales = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<SaleStatus[]>([]);
+  const [planoFilter, setPlanoFilter] = useState<string[]>([]);
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSeller | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -213,6 +214,14 @@ const Sales = () => {
   };
 
 
+  // Get unique planos for filter
+  const uniquePlanos = useMemo(() => {
+    const planos = sales
+      .map(s => s.plano_contratado)
+      .filter((p): p is string => Boolean(p && p.trim()));
+    return [...new Set(planos)].sort();
+  }, [sales]);
+
   const filteredSales = useMemo(() => {
     return sales.filter((sale) => {
       const matchesSearch =
@@ -223,14 +232,18 @@ const Sales = () => {
       // Multi-select filter: if no status selected, show all
       const matchesStatus = statusFilter.length === 0 || statusFilter.includes(sale.status);
       
-      return matchesSearch && matchesStatus;
+      // Plano filter
+      const matchesPlano = planoFilter.length === 0 || 
+        (sale.plano_contratado && planoFilter.includes(sale.plano_contratado));
+      
+      return matchesSearch && matchesStatus && matchesPlano;
     });
-  }, [sales, searchTerm, statusFilter]);
+  }, [sales, searchTerm, statusFilter, planoFilter]);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, planoFilter]);
 
   // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(filteredSales.length / pageSize));
@@ -370,6 +383,20 @@ const Sales = () => {
                 icon={<Filter className="h-4 w-4" />}
                 className="w-full sm:w-auto"
               />
+              {uniquePlanos.length > 0 && (
+                <MultiSelectFilter
+                  options={uniquePlanos.map(plano => ({
+                    value: plano,
+                    label: plano,
+                  }))}
+                  selected={planoFilter}
+                  onChange={(selected) => setPlanoFilter(selected)}
+                  placeholder="Filtrar plano"
+                  title="Filtrar por Plano"
+                  icon={<Package className="h-4 w-4" />}
+                  className="w-full sm:w-auto"
+                />
+              )}
             </div>
           </CardContent>
         </Card>

@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Phone, Coffee, UtensilsCrossed, Circle, PhoneOff, ChevronDown } from 'lucide-react';
+import { Phone, Coffee, UtensilsCrossed, Circle, PhoneOff, ChevronDown, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const STATUS_ICONS: Record<OperatorStatus, React.ReactNode> = {
@@ -17,6 +17,7 @@ const STATUS_ICONS: Record<OperatorStatus, React.ReactNode> = {
   PAUSA: <Coffee className="h-3 w-3" />,
   ALMOCO: <UtensilsCrossed className="h-3 w-3" />,
   OFFLINE: <PhoneOff className="h-3 w-3" />,
+  CADASTRO_VENDA: <ClipboardList className="h-3 w-3" />,
 };
 
 export function StatusSelector() {
@@ -65,7 +66,8 @@ export function StatusSelector() {
             currentStatus === 'EM_LIGACAO' && "border-blue-500/50 bg-blue-500/10 hover:bg-blue-500/20",
             currentStatus === 'PAUSA' && "border-yellow-500/50 bg-yellow-500/10 hover:bg-yellow-500/20",
             currentStatus === 'ALMOCO' && "border-orange-500/50 bg-orange-500/10 hover:bg-orange-500/20",
-            currentStatus === 'OFFLINE' && "border-gray-500/50 bg-gray-500/10 hover:bg-gray-500/20"
+            currentStatus === 'OFFLINE' && "border-gray-500/50 bg-gray-500/10 hover:bg-gray-500/20",
+            currentStatus === 'CADASTRO_VENDA' && "border-purple-500/50 bg-purple-500/10 hover:bg-purple-500/20"
           )}
         >
           <div className="flex items-center gap-2">

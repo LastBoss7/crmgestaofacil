@@ -1283,6 +1283,7 @@ export type Database = {
         | "PAUSA"
         | "ALMOCO"
         | "OFFLINE"
+        | "CADASTRO_VENDA"
       sale_status:
         | "PRE_ANALISE"
         | "AGUARDANDO_AUDITORIA"
@@ -1428,6 +1429,7 @@ export const Constants = {
         "PAUSA",
         "ALMOCO",
         "OFFLINE",
+        "CADASTRO_VENDA",
       ],
       sale_status: [
         "PRE_ANALISE",

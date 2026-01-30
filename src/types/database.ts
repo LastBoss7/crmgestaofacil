@@ -2,7 +2,7 @@ export type AppRole = 'CEO' | 'COORDENADOR' | 'BACKOFFICE' | 'SUPERVISOR' | 'SEL
 
 export type SaleStatus = 'PRE_ANALISE' | 'AGUARDANDO_AUDITORIA' | 'PENDENCIA' | 'VENDA_AUDITADA' | 'INSTALACAO_MARCADA' | 'INSTALADA' | 'CANCELADA' | 'ACEITE_ENVIADO' | 'CHAMADO_EM_ABERTO' | 'DESCONECTADO';
 
-export type OperatorStatus = 'DISPONIVEL' | 'EM_LIGACAO' | 'PAUSA' | 'ALMOCO' | 'OFFLINE';
+export type OperatorStatus = 'DISPONIVEL' | 'EM_LIGACAO' | 'PAUSA' | 'ALMOCO' | 'OFFLINE' | 'CADASTRO_VENDA';
 
 export interface Profile {
   id: string;
@@ -148,6 +148,7 @@ export const OPERATOR_STATUS_LABELS: Record<OperatorStatus, string> = {
   PAUSA: 'Pausa',
   ALMOCO: 'Almoço',
   OFFLINE: 'Offline',
+  CADASTRO_VENDA: 'Cadastro de Venda',
 };
 
 export const OPERATOR_STATUS_COLORS: Record<OperatorStatus, string> = {
@@ -156,4 +157,5 @@ export const OPERATOR_STATUS_COLORS: Record<OperatorStatus, string> = {
   PAUSA: 'bg-yellow-500',
   ALMOCO: 'bg-orange-500',
   OFFLINE: 'bg-gray-500',
+  CADASTRO_VENDA: 'bg-purple-500',
 };

@@ -5,13 +5,14 @@ import Layout from '@/components/layout/Layout';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
-import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X, Printer } from 'lucide-react';
+import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X, Printer, Pencil } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SaleComments } from '@/components/sales/SaleComments';
 import { SaleStatusActions } from '@/components/sales/SaleStatusActions';
 import { SaleForm } from '@/components/sales/SaleForm';
+import { SaleEditForm } from '@/components/sales/SaleEditForm';
 import { SaleDetails } from '@/components/sales/SaleDetails';
 import { PendingSalesAlert } from '@/components/sales/PendingSalesAlert';
 import { exportToExcel, exportToPDF, exportSaleDetailsToPDF, getPeriodLabel } from '@/lib/export-utils';
@@ -66,6 +67,7 @@ const Sales = () => {
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSeller | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [newDocuments, setNewDocuments] = useState<File[]>([]);
   const [isUploadingDocs, setIsUploadingDocs] = useState(false);
   const docInputRef = useRef<HTMLInputElement>(null);
@@ -455,21 +457,56 @@ const Sales = () => {
         </Card>
 
         {/* Sale Detail Dialog */}
-        <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <Dialog open={isDetailOpen} onOpenChange={(open) => {
+          setIsDetailOpen(open);
+          if (!open) setIsEditMode(false);
+        }}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Detalhes da Venda</DialogTitle>
-              <DialogDescription>
-                Informações completas da venda
-              </DialogDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <DialogTitle>{isEditMode ? 'Editar Venda' : 'Detalhes da Venda'}</DialogTitle>
+                  <DialogDescription>
+                    {isEditMode ? 'Edite os dados da venda e salve as alterações' : 'Informações completas da venda'}
+                  </DialogDescription>
+                </div>
+                {/* Edit button - Show for seller when sale is in PENDENCIA or for CEO/Backoffice */}
+                {selectedSale && !isEditMode && (
+                  (isSeller && selectedSale.seller_id === user?.id && selectedSale.status === 'PENDENCIA') ||
+                  isCEO || isBackoffice
+                ) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => setIsEditMode(true)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Editar Dados
+                  </Button>
+                )}
+              </div>
             </DialogHeader>
             {selectedSale && (
               <div className="space-y-6">
-                {/* Complete Sale Details */}
-                <SaleDetails 
-                  sale={selectedSale} 
-                  seller={selectedSale.seller_id ? sellers[selectedSale.seller_id] : undefined}
-                />
+                {isEditMode ? (
+                  <SaleEditForm
+                    sale={selectedSale}
+                    onSuccess={() => {
+                      setIsEditMode(false);
+                      fetchSales();
+                      // Update selected sale with fresh data
+                      setIsDetailOpen(false);
+                    }}
+                    onCancel={() => setIsEditMode(false)}
+                  />
+                ) : (
+                  <>
+                    {/* Complete Sale Details */}
+                    <SaleDetails 
+                      sale={selectedSale} 
+                      seller={selectedSale.seller_id ? sellers[selectedSale.seller_id] : undefined}
+                    />
 
                 {/* Documents Section */}
                 <div className="space-y-3">
@@ -640,6 +677,8 @@ const Sales = () => {
                   onStatusUpdated={fetchSales}
                   onClose={() => setIsDetailOpen(false)}
                 />
+                  </>
+                )}
               </div>
             )}
           </DialogContent>

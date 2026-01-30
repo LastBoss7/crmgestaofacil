@@ -415,8 +415,23 @@ const Sales = () => {
                               : '-'}
                           </TableCell>
                         )}
-                        <TableCell className="max-w-[200px] truncate">
-                          {sale.produtos || '-'}
+                        <TableCell className="max-w-[250px]">
+                          {sale.plano_contratado || sale.produtos ? (
+                            <div className="flex flex-wrap gap-1.5">
+                              {sale.plano_contratado && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-primary/15 text-primary border border-primary/20">
+                                  {sale.plano_contratado}
+                                </span>
+                              )}
+                              {sale.produtos && !sale.produtos.includes(sale.plano_contratado || '') && (
+                                <span className="text-xs text-muted-foreground truncate max-w-[150px]">
+                                  {sale.produtos}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">-</span>
+                          )}
                         </TableCell>
                         <TableCell className="font-medium">
                           {formatCurrency(Number(sale.valor_mensal))}

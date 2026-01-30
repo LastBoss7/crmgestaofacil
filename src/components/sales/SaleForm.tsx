@@ -597,6 +597,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
                 <SelectItem value="bl_solo">BL Solo</SelectItem>
                 <SelectItem value="vivo_total">VIVO TOTAL</SelectItem>
                 <SelectItem value="banda_larga">Banda Larga</SelectItem>
+                <SelectItem value="bl_tel_fixo">BL + Tel Fixo</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      backoffice_teams: {
+        Row: {
+          backoffice_id: string
+          company_id: string
+          created_at: string
+          id: string
+          team_id: string
+        }
+        Insert: {
+          backoffice_id: string
+          company_id: string
+          created_at?: string
+          id?: string
+          team_id: string
+        }
+        Update: {
+          backoffice_id?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backoffice_teams_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backoffice_teams_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       broadcasts: {
         Row: {
           company_id: string
@@ -1226,6 +1265,7 @@ export type Database = {
         Returns: boolean
       }
       cnpj_exists: { Args: { check_cnpj: string }; Returns: boolean }
+      get_backoffice_team_ids: { Args: { _user_id: string }; Returns: string[] }
       get_coordinator_team_ids: {
         Args: { _user_id: string }
         Returns: string[]

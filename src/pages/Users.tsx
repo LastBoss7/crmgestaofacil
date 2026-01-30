@@ -7,6 +7,7 @@ import { Profile, AppRole, ROLE_LABELS, UserRole } from '@/types/database';
 import { Plus, Search, UserCheck, UserX, Shield, UserPlus, Users2, KeyRound, Eye, EyeOff, Settings2 } from 'lucide-react';
 import { CreateUserDialog } from '@/components/users/CreateUserDialog';
 import { CoordinatorTeamsDialog } from '@/components/users/CoordinatorTeamsDialog';
+import { BackofficeTeamsDialog } from '@/components/users/BackofficeTeamsDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -41,6 +42,7 @@ interface UserWithRole extends Profile {
   role?: AppRole;
   team_name?: string;
   coordinator_team_names?: string[]; // For coordinators who manage multiple teams
+  backoffice_team_names?: string[]; // For backoffice users who access multiple teams
 }
 
 const Users = () => {
@@ -55,6 +57,7 @@ const Users = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [isCoordinatorTeamsOpen, setIsCoordinatorTeamsOpen] = useState(false);
+  const [isBackofficeTeamsOpen, setIsBackofficeTeamsOpen] = useState(false);
   const [newRole, setNewRole] = useState<AppRole | ''>('');
   const [newTeamId, setNewTeamId] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState('');
@@ -111,6 +114,15 @@ const Users = () => {
       console.error('Error fetching coordinator teams:', coordTeamsError);
     }
 
+    // Fetch backoffice team assignments
+    const { data: backofficeTeamsData, error: backofficeTeamsError } = await supabase
+      .from('backoffice_teams')
+      .select('backoffice_id, team_id');
+
+    if (backofficeTeamsError) {
+      console.error('Error fetching backoffice teams:', backofficeTeamsError);
+    }
+
     setTeams(teamsData || []);
 
     // Create maps
@@ -136,11 +148,24 @@ const Users = () => {
       }
     });
 
+    // Create backoffice teams map (backoffice_id -> array of team names)
+    const backofficeTeamsMap: Record<string, string[]> = {};
+    (backofficeTeamsData || []).forEach((bt) => {
+      const teamName = teamsMap[bt.team_id];
+      if (teamName) {
+        if (!backofficeTeamsMap[bt.backoffice_id]) {
+          backofficeTeamsMap[bt.backoffice_id] = [];
+        }
+        backofficeTeamsMap[bt.backoffice_id].push(teamName);
+      }
+    });
+
     const usersWithRoles: UserWithRole[] = (profiles || []).map((p: Profile) => ({
       ...p,
       role: rolesMap[p.id],
       team_name: p.team_id ? teamsMap[p.team_id] : undefined,
       coordinator_team_names: rolesMap[p.id] === 'COORDENADOR' ? coordinatorTeamsMap[p.id] : undefined,
+      backoffice_team_names: rolesMap[p.id] === 'BACKOFFICE' ? backofficeTeamsMap[p.id] : undefined,
     }));
 
     setUsers(usersWithRoles);
@@ -378,6 +403,15 @@ const Users = () => {
                                 </Badge>
                               ))}
                             </div>
+                          ) : user.role === 'BACKOFFICE' && user.backoffice_team_names && user.backoffice_team_names.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {user.backoffice_team_names.map((teamName, idx) => (
+                                <Badge key={idx} variant="secondary" className="gap-1">
+                                  <Users2 className="h-3 w-3" />
+                                  {teamName}
+                                </Badge>
+                              ))}
+                            </div>
                           ) : user.team_name ? (
                             <Badge variant="secondary" className="gap-1">
                               <Users2 className="h-3 w-3" />
@@ -385,6 +419,8 @@ const Users = () => {
                             </Badge>
                           ) : user.role === 'COORDENADOR' ? (
                             <span className="text-muted-foreground text-sm italic">Sem equipes atribuídas</span>
+                          ) : user.role === 'BACKOFFICE' ? (
+                            <span className="text-muted-foreground text-sm italic">Acesso apenas à própria equipe</span>
                           ) : (
                             <span className="text-muted-foreground text-sm">-</span>
                           )}
@@ -515,11 +551,24 @@ const Users = () => {
                       O supervisor gerenciará esta equipe
                     </p>
                   )}
-                  {newRole === 'BACKOFFICE' && (
-                    <p className="text-xs text-muted-foreground">
-                      O usuário Qualidade só verá vendas desta equipe
-                    </p>
-                  )}
+                </div>
+              )}
+
+              {/* Backoffice teams management button */}
+              {newRole === 'BACKOFFICE' && selectedUser && isCEO && (
+                <div className="space-y-2">
+                  <Label>Equipes do Qualidade</Label>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setIsBackofficeTeamsOpen(true)}
+                  >
+                    <Settings2 className="h-4 w-4 mr-2" />
+                    Gerenciar Equipes do Qualidade
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Defina quais equipes adicionais o Qualidade terá acesso (opcional)
+                  </p>
                 </div>
               )}
 
@@ -675,6 +724,17 @@ const Users = () => {
             onOpenChange={setIsCoordinatorTeamsOpen}
             coordinatorId={selectedUser.id}
             coordinatorName={selectedUser.nome}
+            onTeamsUpdated={fetchUsers}
+          />
+        )}
+
+        {/* Backoffice Teams Dialog */}
+        {selectedUser && (
+          <BackofficeTeamsDialog
+            open={isBackofficeTeamsOpen}
+            onOpenChange={setIsBackofficeTeamsOpen}
+            backofficeId={selectedUser.id}
+            backofficeName={selectedUser.nome}
             onTeamsUpdated={fetchUsers}
           />
         )}

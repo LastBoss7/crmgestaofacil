@@ -26,6 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Target, Calendar, TrendingUp, Pause, Play, CheckCircle, Trophy, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, differenceInDays, isAfter, isBefore } from 'date-fns';
@@ -49,6 +50,7 @@ export default function Campaigns() {
   const { user, profile, isCEO, isBackoffice } = useAuth();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -104,11 +106,41 @@ export default function Campaigns() {
     enabled: !!profile?.company_id,
   });
 
+  // Fetch teams for campaign assignment
+  const { data: teams = [] } = useQuery({
+    queryKey: ['teams', profile?.company_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('teams')
+        .select('id, name')
+        .order('name');
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.company_id,
+  });
+
+  // Fetch campaign teams
+  const { data: campaignTeams = [] } = useQuery({
+    queryKey: ['campaign-teams', profile?.company_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('campaign_teams')
+        .select('campaign_id, team_id, teams(name)');
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.company_id,
+  });
+
   const [selectedCampaignRanking, setSelectedCampaignRanking] = useState<string | null>(null);
 
   const createCampaignMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const { error } = await supabase.from('sales_campaigns').insert({
+      // Create campaign
+      const { data: newCampaign, error } = await supabase.from('sales_campaigns').insert({
         name: data.name,
         description: data.description || null,
         start_date: data.start_date,
@@ -117,14 +149,31 @@ export default function Campaigns() {
         target_sales: parseInt(data.target_sales) || 0,
         company_id: profile?.company_id,
         created_by: user?.id,
-      });
+      }).select('id').single();
 
       if (error) throw error;
+
+      // Insert team associations if any teams selected
+      if (selectedTeams.length > 0 && newCampaign) {
+        const teamInserts = selectedTeams.map(teamId => ({
+          campaign_id: newCampaign.id,
+          team_id: teamId,
+          company_id: profile?.company_id!,
+        }));
+
+        const { error: teamError } = await supabase
+          .from('campaign_teams')
+          .insert(teamInserts);
+
+        if (teamError) throw teamError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['campaign-teams'] });
       toast.success('Campanha criada com sucesso!');
       setIsDialogOpen(false);
+      setSelectedTeams([]);
       setFormData({
         name: '',
         description: '',
@@ -325,6 +374,44 @@ export default function Campaigns() {
                     </div>
                   </div>
 
+                  {/* Team Selection */}
+                  {teams.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        Equipes Participantes
+                      </Label>
+                      <div className="border rounded-md p-3 max-h-40 overflow-y-auto space-y-2">
+                        {teams.map((team) => (
+                          <div key={team.id} className="flex items-center gap-2">
+                            <Checkbox
+                              id={`team-${team.id}`}
+                              checked={selectedTeams.includes(team.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedTeams([...selectedTeams, team.id]);
+                                } else {
+                                  setSelectedTeams(selectedTeams.filter((id) => id !== team.id));
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor={`team-${team.id}`}
+                              className="text-sm cursor-pointer"
+                            >
+                              {team.name}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                      {selectedTeams.length === 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          Nenhuma equipe selecionada = todas as equipes participam
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <Button type="submit" className="w-full" disabled={createCampaignMutation.isPending}>
                     {createCampaignMutation.isPending ? 'Criando...' : 'Criar Campanha'}
                   </Button>
@@ -384,6 +471,28 @@ export default function Campaigns() {
                     )}
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {/* Teams badges */}
+                    {(() => {
+                      const campaignTeamsList = campaignTeams
+                        .filter((ct) => ct.campaign_id === campaign.id)
+                        .map((ct) => (ct as any).teams?.name)
+                        .filter(Boolean);
+                      
+                      if (campaignTeamsList.length > 0) {
+                        return (
+                          <div className="flex flex-wrap gap-1">
+                            <Users className="h-3 w-3 text-muted-foreground mt-0.5" />
+                            {campaignTeamsList.map((teamName, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {teamName}
+                              </Badge>
+                            ))}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
+                    
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
                       <span>

@@ -5,7 +5,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, Building2, Phone, MapPin, User, Users, FileText, DollarSign, Loader2, Upload, X, File, Target, Plus, Trash2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Calendar, Building2, Phone, MapPin, User, Users, FileText, DollarSign, Loader2, Upload, X, File, Target, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
@@ -420,6 +421,12 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate team assignment
+    if (!profile?.team_id || !teamData?.name) {
+      toast.error('Você não está vinculado a nenhuma equipe. Solicite ao seu supervisor para vincular você a uma equipe antes de cadastrar vendas.');
+      return;
+    }
+    
     // Validate all required fields
     const requiredFields: (keyof FormData)[] = ['cnpj_cliente', 'razao_social', 'telefone_1', 'telefone_2'];
     const newErrors: FieldErrors = {};
@@ -549,13 +556,20 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
       <div>
         <SectionHeader icon={Calendar} title="Informações da Venda" />
         
-        {/* Team info badge */}
-        {teamData?.name && (
+        {/* Team info badge or warning */}
+        {teamData?.name ? (
           <div className="mb-4 flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
             <Users className="h-4 w-4 text-primary" />
             <span className="text-sm text-muted-foreground">Equipe:</span>
             <span className="text-sm font-medium text-primary">{teamData.name}</span>
           </div>
+        ) : (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Você não está vinculado a nenhuma equipe. Solicite ao seu supervisor para vincular você a uma equipe antes de cadastrar vendas.
+            </AlertDescription>
+          </Alert>
         )}
         
         <div className="grid gap-4 sm:grid-cols-3">

@@ -70,19 +70,21 @@ export const SalesMonitor = () => {
       .eq('data_venda', queryDate);
 
     if (!error && salesData) {
-      const totalValue = salesData.reduce((sum, s) => sum + Number(s.valor_mensal), 0);
+      // Filter out cancelled sales from metrics
+      const activeSales = salesData.filter(s => s.status !== 'CANCELADA');
+      const totalValue = activeSales.reduce((sum, s) => sum + Number(s.valor_mensal), 0);
       // Only calculate "this hour" for today
       const thisHourSales = isViewingToday 
-        ? salesData.filter(s => s.created_at && s.created_at >= oneHourAgo)
+        ? activeSales.filter(s => s.created_at && s.created_at >= oneHourAgo)
         : [];
-      const pendingSales = salesData.filter(s => s.status === 'PENDENCIA' || s.status === 'AGUARDANDO_AUDITORIA');
+      const pendingSales = activeSales.filter(s => s.status === 'PENDENCIA' || s.status === 'AGUARDANDO_AUDITORIA');
       
       // Calculate average per hour
       const hoursElapsed = isViewingToday ? Math.max(1, now.getHours() + 1) : 10; // Assume 10h workday for past dates
-      const avgPerHour = salesData.length / hoursElapsed;
+      const avgPerHour = activeSales.length / hoursElapsed;
 
       setStats({
-        total: salesData.length,
+        total: activeSales.length,
         totalValue,
         thisHour: thisHourSales.length,
         pending: pendingSales.length,

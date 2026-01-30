@@ -100,36 +100,39 @@ export const ComparativeMetrics = () => {
         .gte('data_venda', formatDateForQuery(lastWeekStart))
         .lte('data_venda', formatDateForQuery(lastWeekEnd));
 
-      // Process today stats
+      // Process today stats - excluding cancelled sales
       if (todayData) {
+        const activeTodaySales = todayData.filter(s => s.status !== 'CANCELADA');
         setTodayStats({
-          sales: todayData.length,
-          value: todayData.reduce((sum, s) => sum + Number(s.valor_mensal), 0),
-          pending: todayData.filter(s => s.status === 'PENDENCIA' || s.status === 'AGUARDANDO_AUDITORIA').length,
-          approved: todayData.filter(s => s.status === 'VENDA_AUDITADA' || s.status === 'INSTALACAO_MARCADA' || s.status === 'INSTALADA').length,
+          sales: activeTodaySales.length,
+          value: activeTodaySales.reduce((sum, s) => sum + Number(s.valor_mensal), 0),
+          pending: activeTodaySales.filter(s => s.status === 'PENDENCIA' || s.status === 'AGUARDANDO_AUDITORIA').length,
+          approved: activeTodaySales.filter(s => s.status === 'VENDA_AUDITADA' || s.status === 'INSTALACAO_MARCADA' || s.status === 'INSTALADA').length,
         });
       }
 
-      // Process yesterday stats
+      // Process yesterday stats - excluding cancelled sales
       if (yesterdayData) {
+        const activeYesterdaySales = yesterdayData.filter(s => s.status !== 'CANCELADA');
         setYesterdayStats({
-          sales: yesterdayData.length,
-          value: yesterdayData.reduce((sum, s) => sum + Number(s.valor_mensal), 0),
-          pending: yesterdayData.filter(s => s.status === 'PENDENCIA' || s.status === 'AGUARDANDO_AUDITORIA').length,
-          approved: yesterdayData.filter(s => s.status === 'VENDA_AUDITADA' || s.status === 'INSTALACAO_MARCADA' || s.status === 'INSTALADA').length,
+          sales: activeYesterdaySales.length,
+          value: activeYesterdaySales.reduce((sum, s) => sum + Number(s.valor_mensal), 0),
+          pending: activeYesterdaySales.filter(s => s.status === 'PENDENCIA' || s.status === 'AGUARDANDO_AUDITORIA').length,
+          approved: activeYesterdaySales.filter(s => s.status === 'VENDA_AUDITADA' || s.status === 'INSTALACAO_MARCADA' || s.status === 'INSTALADA').length,
         });
       }
 
-      // Process this week stats
+      // Process this week stats - excluding cancelled sales
       if (thisWeekData) {
+        const activeThisWeekSales = thisWeekData.filter(s => s.status !== 'CANCELADA');
         setThisWeekStats({
-          sales: thisWeekData.length,
-          value: thisWeekData.reduce((sum, s) => sum + Number(s.valor_mensal), 0),
-          pending: thisWeekData.filter(s => s.status === 'PENDENCIA' || s.status === 'AGUARDANDO_AUDITORIA').length,
-          approved: thisWeekData.filter(s => s.status === 'VENDA_AUDITADA' || s.status === 'INSTALACAO_MARCADA' || s.status === 'INSTALADA').length,
+          sales: activeThisWeekSales.length,
+          value: activeThisWeekSales.reduce((sum, s) => sum + Number(s.valor_mensal), 0),
+          pending: activeThisWeekSales.filter(s => s.status === 'PENDENCIA' || s.status === 'AGUARDANDO_AUDITORIA').length,
+          approved: activeThisWeekSales.filter(s => s.status === 'VENDA_AUDITADA' || s.status === 'INSTALACAO_MARCADA' || s.status === 'INSTALADA').length,
         });
 
-        // Group by day for chart
+        // Group by day for chart - excluding cancelled sales
         const dayMap: Record<string, DayData> = {};
         for (let i = 0; i < 7; i++) {
           const date = new Date(thisWeekStart);
@@ -142,7 +145,7 @@ export const ComparativeMetrics = () => {
             value: 0,
           };
         }
-        thisWeekData.forEach(sale => {
+        activeThisWeekSales.forEach(sale => {
           if (sale.data_venda && dayMap[sale.data_venda]) {
             dayMap[sale.data_venda].sales++;
             dayMap[sale.data_venda].value += Number(sale.valor_mensal);
@@ -151,16 +154,17 @@ export const ComparativeMetrics = () => {
         setThisWeekDays(Object.values(dayMap));
       }
 
-      // Process last week stats
+      // Process last week stats - excluding cancelled sales
       if (lastWeekData) {
+        const activeLastWeekSales = lastWeekData.filter(s => s.status !== 'CANCELADA');
         setLastWeekStats({
-          sales: lastWeekData.length,
-          value: lastWeekData.reduce((sum, s) => sum + Number(s.valor_mensal), 0),
-          pending: lastWeekData.filter(s => s.status === 'PENDENCIA' || s.status === 'AGUARDANDO_AUDITORIA').length,
-          approved: lastWeekData.filter(s => s.status === 'VENDA_AUDITADA' || s.status === 'INSTALACAO_MARCADA' || s.status === 'INSTALADA').length,
+          sales: activeLastWeekSales.length,
+          value: activeLastWeekSales.reduce((sum, s) => sum + Number(s.valor_mensal), 0),
+          pending: activeLastWeekSales.filter(s => s.status === 'PENDENCIA' || s.status === 'AGUARDANDO_AUDITORIA').length,
+          approved: activeLastWeekSales.filter(s => s.status === 'VENDA_AUDITADA' || s.status === 'INSTALACAO_MARCADA' || s.status === 'INSTALADA').length,
         });
 
-        // Group by day for chart
+        // Group by day for chart - excluding cancelled sales
         const dayMap: Record<string, DayData> = {};
         for (let i = 0; i < 7; i++) {
           const date = new Date(lastWeekStart);
@@ -173,7 +177,7 @@ export const ComparativeMetrics = () => {
             value: 0,
           };
         }
-        lastWeekData.forEach(sale => {
+        activeLastWeekSales.forEach(sale => {
           if (sale.data_venda && dayMap[sale.data_venda]) {
             dayMap[sale.data_venda].sales++;
             dayMap[sale.data_venda].value += Number(sale.valor_mensal);

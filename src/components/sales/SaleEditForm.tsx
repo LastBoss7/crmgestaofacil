@@ -117,6 +117,12 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
   const [loading, setLoading] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
+  
+  // Document management state
+  const [existingDocuments, setExistingDocuments] = useState<string[]>(sale.documentos || []);
+  const [newDocuments, setNewDocuments] = useState<File[]>([]);
+  const [uploadingDocs, setUploadingDocs] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const updateForm = (field: keyof FormData, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -221,6 +227,58 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
     (parseFloat(form.movel_valor) || 0)
   ).toFixed(2);
 
+  // Document management functions
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    
+    const validFiles: File[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!validTypes.includes(file.type)) {
+        toast.error(`Arquivo "${file.name}" não é suportado. Use PDF ou imagens.`);
+        continue;
+      }
+      if (file.size > maxSize) {
+        toast.error(`Arquivo "${file.name}" excede 10MB.`);
+        continue;
+      }
+      validFiles.push(file);
+    }
+    
+    setNewDocuments(prev => [...prev, ...validFiles]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeNewDocument = (index: number) => {
+    setNewDocuments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const uploadNewDocuments = async (saleId: string): Promise<string[]> => {
+    const urls: string[] = [];
+    
+    for (const file of newDocuments) {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${saleId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      
+      const { error } = await supabase.storage
+        .from('sale-documents')
+        .upload(fileName, file);
+      
+      if (error) {
+        console.error('Error uploading document:', error);
+        toast.error(`Erro ao enviar ${file.name}`);
+      } else {
+        urls.push(fileName);
+      }
+    }
+    
+    return urls;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -302,7 +360,25 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
         }
       });
 
-      if (Object.keys(updates).length === 0) {
+      // Upload new documents if any
+      let allDocumentUrls = [...existingDocuments];
+      if (newDocuments.length > 0) {
+        setUploadingDocs(true);
+        const newUrls = await uploadNewDocuments(sale.id);
+        allDocumentUrls = [...allDocumentUrls, ...newUrls];
+        
+        if (newUrls.length > 0) {
+          updates.documentos = allDocumentUrls;
+          changedFields.push({
+            field: 'Documentos',
+            oldValue: `${existingDocuments.length} arquivo(s)`,
+            newValue: `${allDocumentUrls.length} arquivo(s)`,
+          });
+        }
+        setUploadingDocs(false);
+      }
+
+      if (Object.keys(updates).length === 0 && newDocuments.length === 0) {
         toast.info('Nenhuma alteração detectada');
         setLoading(false);
         return;
@@ -323,14 +399,16 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
       // Add comment about the edit
       if (user && profile) {
         const changesSummary = changedFields.map(c => c.field).join(', ');
-        await supabase.from('sale_comments').insert({
-          sale_id: sale.id,
-          user_id: user.id,
-          user_name: profile.nome,
-          user_role: 'SELLER',
-          message: `Campos editados: ${changesSummary}`,
-          company_id: profile.company_id,
-        });
+        if (changesSummary) {
+          await supabase.from('sale_comments').insert({
+            sale_id: sale.id,
+            user_id: user.id,
+            user_name: profile.nome,
+            user_role: 'SELLER',
+            message: `Campos editados: ${changesSummary}`,
+            company_id: profile.company_id,
+          });
+        }
       }
 
       toast.success('Venda atualizada com sucesso!');
@@ -340,6 +418,7 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
       toast.error('Erro ao atualizar venda');
     } finally {
       setLoading(false);
+      setUploadingDocs(false);
     }
   };
 
@@ -805,6 +884,103 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
                 placeholder="Observações adicionais sobre a venda..."
                 rows={4}
               />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* Documentos */}
+        <AccordionItem value="documentos" className="border rounded-lg px-4">
+          <AccordionTrigger className="hover:no-underline py-3">
+            <SectionHeader icon={Upload} title={`Documentos (${existingDocuments.length + newDocuments.length})`} />
+          </AccordionTrigger>
+          <AccordionContent className="pb-4">
+            <div className="space-y-4">
+              {/* Existing Documents */}
+              {existingDocuments.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground text-xs">Documentos Existentes</Label>
+                  <div className="space-y-2">
+                    {existingDocuments.map((doc, index) => {
+                      const fileName = doc.split('/').pop() || doc;
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-2 border rounded-lg bg-muted/30"
+                        >
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            <File className="h-4 w-4 text-primary shrink-0" />
+                            <span className="text-sm truncate">{fileName}</span>
+                          </div>
+                          <a
+                            href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/sale-documents/${doc}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary hover:underline shrink-0"
+                          >
+                            Ver
+                          </a>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* New Documents to Upload */}
+              {newDocuments.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground text-xs">Novos Documentos</Label>
+                  <div className="space-y-2">
+                    {newDocuments.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-2 border rounded-lg border-primary/30 bg-primary/5"
+                      >
+                        <div className="flex items-center gap-2 overflow-hidden">
+                          <File className="h-4 w-4 text-primary shrink-0" />
+                          <span className="text-sm truncate">{file.name}</span>
+                          <span className="text-xs text-muted-foreground shrink-0">
+                            ({(file.size / 1024).toFixed(1)} KB)
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeNewDocument(index)}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Button */}
+              <div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp"
+                  multiple
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  Adicionar Documento
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Formatos aceitos: PDF, JPG, PNG, WEBP (máx. 10MB cada)
+                </p>
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>

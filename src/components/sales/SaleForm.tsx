@@ -133,6 +133,23 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   // Multiple portability phone numbers state (with operator)
   const [portabilityPhones, setPortabilityPhones] = useState<{ phone: string; operator: string }[]>([{ phone: '', operator: '' }]);
 
+  // Fetch team name for the seller
+  const { data: teamData } = useQuery({
+    queryKey: ['seller-team', profile?.team_id],
+    queryFn: async () => {
+      if (!profile?.team_id) return null;
+      const { data, error } = await supabase
+        .from('teams')
+        .select('name')
+        .eq('id', profile.team_id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.team_id,
+  });
+
   // Fetch active campaigns
   const { data: activeCampaigns = [] } = useQuery({
     queryKey: ['active-campaigns', profile?.company_id],
@@ -450,7 +467,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         seller_id: userId,
         company_id: profile?.company_id || null,
         data_venda: form.data_venda || null,
-        equipe: profile?.team_id || null, // Auto-set from seller's team
+        equipe: teamData?.name || null, // Auto-set from seller's team name
         tipo_negociacao: form.tipo_negociacao || null,
         cnpj_cliente: form.cnpj_cliente,
         razao_social: form.razao_social,

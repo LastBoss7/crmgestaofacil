@@ -233,6 +233,7 @@ export const SalesMonitor = () => {
       ACEITE_ENVIADO: 'bg-teal-500/20 text-teal-400',
       CHAMADO_EM_ABERTO: 'bg-indigo-500/20 text-indigo-400',
       DESCONECTADO: 'bg-gray-500/20 text-gray-400',
+      ENVIADO_PARA_SAV: 'bg-pink-500/20 text-pink-400',
     };
     return colors[status];
   };

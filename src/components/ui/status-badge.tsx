@@ -10,7 +10,8 @@ import {
   XCircle,
   Send,
   Headphones,
-  Unplug
+  Unplug,
+  Truck
 } from 'lucide-react';
 
 interface StatusBadgeProps {
@@ -85,6 +86,12 @@ const statusConfig: Record<SaleStatus, {
     text: 'text-gray-600 dark:text-gray-400',
     border: 'border-gray-200 dark:border-gray-500/25',
     icon: Unplug,
+  },
+  ENVIADO_PARA_SAV: { 
+    bg: 'bg-pink-50 dark:bg-pink-500/15',
+    text: 'text-pink-600 dark:text-pink-400',
+    border: 'border-pink-100 dark:border-pink-500/25',
+    icon: Truck,
   },
 };
 

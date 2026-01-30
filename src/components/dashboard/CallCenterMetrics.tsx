@@ -40,6 +40,7 @@ const STATUS_COLORS: Record<SaleStatus, string> = {
   ACEITE_ENVIADO: '#14B8A6',
   CHAMADO_EM_ABERTO: '#6366F1',
   DESCONECTADO: '#6B7280',
+  ENVIADO_PARA_SAV: '#EC4899',
 };
 
 const STATUS_ORDER: SaleStatus[] = [
@@ -100,6 +101,7 @@ export function CallCenterMetrics({ sales }: CallCenterMetricsProps) {
       ACEITE_ENVIADO: { count: 0, totalHours: 0 },
       CHAMADO_EM_ABERTO: { count: 0, totalHours: 0 },
       DESCONECTADO: { count: 0, totalHours: 0 },
+      ENVIADO_PARA_SAV: { count: 0, totalHours: 0 },
     };
 
     sales.forEach(sale => {

@@ -54,19 +54,23 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
   const getAvailableStatuses = (): SaleStatus[] => {
     if (isCEO) {
       // CEO pode fazer tudo
-      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO'];
+      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO', 'ENVIADO_PARA_SAV'];
+    }
+    if (isCoordinator) {
+      // Coordenador pode gerenciar vendas das equipes atribuídas
+      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO', 'ENVIADO_PARA_SAV'];
     }
     if (isBackoffice) {
       // Backoffice analisa, aprova ou devolve
-      return ['AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO'];
+      return ['AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO', 'ENVIADO_PARA_SAV'];
     }
     if (isSupervisor) {
       // Supervisor pode gerenciar vendas da equipe
-      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO'];
+      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO', 'ENVIADO_PARA_SAV'];
     }
     if (isSeller && isOwner) {
-      // Vendedor pode usar: Pré-Análise, Aguardando Auditoria, Aceite Enviado, Chamado em Aberto, Desconectado
-      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO'];
+      // Vendedor pode usar: Pré-Análise, Aguardando Auditoria, Aceite Enviado, Chamado em Aberto, Desconectado, Enviado para SAV
+      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO', 'ENVIADO_PARA_SAV'];
     }
     return [];
   };

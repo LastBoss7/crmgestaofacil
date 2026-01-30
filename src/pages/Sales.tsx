@@ -5,7 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
-import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X, Printer, Pencil, Package } from 'lucide-react';
+import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X, Printer, Pencil, Package, Users2 } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,11 +60,13 @@ const Sales = () => {
   const [sales, setSales] = useState<SaleWithSeller[]>([]);
   const [sellers, setSellers] = useState<Record<string, Profile>>({});
   const [teams, setTeams] = useState<Record<string, string>>({});
+  const [teamsList, setTeamsList] = useState<{ id: string; name: string }[]>([]);
   const [userTeamName, setUserTeamName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<SaleStatus[]>([]);
   const [planoFilter, setPlanoFilter] = useState<string[]>([]);
+  const [teamFilter, setTeamFilter] = useState<string[]>([]);
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSeller | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -193,13 +195,14 @@ const Sales = () => {
   };
 
   const fetchTeams = async () => {
-    const { data } = await supabase.from('teams').select('id, name');
+    const { data } = await supabase.from('teams').select('id, name').order('name');
     if (data) {
       const teamsMap: Record<string, string> = {};
       data.forEach((t: { id: string; name: string }) => {
         teamsMap[t.id] = t.name;
       });
       setTeams(teamsMap);
+      setTeamsList(data);
     }
   };
 
@@ -236,14 +239,21 @@ const Sales = () => {
       const matchesPlano = planoFilter.length === 0 || 
         (sale.plano_contratado && planoFilter.includes(sale.plano_contratado));
       
-      return matchesSearch && matchesStatus && matchesPlano;
+      // Team filter - match by team name or team ID
+      const matchesTeam = teamFilter.length === 0 || 
+        (sale.equipe && (
+          teamFilter.includes(sale.equipe) ||
+          teamFilter.some(teamId => teams[teamId] === sale.equipe)
+        ));
+      
+      return matchesSearch && matchesStatus && matchesPlano && matchesTeam;
     });
-  }, [sales, searchTerm, statusFilter, planoFilter]);
+  }, [sales, searchTerm, statusFilter, planoFilter, teamFilter, teams]);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, planoFilter]);
+  }, [searchTerm, statusFilter, planoFilter, teamFilter]);
 
   // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(filteredSales.length / pageSize));
@@ -394,6 +404,21 @@ const Sales = () => {
                   placeholder="Filtrar plano"
                   title="Filtrar por Plano"
                   icon={<Package className="h-4 w-4" />}
+                  className="w-full sm:w-auto"
+                />
+              )}
+              {/* Team filter - only show for CEO/Coordinator/Supervisor */}
+              {!isSeller && teamsList.length > 0 && (
+                <MultiSelectFilter
+                  options={teamsList.map(team => ({
+                    value: team.id,
+                    label: team.name,
+                  }))}
+                  selected={teamFilter}
+                  onChange={(selected) => setTeamFilter(selected)}
+                  placeholder="Filtrar equipe"
+                  title="Filtrar por Equipe"
+                  icon={<Users2 className="h-4 w-4" />}
                   className="w-full sm:w-auto"
                 />
               )}

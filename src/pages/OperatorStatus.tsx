@@ -20,7 +20,7 @@ import {
 import { 
   Phone, Coffee, UtensilsCrossed, Circle, PhoneOff, 
   Users, Clock, BarChart3, TrendingUp, Calendar,
-  Activity
+  Activity, ClipboardList
 } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay, differenceInSeconds, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -37,14 +37,16 @@ const STATUS_ICONS: Record<OpStatus, React.ReactNode> = {
   PAUSA: <Coffee className="h-4 w-4" />,
   ALMOCO: <UtensilsCrossed className="h-4 w-4" />,
   OFFLINE: <PhoneOff className="h-4 w-4" />,
+  CADASTRO_VENDA: <ClipboardList className="h-4 w-4" />,
 };
 
-const CHART_COLORS = {
+const CHART_COLORS: Record<OpStatus, string> = {
   DISPONIVEL: '#22c55e',
   EM_LIGACAO: '#3b82f6',
   PAUSA: '#eab308',
   ALMOCO: '#f97316',
   OFFLINE: '#6b7280',
+  CADASTRO_VENDA: '#a855f7',
 };
 
 export default function OperatorStatusPage() {
@@ -168,6 +170,7 @@ export default function OperatorStatusPage() {
       PAUSA: 0,
       ALMOCO: 0,
       OFFLINE: 0,
+      CADASTRO_VENDA: 0,
     };
 
     const userTotals: Record<string, Record<OpStatus, number>> = {};
@@ -177,7 +180,7 @@ export default function OperatorStatusPage() {
       statusTotals[log.status as OpStatus] += duration;
 
       if (!userTotals[log.user_id]) {
-        userTotals[log.user_id] = { DISPONIVEL: 0, EM_LIGACAO: 0, PAUSA: 0, ALMOCO: 0, OFFLINE: 0 };
+        userTotals[log.user_id] = { DISPONIVEL: 0, EM_LIGACAO: 0, PAUSA: 0, ALMOCO: 0, OFFLINE: 0, CADASTRO_VENDA: 0 };
       }
       userTotals[log.user_id][log.status as OpStatus] += duration;
     });
@@ -204,6 +207,7 @@ export default function OperatorStatusPage() {
         emLigacao: Math.round(totals.EM_LIGACAO / 60),
         pausa: Math.round(totals.PAUSA / 60),
         almoco: Math.round(totals.ALMOCO / 60),
+        cadastroVenda: Math.round(totals.CADASTRO_VENDA / 60),
       };
     });
 
@@ -335,7 +339,8 @@ export default function OperatorStatusPage() {
                           status.status === 'EM_LIGACAO' && "border-blue-500/50 bg-blue-500/5",
                           status.status === 'PAUSA' && "border-yellow-500/50 bg-yellow-500/5",
                           status.status === 'ALMOCO' && "border-orange-500/50 bg-orange-500/5",
-                          status.status === 'OFFLINE' && "border-gray-500/50 bg-gray-500/5"
+                          status.status === 'OFFLINE' && "border-gray-500/50 bg-gray-500/5",
+                          status.status === 'CADASTRO_VENDA' && "border-purple-500/50 bg-purple-500/5"
                         )}
                       >
                         <div className="flex items-center gap-3">
@@ -364,7 +369,8 @@ export default function OperatorStatusPage() {
                                   status.status === 'EM_LIGACAO' && "bg-blue-500/20 text-blue-700",
                                   status.status === 'PAUSA' && "bg-yellow-500/20 text-yellow-700",
                                   status.status === 'ALMOCO' && "bg-orange-500/20 text-orange-700",
-                                  status.status === 'OFFLINE' && "bg-gray-500/20 text-gray-700"
+                                  status.status === 'OFFLINE' && "bg-gray-500/20 text-gray-700",
+                                  status.status === 'CADASTRO_VENDA' && "bg-purple-500/20 text-purple-700"
                                 )}
                               >
                                 {OPERATOR_STATUS_LABELS[status.status as OpStatus]}
@@ -487,6 +493,7 @@ export default function OperatorStatusPage() {
                           <Bar dataKey="emLigacao" name="Em Ligação" fill={CHART_COLORS.EM_LIGACAO} stackId="a" />
                           <Bar dataKey="pausa" name="Pausa" fill={CHART_COLORS.PAUSA} stackId="a" />
                           <Bar dataKey="almoco" name="Almoço" fill={CHART_COLORS.ALMOCO} stackId="a" />
+                          <Bar dataKey="cadastroVenda" name="Cadastro de Venda" fill={CHART_COLORS.CADASTRO_VENDA} stackId="a" />
                         </BarChart>
                       </ResponsiveContainer>
                     ) : (

@@ -33,7 +33,7 @@ interface SaleStatusActionsProps {
 }
 
 export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatusActionsProps) {
-  const { isCEO, isBackoffice, isSupervisor, isSeller, user, profile, role } = useAuth();
+  const { isCEO, isBackoffice, isSupervisor, isSeller, isCoordinator, user, profile, role } = useAuth();
   const { recordStatusChange } = useSaleHistory();
   const [statusUpdate, setStatusUpdate] = useState({
     status: sale.status,
@@ -47,7 +47,7 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
     action: 'VENDA_AUDITADA' | 'CANCELADA' | null;
   }>({ open: false, action: null });
 
-  const canApprove = isCEO || isBackoffice || isSupervisor;
+  const canApprove = isCEO || isBackoffice || isSupervisor || isCoordinator;
   const isOwner = sale.seller_id === user?.id;
 
   // Workflow status options based on role

@@ -419,6 +419,7 @@ const Sales = () => {
                     <TableRow>
                       <TableHead>Cliente</TableHead>
                       {!isSeller && <TableHead>Vendedor</TableHead>}
+                      {!isSeller && <TableHead>Equipe</TableHead>}
                       <TableHead>Produtos</TableHead>
                       <TableHead>Valor Mensal</TableHead>
                       <TableHead>Status</TableHead>
@@ -440,6 +441,11 @@ const Sales = () => {
                             {sale.seller_id && sellers[sale.seller_id]
                               ? sellers[sale.seller_id].nome
                               : '-'}
+                          </TableCell>
+                        )}
+                        {!isSeller && (
+                          <TableCell>
+                            <span className="text-sm">{sale.equipe || '-'}</span>
                           </TableCell>
                         )}
                         <TableCell className="max-w-[250px]">

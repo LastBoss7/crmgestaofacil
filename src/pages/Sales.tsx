@@ -431,7 +431,7 @@ const Sales = () => {
                       <TableRow key={sale.id}>
                         <TableCell>
                           <div>
-                            <p className="font-medium">{sale.nome_fantasia || sale.razao_social}</p>
+                            <p className="font-medium">{sale.razao_social}</p>
                             <p className="text-xs text-muted-foreground">{sale.cnpj_cliente}</p>
                           </div>
                         </TableCell>

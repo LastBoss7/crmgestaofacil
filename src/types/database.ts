@@ -1,6 +1,6 @@
 export type AppRole = 'CEO' | 'COORDENADOR' | 'BACKOFFICE' | 'SUPERVISOR' | 'SELLER';
 
-export type SaleStatus = 'PRE_ANALISE' | 'AGUARDANDO_AUDITORIA' | 'PENDENCIA' | 'VENDA_AUDITADA' | 'INSTALACAO_MARCADA' | 'INSTALADA' | 'CANCELADA' | 'ACEITE_ENVIADO' | 'CHAMADO_EM_ABERTO' | 'DESCONECTADO';
+export type SaleStatus = 'PRE_ANALISE' | 'AGUARDANDO_AUDITORIA' | 'PENDENCIA' | 'VENDA_AUDITADA' | 'INSTALACAO_MARCADA' | 'INSTALADA' | 'CANCELADA' | 'ACEITE_ENVIADO' | 'CHAMADO_EM_ABERTO' | 'DESCONECTADO' | 'ENVIADO_PARA_SAV';
 
 export type OperatorStatus = 'DISPONIVEL' | 'EM_LIGACAO' | 'PAUSA' | 'ALMOCO' | 'OFFLINE' | 'CADASTRO_VENDA';
 
@@ -132,6 +132,7 @@ export const SALE_STATUS_LABELS: Record<SaleStatus, string> = {
   ACEITE_ENVIADO: 'Aceite Enviado',
   CHAMADO_EM_ABERTO: 'Chamado em Aberto',
   DESCONECTADO: 'Desconectado',
+  ENVIADO_PARA_SAV: 'Enviado para SAV',
 };
 
 export const ROLE_LABELS: Record<AppRole, string> = {

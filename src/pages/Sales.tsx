@@ -5,7 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
-import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X, Printer, Pencil, Package, Users2 } from 'lucide-react';
+import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X, Printer, Pencil, Package, Users2, CalendarDays } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,8 @@ import { SaleDetails } from '@/components/sales/SaleDetails';
 import { PendingSalesAlert } from '@/components/sales/PendingSalesAlert';
 import { exportToExcel, exportToPDF, exportSaleDetailsToPDF, getPeriodLabel } from '@/lib/export-utils';
 import { MultiSelectFilter } from '@/components/ui/multi-select-filter';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { DateRange } from 'react-day-picker';
 import {
   Select,
   SelectContent,
@@ -67,6 +69,7 @@ const Sales = () => {
   const [statusFilter, setStatusFilter] = useState<SaleStatus[]>([]);
   const [planoFilter, setPlanoFilter] = useState<string[]>([]);
   const [teamFilter, setTeamFilter] = useState<string[]>([]);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSeller | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -246,14 +249,29 @@ const Sales = () => {
           teamFilter.some(teamId => teams[teamId] === sale.equipe)
         ));
       
-      return matchesSearch && matchesStatus && matchesPlano && matchesTeam;
+      // Date range filter
+      const matchesDateRange = (() => {
+        if (!dateRange?.from) return true;
+        const saleDate = sale.data_venda ? new Date(sale.data_venda) : new Date(sale.created_at);
+        const from = new Date(dateRange.from);
+        from.setHours(0, 0, 0, 0);
+        
+        if (dateRange.to) {
+          const to = new Date(dateRange.to);
+          to.setHours(23, 59, 59, 999);
+          return saleDate >= from && saleDate <= to;
+        }
+        return saleDate >= from;
+      })();
+      
+      return matchesSearch && matchesStatus && matchesPlano && matchesTeam && matchesDateRange;
     });
-  }, [sales, searchTerm, statusFilter, planoFilter, teamFilter, teams]);
+  }, [sales, searchTerm, statusFilter, planoFilter, teamFilter, teams, dateRange]);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, planoFilter, teamFilter]);
+  }, [searchTerm, statusFilter, planoFilter, teamFilter, dateRange]);
 
   // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(filteredSales.length / pageSize));
@@ -371,8 +389,8 @@ const Sales = () => {
         {/* Filters */}
         <Card className="shadow-card">
           <CardContent className="pt-6">
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <div className="relative flex-1">
+            <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+              <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por cliente, CNPJ..."
@@ -381,6 +399,12 @@ const Sales = () => {
                   className="pl-10"
                 />
               </div>
+              <DateRangePicker
+                value={dateRange}
+                onChange={setDateRange}
+                placeholder="Filtrar por data"
+                className="w-full sm:w-auto"
+              />
               <MultiSelectFilter
                 options={(Object.entries(SALE_STATUS_LABELS) as [SaleStatus, string][]).map(([value, label]) => ({
                   value,

@@ -607,12 +607,12 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
                 <Target className="h-3 w-3" />
                 Campanha
               </Label>
-              <Select value={form.campaign_id} onValueChange={(v) => updateForm('campaign_id', v)}>
+              <Select value={form.campaign_id || "none"} onValueChange={(v) => updateForm('campaign_id', v === "none" ? "" : v)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Vincular a campanha..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectItem value="none">Nenhuma</SelectItem>
                   {activeCampaigns.map((campaign) => (
                     <SelectItem key={campaign.id} value={campaign.id}>
                       {campaign.name}

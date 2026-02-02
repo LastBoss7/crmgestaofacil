@@ -120,7 +120,7 @@ const initialFormData: FormData = {
 type FieldErrors = Partial<Record<keyof FormData, string>>;
 
 export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
-  const { profile } = useAuth();
+  const { profile, loading: authLoading } = useAuth();
   const [form, setForm] = useState<FormData>(initialFormData);
   const [loading, setLoading] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
@@ -135,7 +135,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   const [portabilityPhones, setPortabilityPhones] = useState<{ phone: string; operator: string }[]>([{ phone: '', operator: '' }]);
 
   // Fetch team name for the seller
-  const { data: teamData } = useQuery({
+  const { data: teamData, isLoading: isLoadingTeam } = useQuery({
     queryKey: ['seller-team', profile?.team_id],
     queryFn: async () => {
       if (!profile?.team_id) return null;
@@ -145,10 +145,14 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         .eq('id', profile.team_id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching team:', error);
+        throw error;
+      }
       return data;
     },
     enabled: !!profile?.team_id,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   // Fetch active campaigns
@@ -421,6 +425,12 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Wait for data to load
+    if (authLoading || isLoadingTeam) {
+      toast.error('Aguarde o carregamento dos dados...');
+      return;
+    }
+    
     // Validate team assignment
     if (!profile?.team_id || !teamData?.name) {
       toast.error('Você não está vinculado a nenhuma equipe. Solicite ao seu supervisor para vincular você a uma equipe antes de cadastrar vendas.');
@@ -556,8 +566,13 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
       <div>
         <SectionHeader icon={Calendar} title="Informações da Venda" />
         
-        {/* Team info badge or warning */}
-        {teamData?.name ? (
+        {/* Team info badge, loading state, or warning */}
+        {authLoading || isLoadingTeam ? (
+          <div className="mb-4 flex items-center gap-2 p-3 rounded-lg bg-muted/50 border">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Carregando dados da equipe...</span>
+          </div>
+        ) : teamData?.name ? (
           <div className="mb-4 flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
             <Users className="h-4 w-4 text-primary" />
             <span className="text-sm text-muted-foreground">Equipe:</span>

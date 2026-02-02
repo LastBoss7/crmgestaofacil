@@ -18,6 +18,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   Trophy, 
   Medal,
@@ -35,6 +42,7 @@ import {
   Save,
   Eye,
   LineChart as LineChartIcon,
+  Users2,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -98,12 +106,28 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
   const navigate = useNavigate();
   const { isCEO } = useAuth();
   const [goals, setGoals] = useState<SellerGoal[]>([]);
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
+  const [selectedTeamId, setSelectedTeamId] = useState<string>('all');
   const [isGoalsDialogOpen, setIsGoalsDialogOpen] = useState(false);
   const [editingGoals, setEditingGoals] = useState<Record<string, { sales: number; value: number }>>({});
   const [savingGoals, setSavingGoals] = useState(false);
 
   const currentMonth = new Date().getMonth() + 1;
   const currentYear = new Date().getFullYear();
+
+  // Fetch teams
+  useEffect(() => {
+    const fetchTeams = async () => {
+      const { data } = await supabase
+        .from('teams')
+        .select('id, name')
+        .order('name');
+      if (data) {
+        setTeams(data);
+      }
+    };
+    fetchTeams();
+  }, []);
 
   // Fetch goals
   useEffect(() => {
@@ -121,11 +145,24 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
     fetchGoals();
   }, [currentMonth, currentYear]);
 
+  // Filter sellers by team
+  const filteredSellers = useMemo(() => {
+    if (selectedTeamId === 'all') return sellers;
+    return sellers.filter(seller => seller.team_id === selectedTeamId);
+  }, [sellers, selectedTeamId]);
+
+  // Filter sales by team (based on filtered sellers)
+  const filteredSales = useMemo(() => {
+    if (selectedTeamId === 'all') return sales;
+    const sellerIds = new Set(filteredSellers.map(s => s.id));
+    return sales.filter(sale => sale.seller_id && sellerIds.has(sale.seller_id));
+  }, [sales, filteredSellers, selectedTeamId]);
+
   const sellerMetrics = useMemo(() => {
     const metricsMap: Record<string, SellerMetrics> = {};
 
-    // Initialize metrics for all sellers
-    sellers.forEach(seller => {
+    // Initialize metrics for filtered sellers only
+    filteredSellers.forEach(seller => {
       const sellerGoal = goals.find(g => g.seller_id === seller.id);
       
       metricsMap[seller.id] = {
@@ -151,7 +188,7 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
     });
 
     // Filter sales for current month
-    const currentMonthSales = sales.filter(sale => {
+    const currentMonthSales = filteredSales.filter(sale => {
       const saleDate = new Date(sale.created_at);
       return saleDate.getMonth() + 1 === currentMonth && saleDate.getFullYear() === currentYear;
     });
@@ -238,7 +275,7 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
     return Object.values(metricsMap)
       .filter(m => m.totalSales > 0 || goals.some(g => g.seller_id === m.id))
       .sort((a, b) => b.totalValue - a.totalValue);
-  }, [sales, sellers, goals, currentMonth, currentYear]);
+  }, [filteredSales, filteredSellers, goals, currentMonth, currentYear]);
 
   // Calculate daily revenue data for chart
   const dailyRevenueData = useMemo(() => {
@@ -251,7 +288,7 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
     }
     
     // Filter sales for current month (excluding cancelled)
-    const currentMonthSales = sales.filter(sale => {
+    const currentMonthSales = filteredSales.filter(sale => {
       const saleDate = new Date(sale.created_at);
       return saleDate.getMonth() + 1 === currentMonth && 
              saleDate.getFullYear() === currentYear &&
@@ -263,7 +300,7 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
       if (!sale.seller_id) return;
       const saleDate = new Date(sale.created_at);
       const day = saleDate.getDate();
-      const seller = sellers.find(s => s.id === sale.seller_id);
+      const seller = filteredSellers.find(s => s.id === sale.seller_id);
       if (!seller) return;
       
       if (!dailyData[day][seller.nome]) {
@@ -293,7 +330,7 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
         return entry;
       })
       .filter(entry => entry.day <= new Date().getDate() || currentMonth < new Date().getMonth() + 1);
-  }, [sales, sellers, sellerMetrics, currentMonth, currentYear]);
+  }, [filteredSales, filteredSellers, sellerMetrics, currentMonth, currentYear]);
 
   // Colors for chart lines
   const chartColors = [
@@ -451,12 +488,30 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header with Goals Button */}
-      <div className="flex items-center justify-between">
+      {/* Header with Team Filter and Goals Button */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Ranking {monthNames[currentMonth - 1]} {currentYear}</h2>
           <p className="text-sm text-muted-foreground">Performance do mês atual</p>
         </div>
+        <div className="flex items-center gap-2">
+          {/* Team Filter */}
+          {teams.length > 0 && (
+            <Select value={selectedTeamId} onValueChange={setSelectedTeamId}>
+              <SelectTrigger className="w-[180px] gap-2">
+                <Users2 className="h-4 w-4" />
+                <SelectValue placeholder="Todas as equipes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as equipes</SelectItem>
+                {teams.map(team => (
+                  <SelectItem key={team.id} value={team.id}>
+                    {team.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         {isCEO && (
           <Dialog open={isGoalsDialogOpen} onOpenChange={setIsGoalsDialogOpen}>
             <DialogTrigger asChild>
@@ -532,6 +587,7 @@ export function SellerRanking({ sales, sellers }: SellerRankingProps) {
             </DialogContent>
           </Dialog>
         )}
+        </div>
       </div>
 
       {/* Podium - Top 3 */}

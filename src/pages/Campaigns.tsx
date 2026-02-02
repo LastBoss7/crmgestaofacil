@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Target, Calendar, TrendingUp, Pause, Play, CheckCircle, Trophy, Users } from 'lucide-react';
+import { Plus, Target, Calendar, TrendingUp, Pause, Play, CheckCircle, Trophy, Users, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, differenceInDays, isAfter, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -50,8 +50,19 @@ export default function Campaigns() {
   const { user, profile, isCEO, isBackoffice } = useAuth();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+  const [editSelectedTeams, setEditSelectedTeams] = useState<string[]>([]);
   const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    start_date: '',
+    end_date: '',
+    target_value: '',
+    target_sales: '',
+  });
+  const [editFormData, setEditFormData] = useState({
     name: '',
     description: '',
     start_date: '',
@@ -202,6 +213,75 @@ export default function Campaigns() {
       toast.success('Status atualizado!');
     },
   });
+
+  const updateCampaignMutation = useMutation({
+    mutationFn: async (data: typeof editFormData & { id: string }) => {
+      // Update campaign
+      const { error } = await supabase
+        .from('sales_campaigns')
+        .update({
+          name: data.name,
+          description: data.description || null,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          target_value: parseFloat(data.target_value) || 0,
+          target_sales: parseInt(data.target_sales) || 0,
+        })
+        .eq('id', data.id);
+
+      if (error) throw error;
+
+      // Delete existing team associations
+      await supabase
+        .from('campaign_teams')
+        .delete()
+        .eq('campaign_id', data.id);
+
+      // Insert new team associations if any teams selected
+      if (editSelectedTeams.length > 0) {
+        const teamInserts = editSelectedTeams.map(teamId => ({
+          campaign_id: data.id,
+          team_id: teamId,
+          company_id: profile?.company_id!,
+        }));
+
+        const { error: teamError } = await supabase
+          .from('campaign_teams')
+          .insert(teamInserts);
+
+        if (teamError) throw teamError;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['campaign-teams'] });
+      toast.success('Campanha atualizada com sucesso!');
+      setIsEditDialogOpen(false);
+      setEditingCampaign(null);
+      setEditSelectedTeams([]);
+    },
+    onError: () => {
+      toast.error('Erro ao atualizar campanha');
+    },
+  });
+
+  const handleOpenEditDialog = (campaign: Campaign) => {
+    setEditingCampaign(campaign);
+    setEditFormData({
+      name: campaign.name,
+      description: campaign.description || '',
+      start_date: campaign.start_date,
+      end_date: campaign.end_date,
+      target_value: campaign.target_value.toString(),
+      target_sales: campaign.target_sales.toString(),
+    });
+    // Get current teams for this campaign
+    const currentTeams = campaignTeams
+      .filter(ct => ct.campaign_id === campaign.id)
+      .map(ct => ct.team_id);
+    setEditSelectedTeams(currentTeams);
+    setIsEditDialogOpen(true);
+  };
 
   const getCampaignProgress = (campaign: Campaign) => {
     if (!salesData) return { salesCount: 0, totalValue: 0 };
@@ -419,6 +499,154 @@ export default function Campaigns() {
               </DialogContent>
             </Dialog>
           )}
+
+          {/* Edit Campaign Dialog */}
+          {canManage && (
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+              <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Editar Campanha</DialogTitle>
+                </DialogHeader>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (editingCampaign) {
+                      updateCampaignMutation.mutate({
+                        ...editFormData,
+                        id: editingCampaign.id,
+                      });
+                    }
+                  }}
+                  className="space-y-4 pb-2"
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-name">Nome da Campanha</Label>
+                    <Input
+                      id="edit-name"
+                      value={editFormData.name}
+                      onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                      placeholder="Ex: Black Friday 2024"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-description">Descrição</Label>
+                    <Textarea
+                      id="edit-description"
+                      value={editFormData.description}
+                      onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                      placeholder="Descrição da campanha..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-start_date">Data Início</Label>
+                      <Input
+                        id="edit-start_date"
+                        type="date"
+                        value={editFormData.start_date}
+                        onChange={(e) => setEditFormData({ ...editFormData, start_date: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-end_date">Data Fim</Label>
+                      <Input
+                        id="edit-end_date"
+                        type="date"
+                        value={editFormData.end_date}
+                        onChange={(e) => setEditFormData({ ...editFormData, end_date: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-target_sales">Meta de Vendas</Label>
+                      <Input
+                        id="edit-target_sales"
+                        type="number"
+                        value={editFormData.target_sales}
+                        onChange={(e) => setEditFormData({ ...editFormData, target_sales: e.target.value })}
+                        placeholder="Ex: 50"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-target_value">Meta de Valor (R$)</Label>
+                      <Input
+                        id="edit-target_value"
+                        type="number"
+                        step="0.01"
+                        value={editFormData.target_value}
+                        onChange={(e) => setEditFormData({ ...editFormData, target_value: e.target.value })}
+                        placeholder="Ex: 50000"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Team Selection */}
+                  {teams.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        Equipes Participantes
+                      </Label>
+                      <div className="border rounded-md p-3 max-h-40 overflow-y-auto space-y-2">
+                        {teams.map((team) => (
+                          <div key={team.id} className="flex items-center gap-2">
+                            <Checkbox
+                              id={`edit-team-${team.id}`}
+                              checked={editSelectedTeams.includes(team.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setEditSelectedTeams([...editSelectedTeams, team.id]);
+                                } else {
+                                  setEditSelectedTeams(editSelectedTeams.filter((id) => id !== team.id));
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor={`edit-team-${team.id}`}
+                              className="text-sm cursor-pointer"
+                            >
+                              {team.name}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                      {editSelectedTeams.length === 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          Nenhuma equipe selecionada = todas as equipes participam
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setIsEditDialogOpen(false);
+                        setEditingCampaign(null);
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit" className="flex-1" disabled={updateCampaignMutation.isPending}>
+                      {updateCampaignMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         {isLoading ? (
@@ -461,7 +689,19 @@ export default function Campaigns() {
                 <Card key={campaign.id} className="overflow-hidden">
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
-                      <CardTitle className="text-lg">{campaign.name}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-lg">{campaign.name}</CardTitle>
+                        {canManage && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-6 w-6"
+                            onClick={() => handleOpenEditDialog(campaign)}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
                       {getStatusBadge(campaign)}
                     </div>
                     {campaign.description && (

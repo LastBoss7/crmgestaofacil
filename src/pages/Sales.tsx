@@ -58,7 +58,7 @@ interface SaleWithSeller extends Sale {
 
 const Sales = () => {
   const navigate = useNavigate();
-  const { user, profile, isSeller, isCEO, isBackoffice } = useAuth();
+  const { user, profile, isSeller, isCEO, isBackoffice, isSupervisor } = useAuth();
   const [sales, setSales] = useState<SaleWithSeller[]>([]);
   const [sellers, setSellers] = useState<Record<string, Profile>>({});
   const [teams, setTeams] = useState<Record<string, string>>({});
@@ -567,10 +567,10 @@ const Sales = () => {
                     {isEditMode ? 'Edite os dados da venda e salve as alterações' : 'Informações completas da venda'}
                   </DialogDescription>
                 </div>
-                {/* Edit button - Show for seller when sale is in PENDENCIA or for CEO/Backoffice */}
+                {/* Edit button - Show for seller when sale is in PENDENCIA or for CEO/Backoffice/Supervisor */}
                 {selectedSale && !isEditMode && (
                   (isSeller && selectedSale.seller_id === user?.id && selectedSale.status === 'PENDENCIA') ||
-                  isCEO || isBackoffice
+                  isCEO || isBackoffice || isSupervisor
                 ) && (
                   <Button
                     variant="outline"

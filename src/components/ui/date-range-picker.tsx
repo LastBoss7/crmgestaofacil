@@ -1,5 +1,5 @@
 import * as React from "react";
-import { format } from "date-fns";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon, X } from "lucide-react";
 import { DateRange } from "react-day-picker";
@@ -31,6 +31,36 @@ export function DateRangePicker({
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChange(undefined);
+  };
+
+  const handlePreset = (preset: 'today' | 'yesterday' | 'thisWeek' | 'thisMonth') => {
+    const today = new Date();
+    let range: DateRange;
+
+    switch (preset) {
+      case 'today':
+        range = { from: today, to: today };
+        break;
+      case 'yesterday':
+        const yesterday = subDays(today, 1);
+        range = { from: yesterday, to: yesterday };
+        break;
+      case 'thisWeek':
+        range = { 
+          from: startOfWeek(today, { locale: ptBR }), 
+          to: endOfWeek(today, { locale: ptBR }) 
+        };
+        break;
+      case 'thisMonth':
+        range = { 
+          from: startOfMonth(today), 
+          to: endOfMonth(today) 
+        };
+        break;
+    }
+
+    onChange(range);
+    setIsOpen(false);
   };
 
   return (
@@ -66,6 +96,41 @@ export function DateRangePicker({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
+          {/* Preset buttons */}
+          <div className="flex flex-wrap gap-1.5 p-3 border-b">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => handlePreset('today')}
+            >
+              Hoje
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => handlePreset('yesterday')}
+            >
+              Ontem
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => handlePreset('thisWeek')}
+            >
+              Esta Semana
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => handlePreset('thisMonth')}
+            >
+              Este Mês
+            </Button>
+          </div>
           <Calendar
             initialFocus
             mode="range"

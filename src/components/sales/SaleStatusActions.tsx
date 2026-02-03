@@ -38,13 +38,15 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
   const [statusUpdate, setStatusUpdate] = useState({
     status: sale.status,
     motivo_pendencia: sale.motivo_pendencia || '',
+    motivo_cancelamento: '',
   });
   const [justificativaCorrecao, setJustificativaCorrecao] = useState('');
   const [showJustificativaField, setShowJustificativaField] = useState(false);
+  const [showCancellationReason, setShowCancellationReason] = useState(false);
   const [loading, setLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
-    action: 'VENDA_AUDITADA' | 'CANCELADA' | null;
+    action: 'VENDA_AUDITADA' | null;
   }>({ open: false, action: null });
 
   const canApprove = isCEO || isBackoffice || isSupervisor || isCoordinator;
@@ -77,13 +79,16 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
 
   const availableStatuses = getAvailableStatuses();
 
-  const handleQuickAction = async (newStatus: SaleStatus, motivo?: string, justificativa?: string) => {
+  const handleQuickAction = async (newStatus: SaleStatus, motivo?: string, justificativa?: string, motivoCancelamento?: string) => {
     setLoading(true);
 
     const oldStatus = sale.status;
-    const updateData: Partial<Sale> = { status: newStatus };
+    const updateData: Record<string, unknown> = { status: newStatus };
     if (motivo) {
       updateData.motivo_pendencia = motivo;
+    }
+    if (motivoCancelamento && newStatus === 'CANCELADA') {
+      updateData.motivo_cancelamento = motivoCancelamento;
     }
 
     const { error } = await supabase
@@ -178,10 +183,25 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
       return;
     }
 
+    if (statusUpdate.status === 'CANCELADA' && !statusUpdate.motivo_cancelamento.trim()) {
+      toast.error('Informe o motivo do cancelamento');
+      return;
+    }
+
     await handleQuickAction(
       statusUpdate.status,
-      statusUpdate.status === 'PENDENCIA' ? statusUpdate.motivo_pendencia : undefined
+      statusUpdate.status === 'PENDENCIA' ? statusUpdate.motivo_pendencia : undefined,
+      undefined,
+      statusUpdate.status === 'CANCELADA' ? statusUpdate.motivo_cancelamento : undefined
     );
+  };
+
+  const handleCancellation = () => {
+    if (!statusUpdate.motivo_cancelamento.trim()) {
+      toast.error('Informe o motivo do cancelamento');
+      return;
+    }
+    handleQuickAction('CANCELADA', undefined, undefined, statusUpdate.motivo_cancelamento);
   };
 
   // Quick actions for Backoffice/CEO
@@ -217,7 +237,7 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
             variant="outline"
             size="sm"
             className="gap-2 border-red-500/50 text-red-500 hover:bg-red-500/10"
-            onClick={() => setConfirmDialog({ open: true, action: 'CANCELADA' })}
+            onClick={() => setShowCancellationReason(true)}
             disabled={loading}
           >
             <XCircle className="h-4 w-4" />
@@ -228,33 +248,57 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
         <AlertDialog open={confirmDialog.open} onOpenChange={(open) => setConfirmDialog({ open, action: null })}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>
-                {confirmDialog.action === 'VENDA_AUDITADA' ? 'Auditar Venda' : 'Cancelar Venda'}
-              </AlertDialogTitle>
+              <AlertDialogTitle>Auditar Venda</AlertDialogTitle>
               <AlertDialogDescription>
-                {confirmDialog.action === 'VENDA_AUDITADA'
-                  ? 'Tem certeza que deseja marcar esta venda como auditada? Esta ação não poderá ser desfeita facilmente.'
-                  : 'Tem certeza que deseja cancelar esta venda? Esta ação não poderá ser desfeita facilmente.'}
+                Tem certeza que deseja marcar esta venda como auditada? Esta ação não poderá ser desfeita facilmente.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Voltar</AlertDialogCancel>
               <AlertDialogAction
-                className={confirmDialog.action === 'VENDA_AUDITADA' 
-                  ? 'bg-green-600 hover:bg-green-700' 
-                  : 'bg-destructive hover:bg-destructive/90'}
+                className="bg-green-600 hover:bg-green-700"
                 onClick={() => {
-                  if (confirmDialog.action) {
-                    handleQuickAction(confirmDialog.action);
-                  }
+                  handleQuickAction('VENDA_AUDITADA');
                   setConfirmDialog({ open: false, action: null });
                 }}
               >
-                {confirmDialog.action === 'VENDA_AUDITADA' ? 'Sim, Auditar' : 'Sim, Cancelar'}
+                Sim, Auditar
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {showCancellationReason && (
+          <div className="space-y-3 p-4 rounded-lg border border-destructive/30 bg-destructive/10">
+            <Label className="text-destructive">Motivo do Cancelamento *</Label>
+            <Textarea
+              placeholder="Ex: Cliente desistiu, duplicidade, dados incorretos, sem viabilidade técnica..."
+              value={statusUpdate.motivo_cancelamento}
+              onChange={(e) => setStatusUpdate({ ...statusUpdate, motivo_cancelamento: e.target.value })}
+              className="bg-card border-border"
+            />
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setShowCancellationReason(false);
+                  setStatusUpdate({ ...statusUpdate, motivo_cancelamento: '' });
+                }}
+              >
+                Voltar
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={handleCancellation}
+                disabled={loading || !statusUpdate.motivo_cancelamento.trim()}
+              >
+                Confirmar Cancelamento
+              </Button>
+            </div>
+          </div>
+        )}
 
         {statusUpdate.status === 'PENDENCIA' && (
           <div className="space-y-3 p-4 rounded-lg border border-orange-500/30 bg-orange-500/10">
@@ -440,11 +484,22 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
 
           {statusUpdate.status === 'PENDENCIA' && (
             <div className="space-y-2">
-              <Label>Motivo da Pendência</Label>
+              <Label>Motivo da Pendência *</Label>
               <Textarea
                 placeholder="Descreva o motivo..."
                 value={statusUpdate.motivo_pendencia}
                 onChange={(e) => setStatusUpdate({ ...statusUpdate, motivo_pendencia: e.target.value })}
+              />
+            </div>
+          )}
+
+          {statusUpdate.status === 'CANCELADA' && (
+            <div className="space-y-2">
+              <Label>Motivo do Cancelamento *</Label>
+              <Textarea
+                placeholder="Ex: Cliente desistiu, duplicidade, dados incorretos, sem viabilidade técnica..."
+                value={statusUpdate.motivo_cancelamento}
+                onChange={(e) => setStatusUpdate({ ...statusUpdate, motivo_cancelamento: e.target.value })}
               />
             </div>
           )}

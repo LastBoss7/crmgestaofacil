@@ -733,6 +733,7 @@ export type Database = {
           gestor_nome: string | null
           gestor_rg: string | null
           id: string
+          motivo_cancelamento: string | null
           motivo_pendencia: string | null
           movel_valor: number | null
           nome_fantasia: string | null
@@ -783,6 +784,7 @@ export type Database = {
           gestor_nome?: string | null
           gestor_rg?: string | null
           id?: string
+          motivo_cancelamento?: string | null
           motivo_pendencia?: string | null
           movel_valor?: number | null
           nome_fantasia?: string | null
@@ -833,6 +835,7 @@ export type Database = {
           gestor_nome?: string | null
           gestor_rg?: string | null
           id?: string
+          motivo_cancelamento?: string | null
           motivo_pendencia?: string | null
           movel_valor?: number | null
           nome_fantasia?: string | null

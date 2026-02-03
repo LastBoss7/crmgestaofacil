@@ -514,7 +514,15 @@ const Sales = () => {
 
         {/* Cancelled Sales Analysis - CEO only */}
         {isCEO && !loading && (
-          <CancelledSalesAnalysis sales={filteredSales} teams={teams} />
+          <CancelledSalesAnalysis 
+            sales={filteredSales} 
+            teams={teams} 
+            sellers={sellers}
+            exportedBy={{
+              name: profile?.nome || 'Usuário',
+              team: userTeamName || undefined,
+            }}
+          />
         )}
 
         {/* Sales Table */}

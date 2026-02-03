@@ -251,19 +251,36 @@ const Sales = () => {
           teamFilter.some(teamId => teams[teamId] === sale.equipe)
         ));
       
-      // Date range filter
+      // Date range filter - compare dates as strings to avoid timezone issues
       const matchesDateRange = (() => {
         if (!dateRange?.from) return true;
-        const saleDate = sale.data_venda ? new Date(sale.data_venda) : new Date(sale.created_at);
-        const from = new Date(dateRange.from);
-        from.setHours(0, 0, 0, 0);
+        
+        // Format dates as YYYY-MM-DD for proper comparison
+        const formatDateString = (date: Date) => {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+        
+        // Get sale date - prefer data_venda, fallback to created_at
+        let saleDateStr: string;
+        if (sale.data_venda) {
+          // data_venda is already in YYYY-MM-DD format
+          saleDateStr = sale.data_venda;
+        } else {
+          // Extract date from created_at timestamp
+          const createdDate = new Date(sale.created_at);
+          saleDateStr = formatDateString(createdDate);
+        }
+        
+        const fromStr = formatDateString(dateRange.from);
         
         if (dateRange.to) {
-          const to = new Date(dateRange.to);
-          to.setHours(23, 59, 59, 999);
-          return saleDate >= from && saleDate <= to;
+          const toStr = formatDateString(dateRange.to);
+          return saleDateStr >= fromStr && saleDateStr <= toStr;
         }
-        return saleDate >= from;
+        return saleDateStr >= fromStr;
       })();
       
       return matchesSearch && matchesStatus && matchesPlano && matchesTeam && matchesDateRange;

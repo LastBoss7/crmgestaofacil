@@ -5,7 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
-import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X, Printer, Pencil, Package, Users2, CalendarDays, DollarSign } from 'lucide-react';
+import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X, Printer, Pencil, Package, Users2, CalendarDays, DollarSign, Info } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,6 +50,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 
 interface SaleWithSeller extends Sale {
@@ -492,9 +493,17 @@ const Sales = () => {
                     {filteredSales.length} {filteredSales.length === 1 ? 'venda' : 'vendas'} encontrada{filteredSales.length !== 1 && 's'}
                   </p>
                   {cancelledSalesCount > 0 && (
-                    <p className="text-xs text-destructive/80">
-                      {cancelledSalesCount} cancelada{cancelledSalesCount !== 1 && 's'} excluída{cancelledSalesCount !== 1 && 's'}
-                    </p>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <p className="text-xs text-destructive/80 flex items-center gap-1 cursor-help justify-end">
+                          {cancelledSalesCount} cancelada{cancelledSalesCount !== 1 && 's'} excluída{cancelledSalesCount !== 1 && 's'}
+                          <Info className="h-3 w-3" />
+                        </p>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="max-w-[250px]">
+                        <p>Vendas canceladas são excluídas do cálculo de faturamento para refletir apenas a receita ativa da empresa.</p>
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               </div>

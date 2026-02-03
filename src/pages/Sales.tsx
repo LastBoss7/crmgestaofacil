@@ -15,6 +15,7 @@ import { SaleForm } from '@/components/sales/SaleForm';
 import { SaleEditForm } from '@/components/sales/SaleEditForm';
 import { SaleDetails } from '@/components/sales/SaleDetails';
 import { PendingSalesAlert } from '@/components/sales/PendingSalesAlert';
+import { CancelledSalesAnalysis } from '@/components/dashboard/CancelledSalesAnalysis';
 import { exportToExcel, exportToPDF, exportSaleDetailsToPDF, getPeriodLabel } from '@/lib/export-utils';
 import { MultiSelectFilter } from '@/components/ui/multi-select-filter';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
@@ -509,6 +510,11 @@ const Sales = () => {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Cancelled Sales Analysis - CEO only */}
+        {isCEO && !loading && (
+          <CancelledSalesAnalysis sales={filteredSales} teams={teams} />
         )}
 
         {/* Sales Table */}

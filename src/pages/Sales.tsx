@@ -287,6 +287,11 @@ const Sales = () => {
       .reduce((acc, sale) => acc + (Number(sale.valor_mensal) || 0), 0);
   }, [filteredSales]);
 
+  // Count cancelled sales excluded from revenue
+  const cancelledSalesCount = useMemo(() => {
+    return filteredSales.filter(sale => sale.status === 'CANCELADA').length;
+  }, [filteredSales]);
+
   // Get status filter label for display
   const statusFilterLabel = useMemo(() => {
     if (statusFilter.length === 0) return 'Todas as vendas';
@@ -482,10 +487,15 @@ const Sales = () => {
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-right space-y-1">
                   <p className="text-xs text-muted-foreground">
                     {filteredSales.length} {filteredSales.length === 1 ? 'venda' : 'vendas'} encontrada{filteredSales.length !== 1 && 's'}
                   </p>
+                  {cancelledSalesCount > 0 && (
+                    <p className="text-xs text-destructive/80">
+                      {cancelledSalesCount} cancelada{cancelledSalesCount !== 1 && 's'} excluída{cancelledSalesCount !== 1 && 's'}
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>

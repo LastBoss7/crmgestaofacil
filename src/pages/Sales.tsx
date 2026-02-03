@@ -5,7 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
-import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X, Printer, Pencil, Package, Users2, CalendarDays } from 'lucide-react';
+import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X, Printer, Pencil, Package, Users2, CalendarDays, DollarSign } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -280,6 +280,18 @@ const Sales = () => {
     return filteredSales.slice(startIndex, startIndex + pageSize);
   }, [filteredSales, currentPage, pageSize]);
 
+  // Calculate total revenue for filtered sales (CEO only feature)
+  const filteredSalesRevenue = useMemo(() => {
+    return filteredSales.reduce((acc, sale) => acc + (Number(sale.valor_mensal) || 0), 0);
+  }, [filteredSales]);
+
+  // Get status filter label for display
+  const statusFilterLabel = useMemo(() => {
+    if (statusFilter.length === 0) return 'Todas as vendas';
+    if (statusFilter.length === 1) return SALE_STATUS_LABELS[statusFilter[0]];
+    return `${statusFilter.length} status selecionados`;
+  }, [statusFilter]);
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -449,6 +461,34 @@ const Sales = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Revenue Summary Card - CEO only */}
+        {isCEO && !loading && filteredSales.length > 0 && (
+          <Card className="shadow-card border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
+            <CardContent className="py-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                    <DollarSign className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      Faturamento: {statusFilterLabel}
+                    </p>
+                    <p className="text-2xl font-bold text-primary">
+                      {formatCurrency(filteredSalesRevenue)}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">
+                    {filteredSales.length} {filteredSales.length === 1 ? 'venda' : 'vendas'} encontrada{filteredSales.length !== 1 && 's'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Sales Table */}
         <Card className="shadow-card">

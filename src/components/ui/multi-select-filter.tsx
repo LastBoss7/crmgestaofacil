@@ -125,7 +125,7 @@ export function MultiSelectFilter({
           )}
         </div>
 
-        <ScrollArea className="max-h-[300px]">
+        <ScrollArea className="h-auto max-h-[250px] overflow-y-auto">
           <div className="p-2 space-y-1">
             {options.map((option) => {
               const isSelected = selected.includes(option.value);

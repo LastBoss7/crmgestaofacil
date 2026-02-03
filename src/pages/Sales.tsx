@@ -14,6 +14,7 @@ import { SaleStatusActions } from '@/components/sales/SaleStatusActions';
 import { SaleForm } from '@/components/sales/SaleForm';
 import { SaleEditForm } from '@/components/sales/SaleEditForm';
 import { SaleDetails } from '@/components/sales/SaleDetails';
+import { ChangeSellerDialog } from '@/components/sales/ChangeSellerDialog';
 import { PendingSalesAlert } from '@/components/sales/PendingSalesAlert';
 import { CancelledSalesAnalysis } from '@/components/dashboard/CancelledSalesAnalysis';
 import { exportToExcel, exportToPDF, exportSaleDetailsToPDF, getPeriodLabel } from '@/lib/export-utils';
@@ -691,6 +692,19 @@ const Sales = () => {
                   />
                 ) : (
                   <>
+                    {/* CEO: Change Seller Button */}
+                    <div className="flex justify-end">
+                      <ChangeSellerDialog
+                        saleId={selectedSale.id}
+                        currentSellerId={selectedSale.seller_id}
+                        currentSellerName={selectedSale.seller_id ? sellers[selectedSale.seller_id]?.nome : undefined}
+                        onSuccess={() => {
+                          fetchSales();
+                          setIsDetailOpen(false);
+                        }}
+                      />
+                    </div>
+
                     {/* Complete Sale Details */}
                     <SaleDetails 
                       sale={selectedSale} 

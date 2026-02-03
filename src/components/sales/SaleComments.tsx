@@ -79,6 +79,7 @@ export function SaleComments({ saleId }: SaleCommentsProps) {
       user_name: profile.nome,
       user_role: role,
       message: newMessage.trim(),
+      company_id: profile.company_id,
     });
 
     if (error) {

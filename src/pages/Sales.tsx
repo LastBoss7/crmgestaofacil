@@ -280,9 +280,11 @@ const Sales = () => {
     return filteredSales.slice(startIndex, startIndex + pageSize);
   }, [filteredSales, currentPage, pageSize]);
 
-  // Calculate total revenue for filtered sales (CEO only feature)
+  // Calculate total revenue for filtered sales (CEO only feature) - excludes cancelled sales
   const filteredSalesRevenue = useMemo(() => {
-    return filteredSales.reduce((acc, sale) => acc + (Number(sale.valor_mensal) || 0), 0);
+    return filteredSales
+      .filter(sale => sale.status !== 'CANCELADA')
+      .reduce((acc, sale) => acc + (Number(sale.valor_mensal) || 0), 0);
   }, [filteredSales]);
 
   // Get status filter label for display

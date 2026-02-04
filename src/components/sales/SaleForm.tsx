@@ -134,8 +134,8 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   // Multiple portability phone numbers state (with operator)
   const [portabilityPhones, setPortabilityPhones] = useState<{ phone: string; operator: string }[]>([{ phone: '', operator: '' }]);
 
-  // Fetch team name for the seller
-  const { data: teamData, isLoading: isLoadingTeam } = useQuery({
+  // Fetch team name for the seller - with retry capability
+  const { data: teamData, isLoading: isLoadingTeam, refetch: refetchTeam } = useQuery({
     queryKey: ['seller-team', profile?.team_id],
     queryFn: async () => {
       if (!profile?.team_id) return null;
@@ -153,6 +153,8 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
     },
     enabled: !!profile?.team_id,
     staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 3, // Retry up to 3 times on failure
+    retryDelay: 500,
   });
 
   // Fetch active campaigns
@@ -431,8 +433,29 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
       return;
     }
     
+    // Determine team name - use current data or refetch if needed
+    let finalTeamName = teamData?.name;
+    
+    // If team data is missing but profile has team_id, try to refetch
+    if (profile?.team_id && !finalTeamName) {
+      toast.info('Carregando dados da equipe...');
+      try {
+        const result = await refetchTeam();
+        if (result.data?.name) {
+          finalTeamName = result.data.name;
+        } else {
+          toast.error('Não foi possível carregar os dados da equipe. Tente novamente.');
+          return;
+        }
+      } catch (error) {
+        console.error('Error refetching team:', error);
+        toast.error('Erro ao carregar dados da equipe. Tente novamente.');
+        return;
+      }
+    }
+    
     // Validate team assignment
-    if (!profile?.team_id || !teamData?.name) {
+    if (!profile?.team_id || !finalTeamName) {
       toast.error('Você não está vinculado a nenhuma equipe. Solicite ao seu supervisor para vincular você a uma equipe antes de cadastrar vendas.');
       return;
     }
@@ -484,7 +507,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         seller_id: userId,
         company_id: profile?.company_id || null,
         data_venda: form.data_venda || null,
-        equipe: teamData?.name || null, // Auto-set from seller's team name
+        equipe: finalTeamName, // Use the validated team name
         tipo_negociacao: form.tipo_negociacao || null,
         cnpj_cliente: form.cnpj_cliente,
         razao_social: form.razao_social,

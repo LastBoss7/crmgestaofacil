@@ -70,6 +70,7 @@ const STATUS_COLORS: Record<SaleStatus, string> = {
   CHAMADO_EM_ABERTO: '#6366F1',
   DESCONECTADO: '#6B7280',
   ENVIADO_PARA_SAV: '#EC4899',
+  IMPUTADA: '#0EA5E9',
 };
 
 const Reports = () => {
@@ -242,7 +243,7 @@ const Reports = () => {
   // Sales by status for pie chart - showing active sales only
   const statusData = useMemo(() => {
     const counts: Record<SaleStatus, number> = {
-      PRE_ANALISE: 0, AGUARDANDO_AUDITORIA: 0, PENDENCIA: 0, VENDA_AUDITADA: 0, INSTALACAO_MARCADA: 0, INSTALADA: 0, CANCELADA: 0, ACEITE_ENVIADO: 0, CHAMADO_EM_ABERTO: 0, DESCONECTADO: 0, ENVIADO_PARA_SAV: 0
+      PRE_ANALISE: 0, AGUARDANDO_AUDITORIA: 0, PENDENCIA: 0, VENDA_AUDITADA: 0, INSTALACAO_MARCADA: 0, INSTALADA: 0, CANCELADA: 0, ACEITE_ENVIADO: 0, CHAMADO_EM_ABERTO: 0, DESCONECTADO: 0, ENVIADO_PARA_SAV: 0, IMPUTADA: 0
     };
     
     // Count active sales by status

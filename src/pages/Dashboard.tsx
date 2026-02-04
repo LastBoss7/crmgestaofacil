@@ -46,9 +46,10 @@ const STATUS_BADGE_STYLES: Record<SaleStatus, { bg: string; text: string; label:
   CHAMADO_EM_ABERTO: { bg: 'bg-indigo-50 dark:bg-indigo-500/10', text: 'text-indigo-600 dark:text-indigo-400', label: 'Chamado Aberto' },
   DESCONECTADO: { bg: 'bg-slate-50 dark:bg-slate-500/10', text: 'text-slate-600 dark:text-slate-400', label: 'Desconectado' },
   ENVIADO_PARA_SAV: { bg: 'bg-pink-50 dark:bg-pink-500/10', text: 'text-pink-600 dark:text-pink-400', label: 'Enviado p/ SAV' },
+  IMPUTADA: { bg: 'bg-sky-50 dark:bg-sky-500/10', text: 'text-sky-600 dark:text-sky-400', label: 'Imputada' },
 };
 
-const ALL_STATUSES: SaleStatus[] = ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO', 'ENVIADO_PARA_SAV'];
+const ALL_STATUSES: SaleStatus[] = ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO', 'ENVIADO_PARA_SAV', 'IMPUTADA'];
 
 const Dashboard = () => {
   const navigate = useNavigate();

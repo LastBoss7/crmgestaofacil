@@ -11,7 +11,8 @@ import {
   Send,
   Headphones,
   Unplug,
-  Truck
+  Truck,
+  FileCheck
 } from 'lucide-react';
 
 interface StatusBadgeProps {
@@ -92,6 +93,12 @@ const statusConfig: Record<SaleStatus, {
     text: 'text-pink-600 dark:text-pink-400',
     border: 'border-pink-100 dark:border-pink-500/25',
     icon: Truck,
+  },
+  IMPUTADA: { 
+    bg: 'bg-sky-50 dark:bg-sky-500/15',
+    text: 'text-sky-600 dark:text-sky-400',
+    border: 'border-sky-100 dark:border-sky-500/25',
+    icon: FileCheck,
   },
 };
 

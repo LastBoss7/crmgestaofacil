@@ -1339,6 +1339,7 @@ export type Database = {
         | "CHAMADO_EM_ABERTO"
         | "DESCONECTADO"
         | "ENVIADO_PARA_SAV"
+        | "IMPUTADA"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1487,6 +1488,7 @@ export const Constants = {
         "CHAMADO_EM_ABERTO",
         "DESCONECTADO",
         "ENVIADO_PARA_SAV",
+        "IMPUTADA",
       ],
     },
   },

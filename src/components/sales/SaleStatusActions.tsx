@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Sale, SaleStatus, SALE_STATUS_LABELS } from '@/types/database';
-import { CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, AlertTriangle, Send } from 'lucide-react';
 
 interface SaleStatusActionsProps {
   sale: Sale;
@@ -56,19 +56,19 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
   const getAvailableStatuses = (): SaleStatus[] => {
     if (isCEO) {
       // CEO pode fazer tudo
-      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO', 'ENVIADO_PARA_SAV'];
+      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO', 'ENVIADO_PARA_SAV', 'IMPUTADA'];
     }
     if (isCoordinator) {
       // Coordenador pode gerenciar vendas das equipes atribuídas
-      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO', 'ENVIADO_PARA_SAV'];
+      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO', 'ENVIADO_PARA_SAV', 'IMPUTADA'];
     }
     if (isBackoffice) {
       // Backoffice analisa, aprova ou devolve
-      return ['AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO', 'ENVIADO_PARA_SAV'];
+      return ['AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO', 'ENVIADO_PARA_SAV', 'IMPUTADA'];
     }
     if (isSupervisor) {
       // Supervisor pode gerenciar vendas da equipe
-      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO', 'ENVIADO_PARA_SAV'];
+      return ['PRE_ANALISE', 'AGUARDANDO_AUDITORIA', 'PENDENCIA', 'VENDA_AUDITADA', 'INSTALACAO_MARCADA', 'INSTALADA', 'CANCELADA', 'ACEITE_ENVIADO', 'CHAMADO_EM_ABERTO', 'DESCONECTADO', 'ENVIADO_PARA_SAV', 'IMPUTADA'];
     }
     if (isSeller && isOwner) {
       // Vendedor pode usar: Pré-Análise, Aguardando Auditoria, Aceite Enviado, Chamado em Aberto, Desconectado, Enviado para SAV
@@ -220,6 +220,17 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
           >
             <CheckCircle className="h-4 w-4" />
             Auditar Venda
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-teal-500/50 text-teal-500 hover:bg-teal-500/10"
+            onClick={() => handleQuickAction('ACEITE_ENVIADO')}
+            disabled={loading}
+          >
+            <Send className="h-4 w-4" />
+            Aceite Enviado
           </Button>
           
           <Button

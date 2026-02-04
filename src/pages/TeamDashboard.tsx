@@ -57,6 +57,7 @@ const STATUS_COLORS: Record<SaleStatus, string> = {
   CHAMADO_EM_ABERTO: '#6366F1',
   DESCONECTADO: '#6B7280',
   ENVIADO_PARA_SAV: '#EC4899',
+  IMPUTADA: '#0EA5E9',
 };
 
 interface TeamMemberMetrics {

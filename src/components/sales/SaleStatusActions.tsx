@@ -5,6 +5,7 @@ import { useSaleHistory } from '@/hooks/useSaleHistory';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -24,7 +25,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Sale, SaleStatus, SALE_STATUS_LABELS } from '@/types/database';
-import { CheckCircle, XCircle, Clock, AlertTriangle, Send } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, AlertTriangle, Send, CalendarClock } from 'lucide-react';
 
 interface SaleStatusActionsProps {
   sale: Sale;
@@ -40,6 +41,8 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
     motivo_pendencia: sale.motivo_pendencia || '',
     motivo_cancelamento: '',
   });
+  const [instalacaoData, setInstalacaoData] = useState('');
+  const [instalacaoHorario, setInstalacaoHorario] = useState('');
   const [justificativaCorrecao, setJustificativaCorrecao] = useState('');
   const [showJustificativaField, setShowJustificativaField] = useState(false);
   const [showCancellationReason, setShowCancellationReason] = useState(false);
@@ -79,7 +82,7 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
 
   const availableStatuses = getAvailableStatuses();
 
-  const handleQuickAction = async (newStatus: SaleStatus, motivo?: string, justificativa?: string, motivoCancelamento?: string) => {
+  const handleQuickAction = async (newStatus: SaleStatus, motivo?: string, justificativa?: string, motivoCancelamento?: string, dataInstalacao?: string, horarioInstalacao?: string) => {
     setLoading(true);
 
     const oldStatus = sale.status;
@@ -111,6 +114,9 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
         }
         if (justificativa) {
           message += ` - Correções realizadas: ${justificativa}`;
+        }
+        if (dataInstalacao && horarioInstalacao) {
+          message += ` - Instalação agendada para: ${dataInstalacao} às ${horarioInstalacao}`;
         }
         
         await supabase.from('sale_comments').insert({
@@ -188,11 +194,18 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
       return;
     }
 
+    if (statusUpdate.status === 'INSTALACAO_MARCADA' && (!instalacaoData || !instalacaoHorario)) {
+      toast.error('Informe a data e horário da instalação');
+      return;
+    }
+
     await handleQuickAction(
       statusUpdate.status,
       statusUpdate.status === 'PENDENCIA' ? statusUpdate.motivo_pendencia : undefined,
       undefined,
-      statusUpdate.status === 'CANCELADA' ? statusUpdate.motivo_cancelamento : undefined
+      statusUpdate.status === 'CANCELADA' ? statusUpdate.motivo_cancelamento : undefined,
+      statusUpdate.status === 'INSTALACAO_MARCADA' ? instalacaoData : undefined,
+      statusUpdate.status === 'INSTALACAO_MARCADA' ? instalacaoHorario : undefined
     );
   };
 
@@ -512,6 +525,35 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
                 value={statusUpdate.motivo_cancelamento}
                 onChange={(e) => setStatusUpdate({ ...statusUpdate, motivo_cancelamento: e.target.value })}
               />
+            </div>
+          )}
+
+          {statusUpdate.status === 'INSTALACAO_MARCADA' && (
+            <div className="space-y-3 p-4 rounded-lg border border-primary/30 bg-primary/5">
+              <div className="flex items-center gap-2 text-primary">
+                <CalendarClock className="h-4 w-4" />
+                <Label className="text-primary font-medium">Agendamento da Instalação *</Label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Data</Label>
+                  <Input
+                    type="date"
+                    value={instalacaoData}
+                    onChange={(e) => setInstalacaoData(e.target.value)}
+                    className="bg-card"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Horário</Label>
+                  <Input
+                    type="time"
+                    value={instalacaoHorario}
+                    onChange={(e) => setInstalacaoHorario(e.target.value)}
+                    className="bg-card"
+                  />
+                </div>
+              </div>
             </div>
           )}
 

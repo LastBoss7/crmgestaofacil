@@ -1280,6 +1280,10 @@ export type Database = {
       }
       get_user_team: { Args: { _user_id: string }; Returns: string }
       get_user_team_name: { Args: { _user_id: string }; Returns: string }
+      has_backoffice_team_assignments: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

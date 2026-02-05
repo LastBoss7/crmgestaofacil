@@ -200,6 +200,9 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
       case 'valor_mensal':
         if (!value || parseFloat(value) <= 0) return 'Valor mensal é obrigatório';
         return undefined;
+      case 'plano_contratado':
+        if (!value || !value.trim()) return 'Plano contratado é obrigatório';
+        return undefined;
       default:
         return undefined;
     }
@@ -480,6 +483,12 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         newErrors.email = emailError;
         hasErrors = true;
       }
+    }
+
+    // Validate plano_contratado is required
+    if (!form.plano_contratado || !form.plano_contratado.trim()) {
+      newErrors.plano_contratado = 'Plano contratado é obrigatório';
+      hasErrors = true;
     }
 
     // Validate documents are required
@@ -1053,13 +1062,20 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         <SectionHeader icon={DollarSign} title="Plano Contratado" />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-2 sm:col-span-2 lg:col-span-4">
-            <Label htmlFor="plano">Plano</Label>
+            <Label htmlFor="plano" className="flex items-center gap-1">
+              Plano <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="plano"
               placeholder="Ex: Vivo Fibra 300MB + Vivo Total"
               value={form.plano_contratado}
               onChange={(e) => updateForm('plano_contratado', e.target.value)}
+              onBlur={() => handleBlur('plano_contratado')}
+              className={errors.plano_contratado && touched.plano_contratado ? 'border-destructive' : ''}
             />
+            {errors.plano_contratado && touched.plano_contratado && (
+              <p className="text-sm text-destructive">{errors.plano_contratado}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="bl">BL Valor (R$)</Label>

@@ -73,17 +73,24 @@ const STATUS_COLORS: Record<SaleStatus, string> = {
   IMPUTADA: '#0EA5E9',
 };
 
+interface Team {
+  id: string;
+  name: string;
+}
+
 const Reports = () => {
   const { user, isSeller } = useAuth();
   const [sales, setSales] = useState<Sale[]>([]);
   const [allCancelledSales, setAllCancelledSales] = useState<Sale[]>([]);
   const [sellers, setSellers] = useState<Profile[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
   });
   const [selectedSeller, setSelectedSeller] = useState<string>('ALL');
+  const [selectedTeam, setSelectedTeam] = useState<string>('ALL');
   const [selectedCancelReason, setSelectedCancelReason] = useState<string>('ALL');
 
   useEffect(() => {
@@ -124,6 +131,13 @@ const Reports = () => {
           .from('profiles')
           .select('*');
         setSellers((sellersData || []) as Profile[]);
+
+        // Fetch teams
+        const { data: teamsData } = await supabase
+          .from('teams')
+          .select('id, name')
+          .order('name');
+        setTeams((teamsData || []) as Team[]);
       }
 
       setLoading(false);
@@ -132,19 +146,32 @@ const Reports = () => {
     fetchData();
   }, [user, dateRange, isSeller]);
 
-  // Filter active sales by seller (date range already applied in fetch)
+  // Filter active sales by seller and team (date range already applied in fetch)
   const activeSales = useMemo(() => {
-    if (selectedSeller === 'ALL') return sales;
-    return sales.filter(s => s.seller_id === selectedSeller);
-  }, [sales, selectedSeller]);
+    let filtered = sales;
+    if (selectedSeller !== 'ALL') {
+      filtered = filtered.filter(s => s.seller_id === selectedSeller);
+    }
+    if (selectedTeam !== 'ALL') {
+      const teamName = teams.find(t => t.id === selectedTeam)?.name;
+      filtered = filtered.filter(s => s.equipe === teamName || s.equipe === selectedTeam);
+    }
+    return filtered;
+  }, [sales, selectedSeller, selectedTeam, teams]);
 
-  // Filter cancelled sales by seller and reason
+  // Filter cancelled sales by seller, team and reason
   const cancelledSales = useMemo(() => {
     let cancelled = allCancelledSales;
     
     // Filter by seller
     if (selectedSeller !== 'ALL') {
       cancelled = cancelled.filter(s => s.seller_id === selectedSeller);
+    }
+
+    // Filter by team
+    if (selectedTeam !== 'ALL') {
+      const teamName = teams.find(t => t.id === selectedTeam)?.name;
+      cancelled = cancelled.filter(s => s.equipe === teamName || s.equipe === selectedTeam);
     }
     
     // Apply cancel reason filter
@@ -157,13 +184,20 @@ const Reports = () => {
     }
     
     return cancelled;
-  }, [allCancelledSales, selectedSeller, selectedCancelReason]);
+  }, [allCancelledSales, selectedSeller, selectedTeam, selectedCancelReason, teams]);
 
   // For chart data, use all cancelled (before reason filter)
   const allFilteredCancelled = useMemo(() => {
-    if (selectedSeller === 'ALL') return allCancelledSales;
-    return allCancelledSales.filter(s => s.seller_id === selectedSeller);
-  }, [allCancelledSales, selectedSeller]);
+    let filtered = allCancelledSales;
+    if (selectedSeller !== 'ALL') {
+      filtered = filtered.filter(s => s.seller_id === selectedSeller);
+    }
+    if (selectedTeam !== 'ALL') {
+      const teamName = teams.find(t => t.id === selectedTeam)?.name;
+      filtered = filtered.filter(s => s.equipe === teamName || s.equipe === selectedTeam);
+    }
+    return filtered;
+  }, [allCancelledSales, selectedSeller, selectedTeam, teams]);
 
   // Get unique cancel reasons for filter dropdown
   const cancelReasons = useMemo(() => {
@@ -479,6 +513,23 @@ const Reports = () => {
                 Este mês
               </Button>
             </div>
+
+            {/* Team Filter */}
+            {!isSeller && (
+              <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filtrar equipe" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todas as equipes</SelectItem>
+                  {teams.map(team => (
+                    <SelectItem key={team.id} value={team.id}>
+                      {team.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             {/* Seller Filter */}
             {!isSeller && (

@@ -72,6 +72,7 @@ const Sales = () => {
   const [statusFilter, setStatusFilter] = useState<SaleStatus[]>([]);
   const [planoFilter, setPlanoFilter] = useState<string[]>([]);
   const [teamFilter, setTeamFilter] = useState<string[]>([]);
+  const [sellerFilter, setSellerFilter] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSeller | null>(null);
@@ -231,6 +232,14 @@ const Sales = () => {
     return [...new Set(planos)].sort();
   }, [sales]);
 
+  // Get unique sellers for filter
+  const sellerOptions = useMemo(() => {
+    return Object.values(sellers)
+      .filter(s => s.nome)
+      .sort((a, b) => a.nome.localeCompare(b.nome))
+      .map(s => ({ value: s.id, label: s.nome }));
+  }, [sellers]);
+
   const filteredSales = useMemo(() => {
     return sales.filter((sale) => {
       const matchesSearch =
@@ -251,6 +260,10 @@ const Sales = () => {
           teamFilter.includes(sale.equipe) ||
           teamFilter.some(teamId => teams[teamId] === sale.equipe)
         ));
+      
+      // Seller filter
+      const matchesSeller = sellerFilter.length === 0 || 
+        (sale.seller_id && sellerFilter.includes(sale.seller_id));
       
       // Date range filter - compare dates as strings to avoid timezone issues
       const matchesDateRange = (() => {
@@ -284,14 +297,14 @@ const Sales = () => {
         return saleDateStr >= fromStr;
       })();
       
-      return matchesSearch && matchesStatus && matchesPlano && matchesTeam && matchesDateRange;
+      return matchesSearch && matchesStatus && matchesPlano && matchesTeam && matchesSeller && matchesDateRange;
     });
-  }, [sales, searchTerm, statusFilter, planoFilter, teamFilter, teams, dateRange]);
+  }, [sales, searchTerm, statusFilter, planoFilter, teamFilter, sellerFilter, teams, dateRange]);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, planoFilter, teamFilter, dateRange]);
+  }, [searchTerm, statusFilter, planoFilter, teamFilter, sellerFilter, dateRange]);
 
   // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(filteredSales.length / pageSize));
@@ -481,6 +494,18 @@ const Sales = () => {
                   onChange={(selected) => setTeamFilter(selected)}
                   placeholder="Filtrar equipe"
                   title="Filtrar por Equipe"
+                  icon={<Users2 className="h-4 w-4" />}
+                  className="w-full sm:w-auto"
+                />
+              )}
+              {/* Seller filter - only show for non-sellers */}
+              {!isSeller && sellerOptions.length > 0 && (
+                <MultiSelectFilter
+                  options={sellerOptions}
+                  selected={sellerFilter}
+                  onChange={(selected) => setSellerFilter(selected)}
+                  placeholder="Filtrar vendedor"
+                  title="Filtrar por Vendedor"
                   icon={<Users2 className="h-4 w-4" />}
                   className="w-full sm:w-auto"
                 />

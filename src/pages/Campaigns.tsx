@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Target, Calendar, TrendingUp, Pause, Play, CheckCircle, Trophy, Users, Pencil } from 'lucide-react';
+import { Plus, Target, Calendar, TrendingUp, Pause, Play, CheckCircle, Trophy, Users, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, differenceInDays, isAfter, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -47,7 +47,7 @@ interface Campaign {
 }
 
 export default function Campaigns() {
-  const { user, profile, isCEO, isBackoffice } = useAuth();
+  const { user, profile, isCEO, isBackoffice, isCoordinator, isSupervisor } = useAuth();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -71,7 +71,7 @@ export default function Campaigns() {
     target_sales: '',
   });
 
-  const canManage = isCEO || isBackoffice;
+  const canManage = isCEO || isCoordinator || isSupervisor;
 
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ['campaigns', profile?.company_id],
@@ -262,6 +262,31 @@ export default function Campaigns() {
     },
     onError: () => {
       toast.error('Erro ao atualizar campanha');
+    },
+  });
+
+  const deleteCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      // Delete campaign_teams first
+      await supabase
+        .from('campaign_teams')
+        .delete()
+        .eq('campaign_id', campaignId);
+
+      const { error } = await supabase
+        .from('sales_campaigns')
+        .delete()
+        .eq('id', campaignId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['campaign-teams'] });
+      toast.success('Campanha excluída com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao excluir campanha');
     },
   });
 
@@ -692,14 +717,28 @@ export default function Campaigns() {
                       <div className="flex items-center gap-2">
                         <CardTitle className="text-lg">{campaign.name}</CardTitle>
                         {canManage && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-6 w-6"
-                            onClick={() => handleOpenEditDialog(campaign)}
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </Button>
+                          <>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              onClick={() => handleOpenEditDialog(campaign)}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 text-destructive hover:text-destructive"
+                              onClick={() => {
+                                if (confirm('Tem certeza que deseja excluir esta campanha?')) {
+                                  deleteCampaignMutation.mutate(campaign.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </>
                         )}
                       </div>
                       {getStatusBadge(campaign)}

@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Target, Calendar, TrendingUp, Pause, Play, CheckCircle, Trophy, Users, Pencil } from 'lucide-react';
+import { Plus, Target, Calendar, TrendingUp, Pause, Play, CheckCircle, Trophy, Users, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, differenceInDays, isAfter, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -47,7 +47,7 @@ interface Campaign {
 }
 
 export default function Campaigns() {
-  const { user, profile, isCEO, isBackoffice } = useAuth();
+  const { user, profile, isCEO, isBackoffice, isCoordinator, isSupervisor } = useAuth();
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -71,7 +71,7 @@ export default function Campaigns() {
     target_sales: '',
   });
 
-  const canManage = isCEO || isBackoffice;
+  const canManage = isCEO || isCoordinator || isSupervisor;
 
   const { data: campaigns = [], isLoading } = useQuery({
     queryKey: ['campaigns', profile?.company_id],

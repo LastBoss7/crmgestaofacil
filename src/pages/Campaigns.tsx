@@ -717,14 +717,28 @@ export default function Campaigns() {
                       <div className="flex items-center gap-2">
                         <CardTitle className="text-lg">{campaign.name}</CardTitle>
                         {canManage && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-6 w-6"
-                            onClick={() => handleOpenEditDialog(campaign)}
-                          >
-                            <Pencil className="h-3 w-3" />
-                          </Button>
+                          <>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6"
+                              onClick={() => handleOpenEditDialog(campaign)}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 text-destructive hover:text-destructive"
+                              onClick={() => {
+                                if (confirm('Tem certeza que deseja excluir esta campanha?')) {
+                                  deleteCampaignMutation.mutate(campaign.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </>
                         )}
                       </div>
                       {getStatusBadge(campaign)}

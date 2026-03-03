@@ -265,6 +265,31 @@ export default function Campaigns() {
     },
   });
 
+  const deleteCampaignMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      // Delete campaign_teams first
+      await supabase
+        .from('campaign_teams')
+        .delete()
+        .eq('campaign_id', campaignId);
+
+      const { error } = await supabase
+        .from('sales_campaigns')
+        .delete()
+        .eq('id', campaignId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['campaign-teams'] });
+      toast.success('Campanha excluída com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao excluir campanha');
+    },
+  });
+
   const handleOpenEditDialog = (campaign: Campaign) => {
     setEditingCampaign(campaign);
     setEditFormData({

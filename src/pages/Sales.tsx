@@ -514,8 +514,8 @@ const Sales = () => {
           </CardContent>
         </Card>
 
-        {/* Revenue Summary Card - CEO only */}
-        {isCEO && !loading && filteredSales.length > 0 && (
+        {/* Revenue Summary Card - CEO always, others when seller filter is active */}
+        {(isCEO || (!isSeller && sellerFilter.length > 0)) && !loading && filteredSales.length > 0 && (
           <Card className="shadow-card border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
             <CardContent className="py-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -525,7 +525,9 @@ const Sales = () => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      Faturamento: {statusFilterLabel}
+                      {sellerFilter.length === 1 && sellers[sellerFilter[0]]
+                        ? `Faturamento de ${sellers[sellerFilter[0]].nome}`
+                        : `Faturamento: ${statusFilterLabel}`}
                     </p>
                     <p className="text-2xl font-bold text-primary">
                       {formatCurrency(filteredSalesRevenue)}
@@ -545,7 +547,7 @@ const Sales = () => {
                         </p>
                       </TooltipTrigger>
                       <TooltipContent side="left" className="max-w-[250px]">
-                        <p>Vendas canceladas são excluídas do cálculo de faturamento para refletir apenas a receita ativa da empresa.</p>
+                        <p>Vendas canceladas são excluídas do cálculo de faturamento para refletir apenas a receita ativa.</p>
                       </TooltipContent>
                     </Tooltip>
                   )}

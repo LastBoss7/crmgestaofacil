@@ -28,7 +28,7 @@ export const usePresence = (channelContext?: string) => {
   const [sessionStart] = useState<Date>(new Date());
   const [sessionDuration, setSessionDuration] = useState<string>('0m');
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Update session duration every minute
   useEffect(() => {

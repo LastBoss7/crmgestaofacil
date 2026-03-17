@@ -150,6 +150,9 @@ export default function Campaigns() {
 
   const createCampaignMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
+      if (!profile?.company_id || !user?.id) {
+        throw new Error('Dados do usuário não carregados. Tente novamente.');
+      }
       // Create campaign
       const { data: newCampaign, error } = await supabase.from('sales_campaigns').insert({
         name: data.name,
@@ -158,8 +161,8 @@ export default function Campaigns() {
         end_date: data.end_date,
         target_value: parseFloat(data.target_value) || 0,
         target_sales: parseInt(data.target_sales) || 0,
-        company_id: profile?.company_id,
-        created_by: user?.id,
+        company_id: profile.company_id,
+        created_by: user.id,
       }).select('id').single();
 
       if (error) throw error;
@@ -194,8 +197,9 @@ export default function Campaigns() {
         target_sales: '',
       });
     },
-    onError: () => {
-      toast.error('Erro ao criar campanha');
+    onError: (error: any) => {
+      console.error('Erro ao criar campanha:', error);
+      toast.error(error?.message || 'Erro ao criar campanha');
     },
   });
 

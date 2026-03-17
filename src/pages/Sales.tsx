@@ -517,7 +517,7 @@ const Sales = () => {
         {/* Revenue Summary Card - CEO always, others when seller filter is active */}
         {(isCEO || (!isSeller && sellerFilter.length > 0)) && !loading && filteredSales.length > 0 && (
           <Card className="shadow-card border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
-            <CardContent className="py-4">
+            <CardContent className="py-4 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
@@ -552,6 +552,25 @@ const Sales = () => {
                     </Tooltip>
                   )}
                 </div>
+              </div>
+              {/* Per-status breakdown */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                {(Object.entries(SALE_STATUS_LABELS) as [SaleStatus, string][])
+                  .map(([status, label]) => {
+                    const count = filteredSales.filter(s => s.status === status).length;
+                    const revenue = filteredSales
+                      .filter(s => s.status === status)
+                      .reduce((acc, s) => acc + (Number(s.valor_mensal) || 0), 0);
+                    if (count === 0) return null;
+                    return (
+                      <div key={status} className="rounded-lg border bg-card p-2 text-center space-y-0.5">
+                        <p className="text-[10px] font-medium text-muted-foreground truncate">{label}</p>
+                        <p className="text-sm font-bold">{count}</p>
+                        <p className="text-[10px] text-muted-foreground">{formatCurrency(revenue)}</p>
+                      </div>
+                    );
+                  })
+                  .filter(Boolean)}
               </div>
             </CardContent>
           </Card>

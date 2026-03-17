@@ -197,8 +197,9 @@ export default function Campaigns() {
         target_sales: '',
       });
     },
-    onError: () => {
-      toast.error('Erro ao criar campanha');
+    onError: (error: any) => {
+      console.error('Erro ao criar campanha:', error);
+      toast.error(error?.message || 'Erro ao criar campanha');
     },
   });
 

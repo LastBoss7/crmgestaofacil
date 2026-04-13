@@ -501,6 +501,26 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
                   placeholder="email@empresa.com"
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tipo_negociacao">Tipo de Negociação</Label>
+                <Select value={form.tipo_negociacao} onValueChange={(v) => updateForm('tipo_negociacao', v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="novo">Novo Cliente</SelectItem>
+                    <SelectItem value="portabilidade">Portabilidade</SelectItem>
+                    <SelectItem value="upgrade">Upgrade</SelectItem>
+                    <SelectItem value="migracao">Migração</SelectItem>
+                    <SelectItem value="bl_solo">BL Solo</SelectItem>
+                    <SelectItem value="vivo_total">VIVO TOTAL</SelectItem>
+                    <SelectItem value="banda_larga">Banda Larga</SelectItem>
+                    <SelectItem value="bl_tel_fixo">BL + Tel Fixo</SelectItem>
+                    <SelectItem value="renovacao">Renovação</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>

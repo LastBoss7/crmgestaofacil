@@ -27,7 +27,8 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
-  Phone
+  Phone,
+  RefreshCw
 } from 'lucide-react';
 import { exportBandaLargaToExcel, exportBandaLargaToPDF } from '@/lib/export-utils';
 import { toast } from 'sonner';
@@ -80,6 +81,7 @@ const NEGOTIATION_TYPES = [
   { key: 'VIVO TOTAL', label: 'VIVO Total', icon: Package, color: '#f97316' },
   { key: 'Fixo + Banda Larga', label: 'Fixo + BL', icon: Layers, color: '#10b981' },
   { key: 'bl_tel_fixo', label: 'BL + Tel Fixo', icon: Phone, color: '#8b5cf6' },
+  { key: 'renovacao', label: 'Renovação', icon: RefreshCw, color: '#ef4444' },
 ];
 
 const FALLBACK_COLORS = ['#3b82f6', '#06b6d4', '#a855f7', '#f97316', '#10b981', '#ec4899', '#8b5cf6', '#14b8a6'];

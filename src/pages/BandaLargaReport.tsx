@@ -27,7 +27,8 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
-  Phone
+  Phone,
+  RefreshCw
 } from 'lucide-react';
 import { exportBandaLargaToExcel, exportBandaLargaToPDF } from '@/lib/export-utils';
 import { toast } from 'sonner';

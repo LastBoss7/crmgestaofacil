@@ -26,6 +26,7 @@ const NEGOTIATION_TYPES = [
   { key: 'Móvel', label: 'Móvel', icon: Smartphone, color: '#a855f7' },
   { key: 'VIVO TOTAL', label: 'VIVO Total', icon: Package, color: '#f97316' },
   { key: 'Fixo + Banda Larga', label: 'Fixo + BL', icon: Layers, color: '#10b981' },
+  { key: 'Renovação', label: 'Renovação', icon: RefreshCw, color: '#ef4444' },
 ];
 
 const FALLBACK_COLORS = ['#3b82f6', '#06b6d4', '#a855f7', '#f97316', '#10b981', '#ec4899', '#8b5cf6', '#14b8a6'];

@@ -308,6 +308,7 @@ export const exportSaleDetailsToPDF = (
     vivo_total: 'VIVO TOTAL',
     banda_larga: 'Banda Larga',
     bl_tel_fixo: 'BL + Tel Fixo',
+    renovacao: 'Renovação',
   };
 
   let yPos = 20;

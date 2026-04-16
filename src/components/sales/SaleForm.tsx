@@ -78,7 +78,10 @@ interface FormData {
 }
 
 const initialFormData: FormData = {
-  data_venda: new Date().toISOString().split('T')[0],
+  data_venda: (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  })(),
   tipo_negociacao: '',
   cnpj_cliente: '',
   razao_social: '',

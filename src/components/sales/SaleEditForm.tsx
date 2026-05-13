@@ -294,7 +294,16 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
     e.preventDefault();
     
     if (!form.cnpj_cliente.trim() || !form.razao_social.trim()) {
-      toast.error('CNPJ e Razão Social são obrigatórios');
+      toast.error(clientType === 'PF' ? 'CPF e Nome Completo são obrigatórios' : 'CNPJ e Razão Social são obrigatórios');
+      return;
+    }
+    const docDigits = form.cnpj_cliente.replace(/\D/g, '');
+    if (clientType === 'PF' && docDigits.length !== 11) {
+      toast.error('CPF deve ter 11 dígitos');
+      return;
+    }
+    if (clientType === 'PJ' && docDigits.length !== 14) {
+      toast.error('CNPJ deve ter 14 dígitos');
       return;
     }
 

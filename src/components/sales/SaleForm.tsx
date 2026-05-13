@@ -533,6 +533,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         equipe: finalTeamName, // Use the validated team name
         tipo_negociacao: form.tipo_negociacao || null,
         cnpj_cliente: form.cnpj_cliente,
+        client_type: clientType,
         razao_social: form.razao_social,
         nome_fantasia: form.nome_fantasia || null,
         email: form.email || null,

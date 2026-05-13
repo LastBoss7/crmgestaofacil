@@ -115,8 +115,9 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
     observacoes_vendedor: sale.observacoes_vendedor || '',
   });
 
-  // Detect client type from existing document length (CPF=11 digits, CNPJ=14)
+  // Use stored client_type; fallback to inference for legacy rows without it
   const [clientType, setClientType] = useState<'PJ' | 'PF'>(() => {
+    if (sale.client_type === 'PF' || sale.client_type === 'PJ') return sale.client_type;
     const digits = (sale.cnpj_cliente || '').replace(/\D/g, '');
     return digits.length === 11 ? 'PF' : 'PJ';
   });
@@ -389,6 +390,19 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
           });
         }
       });
+
+      // Track client_type change (not in FormData)
+      const previousClientType = (sale.client_type === 'PF' || sale.client_type === 'PJ')
+        ? sale.client_type
+        : ((sale.cnpj_cliente || '').replace(/\D/g, '').length === 11 ? 'PF' : 'PJ');
+      if (clientType !== previousClientType) {
+        updates.client_type = clientType;
+        changedFields.push({
+          field: 'Tipo de Cliente',
+          oldValue: previousClientType,
+          newValue: clientType,
+        });
+      }
 
       // Upload new documents if any
       let allDocumentUrls = [...existingDocuments];

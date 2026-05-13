@@ -714,6 +714,7 @@ export type Database = {
           cedente_nascimento: string | null
           cedente_nome: string | null
           cedente_rg: string | null
+          client_type: string
           cnpj_cliente: string
           company_id: string | null
           contato_responsavel: string | null
@@ -765,6 +766,7 @@ export type Database = {
           cedente_nascimento?: string | null
           cedente_nome?: string | null
           cedente_rg?: string | null
+          client_type?: string
           cnpj_cliente: string
           company_id?: string | null
           contato_responsavel?: string | null
@@ -816,6 +818,7 @@ export type Database = {
           cedente_nascimento?: string | null
           cedente_nome?: string | null
           cedente_rg?: string | null
+          client_type?: string
           cnpj_cliente?: string
           company_id?: string | null
           contato_responsavel?: string | null

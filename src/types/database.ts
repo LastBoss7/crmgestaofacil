@@ -39,6 +39,7 @@ export interface Sale {
   id: string;
   seller_id: string | null;
   cnpj_cliente: string;
+  client_type?: 'PF' | 'PJ' | string;
   razao_social: string;
   nome_fantasia: string | null;
   contato_responsavel: string | null;

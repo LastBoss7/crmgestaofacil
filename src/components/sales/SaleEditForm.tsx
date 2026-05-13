@@ -293,7 +293,12 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (clientType !== 'PF' && clientType !== 'PJ') {
+      toast.error("Tipo de cliente inválido: selecione 'PF' ou 'PJ'");
+      return;
+    }
+
     if (!form.cnpj_cliente.trim() || !form.razao_social.trim()) {
       toast.error(clientType === 'PF' ? 'CPF e Nome Completo são obrigatórios' : 'CNPJ e Razão Social são obrigatórios');
       return;

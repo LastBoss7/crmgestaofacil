@@ -126,6 +126,7 @@ type FieldErrors = Partial<Record<keyof FormData, string>>;
 export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   const { profile, loading: authLoading } = useAuth();
   const [form, setForm] = useState<FormData>(initialFormData);
+  const [clientType, setClientType] = useState<'PJ' | 'PF'>('PJ');
   const [loading, setLoading] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);

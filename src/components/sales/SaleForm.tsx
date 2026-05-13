@@ -689,16 +689,36 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
 
       <Separator />
 
-      {/* Dados da Empresa */}
+      {/* Dados da Empresa / Pessoa Física */}
       <div>
-        <SectionHeader icon={Building2} title="Dados da Empresa" />
+        <SectionHeader icon={Building2} title={clientType === 'PF' ? 'Dados do Cliente (Pessoa Física)' : 'Dados da Empresa'} />
+
+        <Tabs
+          value={clientType}
+          onValueChange={(v) => {
+            const next = v as 'PJ' | 'PF';
+            setClientType(next);
+            // Clear identification fields when switching type to avoid invalid format
+            setForm(prev => ({ ...prev, cnpj_cliente: '', razao_social: '', nome_fantasia: '' }));
+            setErrors(prev => ({ ...prev, cnpj_cliente: undefined, razao_social: undefined }));
+          }}
+          className="mb-4"
+        >
+          <TabsList>
+            <TabsTrigger value="PJ">Pessoa Jurídica (CNPJ)</TabsTrigger>
+            <TabsTrigger value="PF">Pessoa Física (CPF)</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="cnpj" className={errors.cnpj_cliente ? 'text-destructive' : ''}>CNPJ *</Label>
+            <Label htmlFor="cnpj" className={errors.cnpj_cliente ? 'text-destructive' : ''}>
+              {clientType === 'PF' ? 'CPF *' : 'CNPJ *'}
+            </Label>
             <div className="relative">
               <Input
                 id="cnpj"
-                placeholder="00.000.000/0000-00"
+                placeholder={clientType === 'PF' ? '000.000.000-00' : '00.000.000/0000-00'}
                 value={form.cnpj_cliente}
                 onChange={(e) => handleCnpjChange(e.target.value)}
                 onBlur={() => handleBlur('cnpj_cliente')}
@@ -712,10 +732,12 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
             {errors.cnpj_cliente && <p className="text-sm text-destructive">{errors.cnpj_cliente}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="razao" className={errors.razao_social ? 'text-destructive' : ''}>Razão Social *</Label>
+            <Label htmlFor="razao" className={errors.razao_social ? 'text-destructive' : ''}>
+              {clientType === 'PF' ? 'Nome Completo *' : 'Razão Social *'}
+            </Label>
             <Input
               id="razao"
-              placeholder="Nome da empresa"
+              placeholder={clientType === 'PF' ? 'Nome completo do cliente' : 'Nome da empresa'}
               value={form.razao_social}
               onChange={(e) => updateForm('razao_social', e.target.value)}
               onBlur={() => handleBlur('razao_social')}
@@ -724,15 +746,17 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
             />
             {errors.razao_social && <p className="text-sm text-destructive">{errors.razao_social}</p>}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="fantasia">Nome Fantasia</Label>
-            <Input
-              id="fantasia"
-              placeholder="Nome fantasia"
-              value={form.nome_fantasia}
-              onChange={(e) => updateForm('nome_fantasia', e.target.value)}
-            />
-          </div>
+          {clientType === 'PJ' && (
+            <div className="space-y-2">
+              <Label htmlFor="fantasia">Nome Fantasia</Label>
+              <Input
+                id="fantasia"
+                placeholder="Nome fantasia"
+                value={form.nome_fantasia}
+                onChange={(e) => updateForm('nome_fantasia', e.target.value)}
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email" className={errors.email ? 'text-destructive' : ''}>E-mail</Label>
             <Input

@@ -18,6 +18,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface SaleEditFormProps {
   sale: Sale;

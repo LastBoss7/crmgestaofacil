@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Building2, Phone, MapPin, User, Users, FileText, DollarSign, Loader2, Upload, X, File, Target, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';

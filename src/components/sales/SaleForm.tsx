@@ -181,13 +181,18 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   const validateField = (field: keyof FormData, value: string): string | undefined => {
     switch (field) {
       case 'cnpj_cliente':
-        const cleanCnpj = value.replace(/\D/g, '');
-        if (!cleanCnpj) return 'CNPJ é obrigatório';
-        if (cleanCnpj.length !== 14) return 'CNPJ deve ter 14 dígitos';
+        const cleanDoc = value.replace(/\D/g, '');
+        if (clientType === 'PF') {
+          if (!cleanDoc) return 'CPF é obrigatório';
+          if (cleanDoc.length !== 11) return 'CPF deve ter 11 dígitos';
+          return undefined;
+        }
+        if (!cleanDoc) return 'CNPJ é obrigatório';
+        if (cleanDoc.length !== 14) return 'CNPJ deve ter 14 dígitos';
         return undefined;
       case 'razao_social':
-        if (!value.trim()) return 'Razão Social é obrigatória';
-        if (value.trim().length < 2) return 'Razão Social deve ter pelo menos 2 caracteres';
+        if (!value.trim()) return clientType === 'PF' ? 'Nome completo é obrigatório' : 'Razão Social é obrigatória';
+        if (value.trim().length < 2) return 'Mínimo de 2 caracteres';
         return undefined;
       case 'telefone_1':
         const cleanTel1 = value.replace(/\D/g, '');

@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Building2, Phone, MapPin, User, Users, FileText, DollarSign, Loader2, Upload, X, File, Target, Plus, Trash2, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -125,6 +126,7 @@ type FieldErrors = Partial<Record<keyof FormData, string>>;
 export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   const { profile, loading: authLoading } = useAuth();
   const [form, setForm] = useState<FormData>(initialFormData);
+  const [clientType, setClientType] = useState<'PJ' | 'PF'>('PJ');
   const [loading, setLoading] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
@@ -179,13 +181,18 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   const validateField = (field: keyof FormData, value: string): string | undefined => {
     switch (field) {
       case 'cnpj_cliente':
-        const cleanCnpj = value.replace(/\D/g, '');
-        if (!cleanCnpj) return 'CNPJ é obrigatório';
-        if (cleanCnpj.length !== 14) return 'CNPJ deve ter 14 dígitos';
+        const cleanDoc = value.replace(/\D/g, '');
+        if (clientType === 'PF') {
+          if (!cleanDoc) return 'CPF é obrigatório';
+          if (cleanDoc.length !== 11) return 'CPF deve ter 11 dígitos';
+          return undefined;
+        }
+        if (!cleanDoc) return 'CNPJ é obrigatório';
+        if (cleanDoc.length !== 14) return 'CNPJ deve ter 14 dígitos';
         return undefined;
       case 'razao_social':
-        if (!value.trim()) return 'Razão Social é obrigatória';
-        if (value.trim().length < 2) return 'Razão Social deve ter pelo menos 2 caracteres';
+        if (!value.trim()) return clientType === 'PF' ? 'Nome completo é obrigatório' : 'Razão Social é obrigatória';
+        if (value.trim().length < 2) return 'Mínimo de 2 caracteres';
         return undefined;
       case 'telefone_1':
         const cleanTel1 = value.replace(/\D/g, '');
@@ -264,6 +271,10 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
   };
 
   const handleCnpjChange = (value: string) => {
+    if (clientType === 'PF') {
+      updateForm('cnpj_cliente', maskCPF(value));
+      return;
+    }
     const maskedValue = maskCNPJ(value);
     updateForm('cnpj_cliente', maskedValue);
     const cleanCnpj = maskedValue.replace(/\D/g, '');
@@ -678,16 +689,36 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
 
       <Separator />
 
-      {/* Dados da Empresa */}
+      {/* Dados da Empresa / Pessoa Física */}
       <div>
-        <SectionHeader icon={Building2} title="Dados da Empresa" />
+        <SectionHeader icon={Building2} title={clientType === 'PF' ? 'Dados do Cliente (Pessoa Física)' : 'Dados da Empresa'} />
+
+        <Tabs
+          value={clientType}
+          onValueChange={(v) => {
+            const next = v as 'PJ' | 'PF';
+            setClientType(next);
+            // Clear identification fields when switching type to avoid invalid format
+            setForm(prev => ({ ...prev, cnpj_cliente: '', razao_social: '', nome_fantasia: '' }));
+            setErrors(prev => ({ ...prev, cnpj_cliente: undefined, razao_social: undefined }));
+          }}
+          className="mb-4"
+        >
+          <TabsList>
+            <TabsTrigger value="PJ">Pessoa Jurídica (CNPJ)</TabsTrigger>
+            <TabsTrigger value="PF">Pessoa Física (CPF)</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="cnpj" className={errors.cnpj_cliente ? 'text-destructive' : ''}>CNPJ *</Label>
+            <Label htmlFor="cnpj" className={errors.cnpj_cliente ? 'text-destructive' : ''}>
+              {clientType === 'PF' ? 'CPF *' : 'CNPJ *'}
+            </Label>
             <div className="relative">
               <Input
                 id="cnpj"
-                placeholder="00.000.000/0000-00"
+                placeholder={clientType === 'PF' ? '000.000.000-00' : '00.000.000/0000-00'}
                 value={form.cnpj_cliente}
                 onChange={(e) => handleCnpjChange(e.target.value)}
                 onBlur={() => handleBlur('cnpj_cliente')}
@@ -701,10 +732,12 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
             {errors.cnpj_cliente && <p className="text-sm text-destructive">{errors.cnpj_cliente}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="razao" className={errors.razao_social ? 'text-destructive' : ''}>Razão Social *</Label>
+            <Label htmlFor="razao" className={errors.razao_social ? 'text-destructive' : ''}>
+              {clientType === 'PF' ? 'Nome Completo *' : 'Razão Social *'}
+            </Label>
             <Input
               id="razao"
-              placeholder="Nome da empresa"
+              placeholder={clientType === 'PF' ? 'Nome completo do cliente' : 'Nome da empresa'}
               value={form.razao_social}
               onChange={(e) => updateForm('razao_social', e.target.value)}
               onBlur={() => handleBlur('razao_social')}
@@ -713,15 +746,17 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
             />
             {errors.razao_social && <p className="text-sm text-destructive">{errors.razao_social}</p>}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="fantasia">Nome Fantasia</Label>
-            <Input
-              id="fantasia"
-              placeholder="Nome fantasia"
-              value={form.nome_fantasia}
-              onChange={(e) => updateForm('nome_fantasia', e.target.value)}
-            />
-          </div>
+          {clientType === 'PJ' && (
+            <div className="space-y-2">
+              <Label htmlFor="fantasia">Nome Fantasia</Label>
+              <Input
+                id="fantasia"
+                placeholder="Nome fantasia"
+                value={form.nome_fantasia}
+                onChange={(e) => updateForm('nome_fantasia', e.target.value)}
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="email" className={errors.email ? 'text-destructive' : ''}>E-mail</Label>
             <Input

@@ -114,6 +114,12 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
     produtos: sale.produtos || '',
     observacoes_vendedor: sale.observacoes_vendedor || '',
   });
+
+  // Detect client type from existing document length (CPF=11 digits, CNPJ=14)
+  const [clientType, setClientType] = useState<'PJ' | 'PF'>(() => {
+    const digits = (sale.cnpj_cliente || '').replace(/\D/g, '');
+    return digits.length === 11 ? 'PF' : 'PJ';
+  });
   
   const [loading, setLoading] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);

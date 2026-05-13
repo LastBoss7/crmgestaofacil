@@ -172,6 +172,10 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
   };
 
   const handleCnpjChange = (value: string) => {
+    if (clientType === 'PF') {
+      updateForm('cnpj_cliente', maskCPF(value));
+      return;
+    }
     const maskedValue = maskCNPJ(value);
     updateForm('cnpj_cliente', maskedValue);
     const cleanCnpj = maskedValue.replace(/\D/g, '');

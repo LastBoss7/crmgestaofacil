@@ -428,12 +428,23 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
         return;
       }
 
-      const { error } = await supabase
-        .from('sales')
-        .update(updates)
-        .eq('id', sale.id);
+      const { data: fnData, error: fnError } = await supabase.functions.invoke('update-sale', {
+        body: { sale_id: sale.id, updates },
+      });
 
-      if (error) throw error;
+      if (fnError) {
+        // Tenta extrair mensagem do corpo de resposta (FunctionsHttpError)
+        let serverMessage: string | null = null;
+        try {
+          const ctx: any = (fnError as any).context;
+          if (ctx && typeof ctx.json === 'function') {
+            const parsed = await ctx.json();
+            serverMessage = parsed?.error ?? null;
+          }
+        } catch { /* ignore */ }
+        throw new Error(serverMessage || fnError.message || 'Falha ao atualizar venda');
+      }
+      if (fnData?.error) throw new Error(fnData.error);
 
       // Record history for all changed fields
       if (changedFields.length > 0) {

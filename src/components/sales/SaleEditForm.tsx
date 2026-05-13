@@ -471,19 +471,33 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
         {/* Dados da Empresa */}
         <AccordionItem value="empresa" className="border rounded-lg px-4">
           <AccordionTrigger className="hover:no-underline py-3">
-            <SectionHeader icon={Building2} title="Dados da Empresa" />
+            <SectionHeader icon={Building2} title={clientType === 'PF' ? 'Dados do Cliente (Pessoa Física)' : 'Dados da Empresa'} />
           </AccordionTrigger>
           <AccordionContent className="pb-4">
+            <Tabs
+              value={clientType}
+              onValueChange={(v) => {
+                const next = v as 'PJ' | 'PF';
+                setClientType(next);
+                setForm(prev => ({ ...prev, cnpj_cliente: '', nome_fantasia: next === 'PF' ? '' : prev.nome_fantasia }));
+              }}
+              className="mb-4"
+            >
+              <TabsList>
+                <TabsTrigger value="PJ">Pessoa Jurídica (CNPJ)</TabsTrigger>
+                <TabsTrigger value="PF">Pessoa Física (CPF)</TabsTrigger>
+              </TabsList>
+            </Tabs>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="cnpj_cliente">CNPJ *</Label>
+                <Label htmlFor="cnpj_cliente">{clientType === 'PF' ? 'CPF *' : 'CNPJ *'}</Label>
                 <div className="relative">
                   <Input
                     id="cnpj_cliente"
                     value={form.cnpj_cliente}
                     onChange={(e) => handleCnpjChange(e.target.value)}
-                    placeholder="00.000.000/0000-00"
-                    maxLength={18}
+                    placeholder={clientType === 'PF' ? '000.000.000-00' : '00.000.000/0000-00'}
+                    maxLength={clientType === 'PF' ? 14 : 18}
                   />
                   {loadingCnpj && (
                     <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />
@@ -492,24 +506,26 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="razao_social">Razão Social *</Label>
+                <Label htmlFor="razao_social">{clientType === 'PF' ? 'Nome Completo *' : 'Razão Social *'}</Label>
                 <Input
                   id="razao_social"
                   value={form.razao_social}
                   onChange={(e) => updateForm('razao_social', e.target.value)}
-                  placeholder="Razão Social da empresa"
+                  placeholder={clientType === 'PF' ? 'Nome completo do cliente' : 'Razão Social da empresa'}
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
-                <Input
-                  id="nome_fantasia"
-                  value={form.nome_fantasia}
-                  onChange={(e) => updateForm('nome_fantasia', e.target.value)}
-                  placeholder="Nome Fantasia"
-                />
-              </div>
+              {clientType === 'PJ' && (
+                <div className="space-y-2">
+                  <Label htmlFor="nome_fantasia">Nome Fantasia</Label>
+                  <Input
+                    id="nome_fantasia"
+                    value={form.nome_fantasia}
+                    onChange={(e) => updateForm('nome_fantasia', e.target.value)}
+                    placeholder="Nome Fantasia"
+                  />
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>

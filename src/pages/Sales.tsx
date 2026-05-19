@@ -74,6 +74,7 @@ const Sales = () => {
   const [teamFilter, setTeamFilter] = useState<string[]>([]);
   const [sellerFilter, setSellerFilter] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [clientTypeFilter, setClientTypeFilter] = useState<'all' | 'PF' | 'PJ'>('all');
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSeller | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -297,14 +298,17 @@ const Sales = () => {
         return saleDateStr >= fromStr;
       })();
       
-      return matchesSearch && matchesStatus && matchesPlano && matchesTeam && matchesSeller && matchesDateRange;
+      // Client type filter (PF/PJ)
+      const matchesClientType = clientTypeFilter === 'all' || sale.client_type === clientTypeFilter;
+      
+      return matchesSearch && matchesStatus && matchesPlano && matchesTeam && matchesSeller && matchesDateRange && matchesClientType;
     });
-  }, [sales, searchTerm, statusFilter, planoFilter, teamFilter, sellerFilter, teams, dateRange]);
+  }, [sales, searchTerm, statusFilter, planoFilter, teamFilter, sellerFilter, teams, dateRange, clientTypeFilter]);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, planoFilter, teamFilter, sellerFilter, dateRange]);
+  }, [searchTerm, statusFilter, planoFilter, teamFilter, sellerFilter, dateRange, clientTypeFilter]);
 
   // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(filteredSales.length / pageSize));
@@ -510,6 +514,16 @@ const Sales = () => {
                   className="w-full sm:w-auto"
                 />
               )}
+              <Select value={clientTypeFilter} onValueChange={(v) => setClientTypeFilter(v as 'all' | 'PF' | 'PJ')}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Tipo de cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos (PF e PJ)</SelectItem>
+                  <SelectItem value="PF">Pessoa Física (CPF)</SelectItem>
+                  <SelectItem value="PJ">Pessoa Jurídica (CNPJ)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>

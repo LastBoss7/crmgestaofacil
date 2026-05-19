@@ -298,14 +298,17 @@ const Sales = () => {
         return saleDateStr >= fromStr;
       })();
       
-      return matchesSearch && matchesStatus && matchesPlano && matchesTeam && matchesSeller && matchesDateRange;
+      // Client type filter (PF/PJ)
+      const matchesClientType = clientTypeFilter === 'all' || sale.client_type === clientTypeFilter;
+      
+      return matchesSearch && matchesStatus && matchesPlano && matchesTeam && matchesSeller && matchesDateRange && matchesClientType;
     });
-  }, [sales, searchTerm, statusFilter, planoFilter, teamFilter, sellerFilter, teams, dateRange]);
+  }, [sales, searchTerm, statusFilter, planoFilter, teamFilter, sellerFilter, teams, dateRange, clientTypeFilter]);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, planoFilter, teamFilter, sellerFilter, dateRange]);
+  }, [searchTerm, statusFilter, planoFilter, teamFilter, sellerFilter, dateRange, clientTypeFilter]);
 
   // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(filteredSales.length / pageSize));

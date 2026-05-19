@@ -514,6 +514,16 @@ const Sales = () => {
                   className="w-full sm:w-auto"
                 />
               )}
+              <Select value={clientTypeFilter} onValueChange={(v) => setClientTypeFilter(v as 'all' | 'PF' | 'PJ')}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Tipo de cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos (PF e PJ)</SelectItem>
+                  <SelectItem value="PF">Pessoa Física (CPF)</SelectItem>
+                  <SelectItem value="PJ">Pessoa Jurídica (CNPJ)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>

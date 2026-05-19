@@ -74,6 +74,7 @@ const Sales = () => {
   const [teamFilter, setTeamFilter] = useState<string[]>([]);
   const [sellerFilter, setSellerFilter] = useState<string[]>([]);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [clientTypeFilter, setClientTypeFilter] = useState<'all' | 'PF' | 'PJ'>('all');
   const [isNewSaleOpen, setIsNewSaleOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<SaleWithSeller | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);

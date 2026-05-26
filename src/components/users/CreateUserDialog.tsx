@@ -170,10 +170,12 @@ export const CreateUserDialog = ({ open, onOpenChange, onUserCreated }: CreateUs
   };
 
   const generatePassword = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%&*';
+    const array = new Uint8Array(16);
+    crypto.getRandomValues(array);
     let password = '';
-    for (let i = 0; i < 10; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    for (let i = 0; i < array.length; i++) {
+      password += chars[array[i] % chars.length];
     }
     setFormData(prev => ({ ...prev, password }));
     setShowPassword(true);

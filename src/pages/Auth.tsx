@@ -220,14 +220,28 @@ const Auth = () => {
       company_id: companyResult.id 
     });
 
-    await supabase
+    const { error: profileError } = await supabase
       .from('profiles')
       .update({ company_id: companyResult.id })
       .eq('id', authData.user.id);
 
-    await supabase
+    if (profileError) {
+      console.error('Profile update failed:', profileError);
+      setIsLoading(false);
+      toast.error('Erro ao configurar perfil. Contate o suporte.');
+      return;
+    }
+
+    const { error: roleError } = await supabase
       .from('user_roles')
       .insert({ user_id: authData.user.id, role: 'CEO' });
+
+    if (roleError) {
+      console.error('Role assignment failed:', roleError);
+      setIsLoading(false);
+      toast.error('Erro ao atribuir função de CEO. Contate o suporte.');
+      return;
+    }
 
     setIsLoading(false);
     toast.success('Empresa cadastrada com sucesso!');

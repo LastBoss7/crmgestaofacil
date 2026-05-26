@@ -315,6 +315,20 @@ const Sales = () => {
     });
   }, [sales, searchTerm, statusFilter, planoFilter, teamFilter, sellerFilter, teams, dateRange, clientTypeFilter]);
 
+  // Debug: log filter payload + result count whenever clientTypeFilter changes
+  useEffect(() => {
+    console.log('[Sales] filter payload →', {
+      clientTypeFilter,
+      statusFilter,
+      planoFilter,
+      teamFilter,
+      sellerFilter,
+      searchTerm,
+      totalSales: sales.length,
+      filteredSales: filteredSales.length,
+    });
+  }, [clientTypeFilter, filteredSales.length, sales.length, statusFilter, planoFilter, teamFilter, sellerFilter, searchTerm]);
+
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);

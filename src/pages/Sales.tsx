@@ -303,9 +303,8 @@ const Sales = () => {
         return saleDateStr >= fromStr;
       })();
       
-      // Client type filter (PF/PJ) — normalize to handle casing/whitespace
-      const normalizedClientType = (sale.client_type ?? '').toString().trim().toUpperCase();
-      const matchesClientType = clientTypeFilter === 'all' || normalizedClientType === clientTypeFilter;
+      // Client type filter (PF/PJ) — client_type is normalized on fetch
+      const matchesClientType = clientTypeFilter === 'all' || sale.client_type === clientTypeFilter;
       
       return matchesSearch && matchesStatus && matchesPlano && matchesTeam && matchesSeller && matchesDateRange && matchesClientType;
     });

@@ -166,6 +166,7 @@ const Sales = () => {
     if (!user) return;
 
     // Use sales_secure view for reading - masks sensitive data based on user role
+    console.log('[Sales] fetchSales → source=sales_secure, company_id=', profile?.company_id);
     let query = supabase
       .from('sales_secure')
       .select('*')
@@ -179,7 +180,7 @@ const Sales = () => {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Error fetching sales:', error);
+      console.error('[Sales] Error fetching sales:', error);
       toast.error('Erro ao carregar vendas');
     } else {
       // Normalize client_type to 'PF' | 'PJ' so filters never compare against null/undefined
@@ -187,6 +188,10 @@ const Sales = () => {
         const ct = (s.client_type ?? '').toString().trim().toUpperCase();
         return { ...s, client_type: ct === 'PF' ? 'PF' : 'PJ' };
       });
+      const pfCount = normalized.filter(s => s.client_type === 'PF').length;
+      const pjCount = normalized.filter(s => s.client_type === 'PJ').length;
+      console.log(`[Sales] fetched ${normalized.length} rows from sales_secure → PF=${pfCount} PJ=${pjCount}`);
+      console.log('[Sales] sample row keys:', normalized[0] ? Object.keys(normalized[0]) : '(empty)');
       setSales(normalized as SaleWithSeller[]);
       
       // Fetch seller profiles

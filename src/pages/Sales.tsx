@@ -182,7 +182,12 @@ const Sales = () => {
       console.error('Error fetching sales:', error);
       toast.error('Erro ao carregar vendas');
     } else {
-      setSales((data || []) as SaleWithSeller[]);
+      // Normalize client_type to 'PF' | 'PJ' so filters never compare against null/undefined
+      const normalized = (data || []).map((s: any) => {
+        const ct = (s.client_type ?? '').toString().trim().toUpperCase();
+        return { ...s, client_type: ct === 'PF' ? 'PF' : 'PJ' };
+      });
+      setSales(normalized as SaleWithSeller[]);
       
       // Fetch seller profiles
       const sellerIds = [...new Set((data || []).map(s => s.seller_id).filter(Boolean))];
@@ -298,9 +303,8 @@ const Sales = () => {
         return saleDateStr >= fromStr;
       })();
       
-      // Client type filter (PF/PJ) — normalize to handle casing/whitespace
-      const normalizedClientType = (sale.client_type ?? '').toString().trim().toUpperCase();
-      const matchesClientType = clientTypeFilter === 'all' || normalizedClientType === clientTypeFilter;
+      // Client type filter (PF/PJ) — client_type is normalized on fetch
+      const matchesClientType = clientTypeFilter === 'all' || sale.client_type === clientTypeFilter;
       
       return matchesSearch && matchesStatus && matchesPlano && matchesTeam && matchesSeller && matchesDateRange && matchesClientType;
     });

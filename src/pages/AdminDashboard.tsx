@@ -150,12 +150,14 @@ const AdminDashboard = () => {
     },
   });
 
-  // Generate invite code
+  // Generate invite code using cryptographically secure randomness
   const generateCode = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const array = new Uint8Array(16);
+    crypto.getRandomValues(array);
     let code = '';
-    for (let i = 0; i < 8; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    for (let i = 0; i < array.length; i++) {
+      code += chars[array[i] % chars.length];
     }
     return code;
   };

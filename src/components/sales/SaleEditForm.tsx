@@ -1007,14 +1007,22 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
                             <File className="h-4 w-4 text-primary shrink-0" />
                             <span className="text-sm truncate">{fileName}</span>
                           </div>
-                          <a
-                            href={`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/sale-documents/${doc}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const { data, error } = await supabase.storage
+                                .from('sale-documents')
+                                .createSignedUrl(doc, 60 * 10);
+                              if (error || !data?.signedUrl) {
+                                toast.error('Não foi possível gerar o link do documento');
+                                return;
+                              }
+                              window.open(data.signedUrl, '_blank');
+                            }}
                             className="text-xs text-primary hover:underline shrink-0"
                           >
                             Ver
-                          </a>
+                          </button>
                         </div>
                       );
                     })}

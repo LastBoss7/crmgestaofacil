@@ -826,11 +826,15 @@ const Sales = () => {
                               variant="ghost"
                               size="sm"
                               className="gap-2 shrink-0"
-                              onClick={() => {
-                                const { data } = supabase.storage
+                              onClick={async () => {
+                                const { data, error } = await supabase.storage
                                   .from('sale-documents')
-                                  .getPublicUrl(docUrl);
-                                window.open(data.publicUrl, '_blank');
+                                  .createSignedUrl(docUrl, 60 * 10);
+                                if (error || !data?.signedUrl) {
+                                  toast.error('Não foi possível gerar o link do documento');
+                                  return;
+                                }
+                                window.open(data.signedUrl, '_blank');
                               }}
                             >
                               <Download className="h-4 w-4" />

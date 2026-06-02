@@ -227,6 +227,14 @@ export function SaleDetails({ sale, seller }: SaleDetailsProps) {
                   <p className="text-sm text-amber-300 whitespace-pre-wrap">{sale.motivo_pendencia}</p>
                 </div>
               )}
+              {sale.status === 'CANCELADA' && (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+                  <Label className="text-xs text-destructive">Motivo do Cancelamento</Label>
+                  <p className="text-sm text-destructive whitespace-pre-wrap">
+                    {(sale as any).motivo_cancelamento || 'Não informado'}
+                  </p>
+                </div>
+              )}
               <Separator />
               <div className="grid gap-4 sm:grid-cols-2 text-xs">
                 <InfoField label="Criado em" value={format(new Date(sale.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })} />

@@ -39,7 +39,7 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
   const [statusUpdate, setStatusUpdate] = useState({
     status: sale.status,
     motivo_pendencia: sale.motivo_pendencia || '',
-    motivo_cancelamento: '',
+    motivo_cancelamento: sale.motivo_cancelamento || '',
   });
   const [instalacaoData, setInstalacaoData] = useState('');
   const [instalacaoHorario, setInstalacaoHorario] = useState('');
@@ -475,7 +475,14 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
             <Button variant="outline" onClick={onClose} className="flex-1">
               Cancelar
             </Button>
-            <Button onClick={handleStatusUpdate} disabled={loading} className="flex-1">
+            <Button
+              onClick={handleStatusUpdate}
+              disabled={
+                loading ||
+                (statusUpdate.status === 'CANCELADA' && !statusUpdate.motivo_cancelamento.trim())
+              }
+              className="flex-1"
+            >
               Salvar
             </Button>
           </div>
@@ -561,7 +568,16 @@ export function SaleStatusActions({ sale, onStatusUpdated, onClose }: SaleStatus
             <Button variant="outline" onClick={onClose} className="flex-1">
               Cancelar
             </Button>
-            <Button onClick={handleStatusUpdate} disabled={loading} className="flex-1">
+            <Button
+              onClick={handleStatusUpdate}
+              disabled={
+                loading ||
+                (statusUpdate.status === 'CANCELADA' && !statusUpdate.motivo_cancelamento.trim()) ||
+                (statusUpdate.status === 'PENDENCIA' && !statusUpdate.motivo_pendencia.trim()) ||
+                (statusUpdate.status === 'INSTALACAO_MARCADA' && (!instalacaoData || !instalacaoHorario))
+              }
+              className="flex-1"
+            >
               Salvar
             </Button>
           </div>

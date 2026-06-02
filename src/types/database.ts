@@ -49,6 +49,7 @@ export interface Sale {
   status: SaleStatus;
   observacoes_vendedor: string | null;
   motivo_pendencia: string | null;
+  motivo_cancelamento: string | null;
   documentos?: string[] | null;
   created_at: string;
   updated_at: string;

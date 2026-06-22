@@ -128,6 +128,7 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
   
   // Document management state
   const [existingDocuments, setExistingDocuments] = useState<string[]>(sale.documentos || []);
+  const [removedDocuments, setRemovedDocuments] = useState<string[]>([]);
   const [newDocuments, setNewDocuments] = useState<File[]>([]);
   const [uploadingDocs, setUploadingDocs] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);

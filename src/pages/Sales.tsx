@@ -5,7 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
-import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X, Printer, Pencil, Package, Users2, CalendarDays, DollarSign, Info } from 'lucide-react';
+import { Plus, Search, Filter, Eye, History, Download, FileSpreadsheet, FileText, FileIcon, ImageIcon, Loader2, Upload, X, Printer, Pencil, Package, Users2, CalendarDays, DollarSign, Info, Trash2 } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -119,6 +119,34 @@ const Sales = () => {
 
   const removeNewDocument = (index: number) => {
     setNewDocuments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const [removingDocIndex, setRemovingDocIndex] = useState<number | null>(null);
+
+  const removeExistingDocument = async (docPath: string, index: number) => {
+    if (!selectedSale) return;
+    if (!window.confirm('Deseja realmente desanexar este documento? Esta ação não pode ser desfeita.')) return;
+    setRemovingDocIndex(index);
+    try {
+      // Remove from storage (ignore error if already missing)
+      await supabase.storage.from('sale-documents').remove([docPath]);
+
+      const updatedDocs = (selectedSale.documentos || []).filter((_, i) => i !== index);
+      const { error: updateError } = await supabase
+        .from('sales')
+        .update({ documentos: updatedDocs } as any)
+        .eq('id', selectedSale.id);
+      if (updateError) throw updateError;
+
+      setSelectedSale({ ...selectedSale, documentos: updatedDocs });
+      toast.success('Documento desanexado');
+      fetchSales();
+    } catch (err) {
+      console.error('Error removing document:', err);
+      toast.error('Erro ao desanexar documento');
+    } finally {
+      setRemovingDocIndex(null);
+    }
   };
 
   const uploadNewDocuments = async () => {
@@ -822,24 +850,42 @@ const Sales = () => {
                               )}
                               <span className="text-sm truncate">{fileName}</span>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="gap-2 shrink-0"
-                              onClick={async () => {
-                                const { data, error } = await supabase.storage
-                                  .from('sale-documents')
-                                  .createSignedUrl(docUrl, 60 * 10);
-                                if (error || !data?.signedUrl) {
-                                  toast.error('Não foi possível gerar o link do documento');
-                                  return;
-                                }
-                                window.open(data.signedUrl, '_blank');
-                              }}
-                            >
-                              <Download className="h-4 w-4" />
-                              Baixar
-                            </Button>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="gap-2"
+                                onClick={async () => {
+                                  const { data, error } = await supabase.storage
+                                    .from('sale-documents')
+                                    .createSignedUrl(docUrl, 60 * 10);
+                                  if (error || !data?.signedUrl) {
+                                    toast.error('Não foi possível gerar o link do documento');
+                                    return;
+                                  }
+                                  window.open(data.signedUrl, '_blank');
+                                }}
+                              >
+                                <Download className="h-4 w-4" />
+                                Baixar
+                              </Button>
+                              {(isCEO || isCoordinator || isSupervisor || isBackoffice || (selectedSale.seller_id === user?.id)) && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive"
+                                  disabled={removingDocIndex === index}
+                                  onClick={() => removeExistingDocument(docUrl, index)}
+                                  title="Desanexar documento"
+                                >
+                                  {removingDocIndex === index ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         );
                       })}

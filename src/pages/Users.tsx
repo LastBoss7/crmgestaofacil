@@ -788,6 +788,32 @@ const Users = () => {
             onTeamsUpdated={fetchUsers}
           />
         )}
+
+        {/* Delete confirmation */}
+        <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir usuário</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir <strong>{selectedUser?.nome}</strong>?
+                Esta ação é permanente e removerá o acesso, perfil e funções deste usuário.
+                Vendas já cadastradas serão mantidas no histórico.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); handleDeleteUser(); }}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Excluindo...</>
+                ) : 'Excluir'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );

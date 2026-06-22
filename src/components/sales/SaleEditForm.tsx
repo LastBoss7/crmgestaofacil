@@ -128,6 +128,7 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
   
   // Document management state
   const [existingDocuments, setExistingDocuments] = useState<string[]>(sale.documentos || []);
+  const [removedDocuments, setRemovedDocuments] = useState<string[]>([]);
   const [newDocuments, setNewDocuments] = useState<File[]>([]);
   const [uploadingDocs, setUploadingDocs] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -269,6 +270,12 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
     setNewDocuments(prev => prev.filter((_, i) => i !== index));
   };
 
+  const removeExistingDocument = (path: string) => {
+    setExistingDocuments(prev => prev.filter(p => p !== path));
+    setRemovedDocuments(prev => prev.includes(path) ? prev : [...prev, path]);
+  };
+
+
   const uploadNewDocuments = async (saleId: string): Promise<string[]> => {
     const urls: string[] = [];
     
@@ -409,29 +416,36 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
         });
       }
 
-      // Upload new documents if any
+      // Documents: handle removals + new uploads
+      const originalDocs = sale.documentos || [];
       let allDocumentUrls = [...existingDocuments];
       if (newDocuments.length > 0) {
         setUploadingDocs(true);
         const newUrls = await uploadNewDocuments(sale.id);
         allDocumentUrls = [...allDocumentUrls, ...newUrls];
-        
-        if (newUrls.length > 0) {
-          updates.documentos = allDocumentUrls;
-          changedFields.push({
-            field: 'Documentos',
-            oldValue: `${existingDocuments.length} arquivo(s)`,
-            newValue: `${allDocumentUrls.length} arquivo(s)`,
-          });
-        }
         setUploadingDocs(false);
       }
 
-      if (Object.keys(updates).length === 0 && newDocuments.length === 0) {
+      const docsChanged =
+        removedDocuments.length > 0 ||
+        allDocumentUrls.length !== originalDocs.length ||
+        allDocumentUrls.some((u, i) => u !== originalDocs[i]);
+
+      if (docsChanged) {
+        updates.documentos = allDocumentUrls;
+        changedFields.push({
+          field: 'Documentos',
+          oldValue: `${originalDocs.length} arquivo(s)`,
+          newValue: `${allDocumentUrls.length} arquivo(s)`,
+        });
+      }
+
+      if (Object.keys(updates).length === 0 && newDocuments.length === 0 && removedDocuments.length === 0) {
         toast.info('Nenhuma alteração detectada');
         setLoading(false);
         return;
       }
+
 
       const { data: fnData, error: fnError } = await supabase.functions.invoke('update-sale', {
         body: { sale_id: sale.id, updates },
@@ -469,6 +483,17 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
             company_id: profile.company_id,
           });
         }
+      }
+
+      // Best-effort: remove deleted files from storage AFTER DB update succeeds
+      if (removedDocuments.length > 0) {
+        const { error: removeError } = await supabase.storage
+          .from('sale-documents')
+          .remove(removedDocuments);
+        if (removeError) {
+          console.warn('Falha ao remover arquivos do storage:', removeError);
+        }
+        setRemovedDocuments([]);
       }
 
       toast.success('Venda atualizada com sucesso!');
@@ -1007,22 +1032,34 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
                             <File className="h-4 w-4 text-primary shrink-0" />
                             <span className="text-sm truncate">{fileName}</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              const { data, error } = await supabase.storage
-                                .from('sale-documents')
-                                .createSignedUrl(doc, 60 * 10);
-                              if (error || !data?.signedUrl) {
-                                toast.error('Não foi possível gerar o link do documento');
-                                return;
-                              }
-                              window.open(data.signedUrl, '_blank');
-                            }}
-                            className="text-xs text-primary hover:underline shrink-0"
-                          >
-                            Ver
-                          </button>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const { data, error } = await supabase.storage
+                                  .from('sale-documents')
+                                  .createSignedUrl(doc, 60 * 10);
+                                if (error || !data?.signedUrl) {
+                                  toast.error('Não foi possível gerar o link do documento');
+                                  return;
+                                }
+                                window.open(data.signedUrl, '_blank');
+                              }}
+                              className="text-xs text-primary hover:underline"
+                            >
+                              Ver
+                            </button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeExistingDocument(doc)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              title="Remover documento"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       );
                     })}

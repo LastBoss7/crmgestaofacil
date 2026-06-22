@@ -324,20 +324,46 @@ const Users = () => {
   const handleToggleActive = async () => {
     if (!selectedUser) return;
     setIsDeactivating(true);
+    const wasActive = selectedUser.active;
     const { error } = await supabase
       .from('profiles')
       .update({ active: !selectedUser.active })
       .eq('id', selectedUser.id);
-    setIsDeactivating(false);
 
     if (error) {
+      setIsDeactivating(false);
       toast.error('Erro ao atualizar status');
       console.error(error);
-    } else {
-      toast.success(selectedUser.active ? 'Usuário desativado' : 'Usuário ativado');
-      setIsDeactivateOpen(false);
-      setSelectedUser(null);
-      fetchUsers();
+      return;
+    }
+
+    const counts = impact ?? (await computeImpact(selectedUser.id));
+    await logAudit(wasActive ? 'DEACTIVATE' : 'REACTIVATE', selectedUser, counts);
+    setIsDeactivating(false);
+    toast.success(wasActive ? 'Usuário desativado' : 'Usuário ativado');
+    setIsDeactivateOpen(false);
+    setSelectedUser(null);
+    fetchUsers();
+  };
+
+  const handleToggleActiveDirect = async (user: UserWithRole) => {
+    setIsReactivating(true);
+    try {
+      const wasActive = user.active;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ active: !user.active })
+        .eq('id', user.id);
+      if (error) {
+        toast.error('Erro ao atualizar status');
+      } else {
+        const counts = await computeImpact(user.id);
+        await logAudit(wasActive ? 'DEACTIVATE' : 'REACTIVATE', user, counts);
+        toast.success('Usuário ativado');
+        fetchUsers();
+      }
+    } finally {
+      setIsReactivating(false);
     }
   };
 

@@ -565,6 +565,7 @@ const Users = () => {
                             variant="ghost"
                             size="sm"
                             title={user.active ? 'Desativar usuário' : 'Ativar usuário'}
+                            disabled={isProcessing}
                             onClick={() => {
                               if (user.active) {
                                 openDeactivateDialog(user);
@@ -584,6 +585,7 @@ const Users = () => {
                             variant="ghost"
                             size="sm"
                             title="Excluir usuário"
+                            disabled={isProcessing}
                             onClick={() => openDeleteDialog(user)}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />

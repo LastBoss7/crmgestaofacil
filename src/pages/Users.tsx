@@ -545,7 +545,14 @@ const Users = () => {
                             variant="ghost"
                             size="sm"
                             title={user.active ? 'Desativar usuário' : 'Ativar usuário'}
-                            onClick={() => handleToggleActive(user)}
+                            onClick={() => {
+                              if (user.active) {
+                                openDeactivateDialog(user);
+                              } else {
+                                setSelectedUser(user);
+                                handleToggleActiveDirect(user);
+                              }
+                            }}
                           >
                             {user.active ? (
                               <UserX className="h-4 w-4 text-destructive" />
@@ -557,10 +564,7 @@ const Users = () => {
                             variant="ghost"
                             size="sm"
                             title="Excluir usuário"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setIsDeleteOpen(true);
-                            }}
+                            onClick={() => openDeleteDialog(user)}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>

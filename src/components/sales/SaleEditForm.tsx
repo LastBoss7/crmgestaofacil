@@ -485,6 +485,17 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
         }
       }
 
+      // Best-effort: remove deleted files from storage AFTER DB update succeeds
+      if (removedDocuments.length > 0) {
+        const { error: removeError } = await supabase.storage
+          .from('sale-documents')
+          .remove(removedDocuments);
+        if (removeError) {
+          console.warn('Falha ao remover arquivos do storage:', removeError);
+        }
+        setRemovedDocuments([]);
+      }
+
       toast.success('Venda atualizada com sucesso!');
       onSuccess();
     } catch (error) {

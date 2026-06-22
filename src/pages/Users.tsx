@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, AppRole, ROLE_LABELS, UserRole } from '@/types/database';
-import { Plus, Search, UserCheck, UserX, Shield, UserPlus, Users2, KeyRound, Eye, EyeOff, Settings2 } from 'lucide-react';
+import { Plus, Search, UserCheck, UserX, Shield, UserPlus, Users2, KeyRound, Eye, EyeOff, Settings2, Trash2 } from 'lucide-react';
 import { CreateUserDialog } from '@/components/users/CreateUserDialog';
 import { CoordinatorTeamsDialog } from '@/components/users/CoordinatorTeamsDialog';
 import { BackofficeTeamsDialog } from '@/components/users/BackofficeTeamsDialog';
@@ -32,6 +32,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -63,6 +73,8 @@ const Users = () => {
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     // Wait for both auth loading to complete AND role to be loaded
@@ -300,6 +312,33 @@ const Users = () => {
     toast.success('Senha gerada! Anote antes de salvar.');
   };
 
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    setIsDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId: selectedUser.id },
+      });
+      if (error) {
+        toast.error('Erro ao excluir usuário: ' + error.message);
+        return;
+      }
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      toast.success(`Usuário ${selectedUser.nome} excluído com sucesso`);
+      setIsDeleteOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      toast.error('Erro ao excluir usuário');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const filteredUsers = users.filter((user) =>
     user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -469,6 +508,17 @@ const Users = () => {
                             ) : (
                               <UserCheck className="h-4 w-4 text-emerald-600" />
                             )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title="Excluir usuário"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setIsDeleteOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -738,6 +788,32 @@ const Users = () => {
             onTeamsUpdated={fetchUsers}
           />
         )}
+
+        {/* Delete confirmation */}
+        <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir usuário</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir <strong>{selectedUser?.nome}</strong>?
+                Esta ação é permanente e removerá o acesso, perfil e funções deste usuário.
+                Vendas já cadastradas serão mantidas no histórico.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); handleDeleteUser(); }}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Excluindo...</>
+                ) : 'Excluir'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );

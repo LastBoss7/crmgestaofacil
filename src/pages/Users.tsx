@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
 import { Profile, AppRole, ROLE_LABELS, UserRole } from '@/types/database';
-import { Plus, Search, UserCheck, UserX, Shield, UserPlus, Users2, KeyRound, Eye, EyeOff, Settings2 } from 'lucide-react';
+import { Plus, Search, UserCheck, UserX, Shield, UserPlus, Users2, KeyRound, Eye, EyeOff, Settings2, Trash2 } from 'lucide-react';
 import { CreateUserDialog } from '@/components/users/CreateUserDialog';
 import { CoordinatorTeamsDialog } from '@/components/users/CoordinatorTeamsDialog';
 import { BackofficeTeamsDialog } from '@/components/users/BackofficeTeamsDialog';

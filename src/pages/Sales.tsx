@@ -850,24 +850,42 @@ const Sales = () => {
                               )}
                               <span className="text-sm truncate">{fileName}</span>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="gap-2 shrink-0"
-                              onClick={async () => {
-                                const { data, error } = await supabase.storage
-                                  .from('sale-documents')
-                                  .createSignedUrl(docUrl, 60 * 10);
-                                if (error || !data?.signedUrl) {
-                                  toast.error('Não foi possível gerar o link do documento');
-                                  return;
-                                }
-                                window.open(data.signedUrl, '_blank');
-                              }}
-                            >
-                              <Download className="h-4 w-4" />
-                              Baixar
-                            </Button>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="gap-2"
+                                onClick={async () => {
+                                  const { data, error } = await supabase.storage
+                                    .from('sale-documents')
+                                    .createSignedUrl(docUrl, 60 * 10);
+                                  if (error || !data?.signedUrl) {
+                                    toast.error('Não foi possível gerar o link do documento');
+                                    return;
+                                  }
+                                  window.open(data.signedUrl, '_blank');
+                                }}
+                              >
+                                <Download className="h-4 w-4" />
+                                Baixar
+                              </Button>
+                              {(isCEO || isCoordinator || isSupervisor || isBackoffice || (selectedSale.seller_id === user?.id)) && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive hover:text-destructive"
+                                  disabled={removingDocIndex === index}
+                                  onClick={() => removeExistingDocument(docUrl, index)}
+                                  title="Desanexar documento"
+                                >
+                                  {removingDocIndex === index ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         );
                       })}

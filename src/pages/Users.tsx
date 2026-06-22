@@ -77,8 +77,10 @@ const Users = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
+  const [isReactivating, setIsReactivating] = useState(false);
   const [impactLoading, setImpactLoading] = useState(false);
   const [impact, setImpact] = useState<{ salesCount: number; documentsCount: number } | null>(null);
+  const isProcessing = isDeleting || isDeactivating || isReactivating;
 
   useEffect(() => {
     // Wait for both auth loading to complete AND role to be loaded

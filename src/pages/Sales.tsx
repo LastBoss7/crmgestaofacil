@@ -121,6 +121,34 @@ const Sales = () => {
     setNewDocuments(prev => prev.filter((_, i) => i !== index));
   };
 
+  const [removingDocIndex, setRemovingDocIndex] = useState<number | null>(null);
+
+  const removeExistingDocument = async (docPath: string, index: number) => {
+    if (!selectedSale) return;
+    if (!window.confirm('Deseja realmente desanexar este documento? Esta ação não pode ser desfeita.')) return;
+    setRemovingDocIndex(index);
+    try {
+      // Remove from storage (ignore error if already missing)
+      await supabase.storage.from('sale-documents').remove([docPath]);
+
+      const updatedDocs = (selectedSale.documentos || []).filter((_, i) => i !== index);
+      const { error: updateError } = await supabase
+        .from('sales')
+        .update({ documentos: updatedDocs } as any)
+        .eq('id', selectedSale.id);
+      if (updateError) throw updateError;
+
+      setSelectedSale({ ...selectedSale, documentos: updatedDocs });
+      toast.success('Documento desanexado');
+      fetchSales();
+    } catch (err) {
+      console.error('Error removing document:', err);
+      toast.error('Erro ao desanexar documento');
+    } finally {
+      setRemovingDocIndex(null);
+    }
+  };
+
   const uploadNewDocuments = async () => {
     if (!selectedSale || newDocuments.length === 0) return;
     

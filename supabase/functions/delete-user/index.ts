@@ -114,6 +114,15 @@ serve(async (req) => {
       );
     }
 
+    // Snapshot seller info on sales so history stays readable after deletion
+    await supabaseAdmin
+      .from("sales")
+      .update({
+        seller_name_snapshot: targetProfile.nome,
+        seller_removed: true,
+      })
+      .eq("seller_id", userId);
+
     // Detach from team-assignment tables (no FK cascade guaranteed)
     await supabaseAdmin.from("coordinator_teams").delete().eq("coordinator_id", userId);
     await supabaseAdmin.from("backoffice_teams").delete().eq("backoffice_id", userId);

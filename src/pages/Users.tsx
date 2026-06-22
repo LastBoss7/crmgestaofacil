@@ -75,6 +75,10 @@ const Users = () => {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
+  const [isDeactivating, setIsDeactivating] = useState(false);
+  const [impactLoading, setImpactLoading] = useState(false);
+  const [impact, setImpact] = useState<{ salesCount: number; documentsCount: number } | null>(null);
 
   useEffect(() => {
     // Wait for both auth loading to complete AND role to be loaded
@@ -242,17 +246,70 @@ const Users = () => {
     fetchUsers();
   };
 
-  const handleToggleActive = async (user: UserWithRole) => {
+  const loadImpact = async (userId: string) => {
+    setImpactLoading(true);
+    setImpact(null);
+    try {
+      const { data, error } = await supabase
+        .from('sales')
+        .select('documentos')
+        .eq('seller_id', userId);
+      if (error) throw error;
+      const salesCount = data?.length ?? 0;
+      const documentsCount = (data ?? []).reduce(
+        (sum, s: any) => sum + (Array.isArray(s.documentos) ? s.documentos.length : 0),
+        0
+      );
+      setImpact({ salesCount, documentsCount });
+    } catch (err) {
+      console.error('Error loading impact:', err);
+      setImpact({ salesCount: 0, documentsCount: 0 });
+    } finally {
+      setImpactLoading(false);
+    }
+  };
+
+  const openDeactivateDialog = (user: UserWithRole) => {
+    setSelectedUser(user);
+    setIsDeactivateOpen(true);
+    if (user.active) loadImpact(user.id);
+  };
+
+  const openDeleteDialog = (user: UserWithRole) => {
+    setSelectedUser(user);
+    setIsDeleteOpen(true);
+    loadImpact(user.id);
+  };
+
+  const handleToggleActive = async () => {
+    if (!selectedUser) return;
+    setIsDeactivating(true);
     const { error } = await supabase
       .from('profiles')
-      .update({ active: !user.active })
-      .eq('id', user.id);
+      .update({ active: !selectedUser.active })
+      .eq('id', selectedUser.id);
+    setIsDeactivating(false);
 
     if (error) {
       toast.error('Erro ao atualizar status');
       console.error(error);
     } else {
-      toast.success(user.active ? 'Usuário desativado' : 'Usuário ativado');
+      toast.success(selectedUser.active ? 'Usuário desativado' : 'Usuário ativado');
+      setIsDeactivateOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
+    }
+  };
+
+  const handleToggleActiveDirect = async (user: UserWithRole) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ active: !user.active })
+      .eq('id', user.id);
+    if (error) {
+      toast.error('Erro ao atualizar status');
+    } else {
+      toast.success('Usuário ativado');
       fetchUsers();
     }
   };
@@ -501,7 +558,14 @@ const Users = () => {
                             variant="ghost"
                             size="sm"
                             title={user.active ? 'Desativar usuário' : 'Ativar usuário'}
-                            onClick={() => handleToggleActive(user)}
+                            onClick={() => {
+                              if (user.active) {
+                                openDeactivateDialog(user);
+                              } else {
+                                setSelectedUser(user);
+                                handleToggleActiveDirect(user);
+                              }
+                            }}
                           >
                             {user.active ? (
                               <UserX className="h-4 w-4 text-destructive" />
@@ -513,10 +577,7 @@ const Users = () => {
                             variant="ghost"
                             size="sm"
                             title="Excluir usuário"
-                            onClick={() => {
-                              setSelectedUser(user);
-                              setIsDeleteOpen(true);
-                            }}
+                            onClick={() => openDeleteDialog(user)}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
@@ -789,27 +850,98 @@ const Users = () => {
           />
         )}
 
+        {/* Deactivate confirmation */}
+        <AlertDialog open={isDeactivateOpen} onOpenChange={setIsDeactivateOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Desativar usuário</AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-3 text-sm text-muted-foreground">
+                  <p>
+                    Você vai desativar <strong className="text-foreground">{selectedUser?.nome}</strong>.
+                    O usuário não conseguirá mais entrar no sistema, mas todo o
+                    histórico permanece intacto.
+                  </p>
+                  <div className="rounded-md border bg-muted/40 p-3 space-y-1">
+                    <p className="text-xs font-medium text-foreground">Impacto</p>
+                    {impactLoading ? (
+                      <p className="flex items-center gap-2 text-xs">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Calculando...
+                      </p>
+                    ) : (
+                      <ul className="text-xs space-y-0.5">
+                        <li>• Vendas vinculadas: <strong className="text-foreground">{impact?.salesCount ?? 0}</strong></li>
+                        <li>• Documentos anexados: <strong className="text-foreground">{impact?.documentsCount ?? 0}</strong></li>
+                      </ul>
+                    )}
+                  </div>
+                  <p className="text-xs">
+                    Você pode reativar o usuário a qualquer momento.
+                  </p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeactivating}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); handleToggleActive(); }}
+                disabled={isDeactivating}
+              >
+                {isDeactivating ? (
+                  <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Desativando...</>
+                ) : 'Desativar'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* Delete confirmation */}
         <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Excluir usuário</AlertDialogTitle>
-              <AlertDialogDescription>
-                Tem certeza que deseja excluir <strong>{selectedUser?.nome}</strong>?
-                Esta ação é permanente e removerá o acesso, perfil e funções deste usuário.
-                Vendas já cadastradas serão mantidas no histórico.
+              <AlertDialogTitle className="text-destructive">Excluir usuário permanentemente</AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-3 text-sm text-muted-foreground">
+                  <p>
+                    Você vai excluir <strong className="text-foreground">{selectedUser?.nome}</strong> de
+                    forma <strong>permanente</strong>. Esta ação não pode ser desfeita.
+                  </p>
+                  <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-1">
+                    <p className="text-xs font-medium text-destructive">O que será removido</p>
+                    <ul className="text-xs space-y-0.5">
+                      <li>• Acesso, perfil e função do usuário</li>
+                      <li>• Vínculo com equipes (coordenador / qualidade)</li>
+                    </ul>
+                  </div>
+                  <div className="rounded-md border bg-muted/40 p-3 space-y-1">
+                    <p className="text-xs font-medium text-foreground">O que será preservado</p>
+                    {impactLoading ? (
+                      <p className="flex items-center gap-2 text-xs">
+                        <Loader2 className="h-3 w-3 animate-spin" /> Calculando impacto...
+                      </p>
+                    ) : (
+                      <ul className="text-xs space-y-0.5">
+                        <li>• <strong className="text-foreground">{impact?.salesCount ?? 0}</strong> venda(s) — mantidas no histórico, marcadas como "vendedor não faz mais parte da equipe"</li>
+                        <li>• <strong className="text-foreground">{impact?.documentsCount ?? 0}</strong> documento(s) anexado(s) — preservados</li>
+                      </ul>
+                    )}
+                  </div>
+                  <p className="text-xs">
+                    💡 Se quiser apenas bloquear o acesso, prefira <strong>desativar</strong> em vez de excluir.
+                  </p>
+                </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
               <AlertDialogAction
                 onClick={(e) => { e.preventDefault(); handleDeleteUser(); }}
-                disabled={isDeleting}
+                disabled={isDeleting || impactLoading}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 {isDeleting ? (
                   <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Excluindo...</>
-                ) : 'Excluir'}
+                ) : 'Excluir permanentemente'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

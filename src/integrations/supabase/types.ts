@@ -748,6 +748,8 @@ export type Database = {
           proprietario_rg: string | null
           razao_social: string
           seller_id: string | null
+          seller_name_snapshot: string | null
+          seller_removed: boolean
           status: Database["public"]["Enums"]["sale_status"] | null
           telefone_1: string | null
           telefone_2: string | null
@@ -800,6 +802,8 @@ export type Database = {
           proprietario_rg?: string | null
           razao_social: string
           seller_id?: string | null
+          seller_name_snapshot?: string | null
+          seller_removed?: boolean
           status?: Database["public"]["Enums"]["sale_status"] | null
           telefone_1?: string | null
           telefone_2?: string | null
@@ -852,6 +856,8 @@ export type Database = {
           proprietario_rg?: string | null
           razao_social?: string
           seller_id?: string | null
+          seller_name_snapshot?: string | null
+          seller_removed?: boolean
           status?: Database["public"]["Enums"]["sale_status"] | null
           telefone_1?: string | null
           telefone_2?: string | null

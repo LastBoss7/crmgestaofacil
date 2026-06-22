@@ -509,6 +509,17 @@ const Users = () => {
                               <UserCheck className="h-4 w-4 text-emerald-600" />
                             )}
                           </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            title="Excluir usuário"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setIsDeleteOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}

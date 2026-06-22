@@ -76,6 +76,21 @@ serve(async (req) => {
       );
     }
 
+    // Enforce company user limit (max 20 users per company)
+    const { count: companyUserCount, error: countError } = await supabaseAdmin
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("company_id", callerProfile.company_id);
+
+    if (countError) {
+      console.error("Count error:", countError);
+    } else if ((companyUserCount ?? 0) >= 20) {
+      return new Response(
+        JSON.stringify({ error: "Limite de 20 usuários por empresa atingido. Remova um usuário antes de criar outro." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Validate role permissions
     // CEO can create any role, COORDENADOR and SUPERVISOR can create SELLER, BACKOFFICE, SUPERVISOR
     const allowedRoles = callerRole.role === "CEO" 

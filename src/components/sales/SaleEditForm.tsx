@@ -270,6 +270,12 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
     setNewDocuments(prev => prev.filter((_, i) => i !== index));
   };
 
+  const removeExistingDocument = (path: string) => {
+    setExistingDocuments(prev => prev.filter(p => p !== path));
+    setRemovedDocuments(prev => prev.includes(path) ? prev : [...prev, path]);
+  };
+
+
   const uploadNewDocuments = async (saleId: string): Promise<string[]> => {
     const urls: string[] = [];
     

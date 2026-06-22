@@ -304,15 +304,20 @@ const Users = () => {
   };
 
   const handleToggleActiveDirect = async (user: UserWithRole) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ active: !user.active })
-      .eq('id', user.id);
-    if (error) {
-      toast.error('Erro ao atualizar status');
-    } else {
-      toast.success('Usuário ativado');
-      fetchUsers();
+    setIsReactivating(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ active: !user.active })
+        .eq('id', user.id);
+      if (error) {
+        toast.error('Erro ao atualizar status');
+      } else {
+        toast.success('Usuário ativado');
+        fetchUsers();
+      }
+    } finally {
+      setIsReactivating(false);
     }
   };
 

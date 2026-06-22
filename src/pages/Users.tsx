@@ -312,6 +312,33 @@ const Users = () => {
     toast.success('Senha gerada! Anote antes de salvar.');
   };
 
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    setIsDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId: selectedUser.id },
+      });
+      if (error) {
+        toast.error('Erro ao excluir usuário: ' + error.message);
+        return;
+      }
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+      toast.success(`Usuário ${selectedUser.nome} excluído com sucesso`);
+      setIsDeleteOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      toast.error('Erro ao excluir usuário');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const filteredUsers = users.filter((user) =>
     user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.email.toLowerCase().includes(searchTerm.toLowerCase())

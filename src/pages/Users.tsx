@@ -8,6 +8,7 @@ import { Plus, Search, UserCheck, UserX, Shield, UserPlus, Users2, KeyRound, Eye
 import { CreateUserDialog } from '@/components/users/CreateUserDialog';
 import { CoordinatorTeamsDialog } from '@/components/users/CoordinatorTeamsDialog';
 import { BackofficeTeamsDialog } from '@/components/users/BackofficeTeamsDialog';
+import { UserAuditLogDialog } from '@/components/users/UserAuditLogDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {

@@ -85,7 +85,7 @@ serve(async (req) => {
     // Target user must belong to same company
     const { data: targetProfile } = await supabaseAdmin
       .from("profiles")
-      .select("company_id, nome")
+      .select("company_id, nome, email")
       .eq("id", userId)
       .maybeSingle();
 
@@ -102,7 +102,6 @@ serve(async (req) => {
       .eq("user_id", userId)
       .maybeSingle();
 
-    // Only CEO can delete CEO or COORDENADOR
     if (
       targetRole &&
       ["CEO", "COORDENADOR"].includes(targetRole.role) &&
@@ -114,7 +113,23 @@ serve(async (req) => {
       );
     }
 
-    // Snapshot seller info on sales so history stays readable after deletion
+    // Compute impact (sales + documents) before deletion
+    const { data: impactSales } = await supabaseAdmin
+      .from("sales")
+      .select("documentos")
+      .eq("seller_id", userId);
+    const salesCount = impactSales?.length ?? 0;
+    const documentsCount = (impactSales ?? []).reduce(
+      (sum: number, s: any) => sum + (Array.isArray(s.documentos) ? s.documentos.length : 0),
+      0
+    );
+
+    const { data: callerProfileFull } = await supabaseAdmin
+      .from("profiles")
+      .select("nome")
+      .eq("id", caller.id)
+      .maybeSingle();
+
     await supabaseAdmin
       .from("sales")
       .update({
@@ -123,11 +138,9 @@ serve(async (req) => {
       })
       .eq("seller_id", userId);
 
-    // Detach from team-assignment tables (no FK cascade guaranteed)
     await supabaseAdmin.from("coordinator_teams").delete().eq("coordinator_id", userId);
     await supabaseAdmin.from("backoffice_teams").delete().eq("backoffice_id", userId);
 
-    // Delete from auth.users — cascades to profiles + user_roles
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
     if (deleteError) {
       console.error("Delete error:", deleteError);
@@ -137,8 +150,22 @@ serve(async (req) => {
       });
     }
 
+    await supabaseAdmin.from("user_admin_audit_log").insert({
+      company_id: callerProfile.company_id,
+      actor_id: caller.id,
+      actor_name: callerProfileFull?.nome ?? null,
+      actor_role: callerRole.role,
+      action: "DELETE",
+      target_user_id: userId,
+      target_user_name: targetProfile.nome,
+      target_user_email: targetProfile.email,
+      target_user_role: targetRole?.role ?? null,
+      sales_count: salesCount,
+      documents_count: documentsCount,
+    });
+
     return new Response(
-      JSON.stringify({ success: true, message: `Usuário ${targetProfile.nome} excluído` }),
+      JSON.stringify({ success: true, message: `Usuário ${targetProfile.nome} excluído`, salesCount, documentsCount }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

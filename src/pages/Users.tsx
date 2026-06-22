@@ -301,6 +301,19 @@ const Users = () => {
     }
   };
 
+  const handleToggleActiveDirect = async (user: UserWithRole) => {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ active: !user.active })
+      .eq('id', user.id);
+    if (error) {
+      toast.error('Erro ao atualizar status');
+    } else {
+      toast.success('Usuário ativado');
+      fetchUsers();
+    }
+  };
+
   const handleResetPassword = async () => {
     if (!selectedUser || !newPassword) {
       toast.error('Preencha a nova senha');

@@ -482,10 +482,16 @@ const Users = () => {
               Gerencie os usuários e suas permissões
             </p>
           </div>
-          <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
-            <UserPlus className="h-4 w-4" />
-            Novo Usuário
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsAuditOpen(true)} className="gap-2">
+              <Shield className="h-4 w-4" />
+              Log de Auditoria
+            </Button>
+            <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Novo Usuário
+            </Button>
+          </div>
         </div>
 
         {/* Search */}

@@ -104,6 +104,7 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isAuditOpen, setIsAuditOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [isCoordinatorTeamsOpen, setIsCoordinatorTeamsOpen] = useState(false);
   const [isBackofficeTeamsOpen, setIsBackofficeTeamsOpen] = useState(false);

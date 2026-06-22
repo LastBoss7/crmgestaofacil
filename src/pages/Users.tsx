@@ -77,8 +77,10 @@ const Users = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeactivateOpen, setIsDeactivateOpen] = useState(false);
   const [isDeactivating, setIsDeactivating] = useState(false);
+  const [isReactivating, setIsReactivating] = useState(false);
   const [impactLoading, setImpactLoading] = useState(false);
   const [impact, setImpact] = useState<{ salesCount: number; documentsCount: number } | null>(null);
+  const isProcessing = isDeleting || isDeactivating || isReactivating;
 
   useEffect(() => {
     // Wait for both auth loading to complete AND role to be loaded
@@ -302,15 +304,20 @@ const Users = () => {
   };
 
   const handleToggleActiveDirect = async (user: UserWithRole) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ active: !user.active })
-      .eq('id', user.id);
-    if (error) {
-      toast.error('Erro ao atualizar status');
-    } else {
-      toast.success('Usuário ativado');
-      fetchUsers();
+    setIsReactivating(true);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ active: !user.active })
+        .eq('id', user.id);
+      if (error) {
+        toast.error('Erro ao atualizar status');
+      } else {
+        toast.success('Usuário ativado');
+        fetchUsers();
+      }
+    } finally {
+      setIsReactivating(false);
     }
   };
 
@@ -558,6 +565,7 @@ const Users = () => {
                             variant="ghost"
                             size="sm"
                             title={user.active ? 'Desativar usuário' : 'Ativar usuário'}
+                            disabled={isProcessing}
                             onClick={() => {
                               if (user.active) {
                                 openDeactivateDialog(user);
@@ -577,6 +585,7 @@ const Users = () => {
                             variant="ghost"
                             size="sm"
                             title="Excluir usuário"
+                            disabled={isProcessing}
                             onClick={() => openDeleteDialog(user)}
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />

@@ -1078,6 +1078,57 @@ export type Database = {
         }
         Relationships: []
       }
+      user_admin_audit_log: {
+        Row: {
+          action: string
+          actor_id: string
+          actor_name: string | null
+          actor_role: string | null
+          company_id: string
+          created_at: string
+          documents_count: number
+          id: string
+          metadata: Json | null
+          sales_count: number
+          target_user_email: string | null
+          target_user_id: string
+          target_user_name: string | null
+          target_user_role: string | null
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          actor_name?: string | null
+          actor_role?: string | null
+          company_id: string
+          created_at?: string
+          documents_count?: number
+          id?: string
+          metadata?: Json | null
+          sales_count?: number
+          target_user_email?: string | null
+          target_user_id: string
+          target_user_name?: string | null
+          target_user_role?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          actor_name?: string | null
+          actor_role?: string | null
+          company_id?: string
+          created_at?: string
+          documents_count?: number
+          id?: string
+          metadata?: Json | null
+          sales_count?: number
+          target_user_email?: string | null
+          target_user_id?: string
+          target_user_name?: string | null
+          target_user_role?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null

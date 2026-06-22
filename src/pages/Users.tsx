@@ -57,7 +57,45 @@ interface UserWithRole extends Profile {
 
 const Users = () => {
   const navigate = useNavigate();
-  const { canManageUsers, loading: authLoading, isCEO, isSupervisor, role } = useAuth();
+  const { canManageUsers, loading: authLoading, isCEO, isSupervisor, role, user: authUser, profile: authProfile } = useAuth();
+
+  const logAudit = async (
+    action: 'DEACTIVATE' | 'REACTIVATE',
+    target: UserWithRole,
+    counts: { salesCount: number; documentsCount: number }
+  ) => {
+    if (!authUser || !authProfile?.company_id) return;
+    try {
+      await supabase.from('user_admin_audit_log').insert({
+        company_id: authProfile.company_id,
+        actor_id: authUser.id,
+        actor_name: authProfile.nome ?? null,
+        actor_role: role ?? null,
+        action,
+        target_user_id: target.id,
+        target_user_name: target.nome,
+        target_user_email: target.email,
+        target_user_role: target.role ?? null,
+        sales_count: counts.salesCount,
+        documents_count: counts.documentsCount,
+      });
+    } catch (err) {
+      console.error('Audit log error:', err);
+    }
+  };
+
+  const computeImpact = async (userId: string) => {
+    const { data } = await supabase
+      .from('sales')
+      .select('documentos')
+      .eq('seller_id', userId);
+    const salesCount = data?.length ?? 0;
+    const documentsCount = (data ?? []).reduce(
+      (sum, s: any) => sum + (Array.isArray(s.documentos) ? s.documentos.length : 0),
+      0
+    );
+    return { salesCount, documentsCount };
+  };
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -286,26 +324,32 @@ const Users = () => {
   const handleToggleActive = async () => {
     if (!selectedUser) return;
     setIsDeactivating(true);
+    const wasActive = selectedUser.active;
     const { error } = await supabase
       .from('profiles')
       .update({ active: !selectedUser.active })
       .eq('id', selectedUser.id);
-    setIsDeactivating(false);
 
     if (error) {
+      setIsDeactivating(false);
       toast.error('Erro ao atualizar status');
       console.error(error);
-    } else {
-      toast.success(selectedUser.active ? 'Usuário desativado' : 'Usuário ativado');
-      setIsDeactivateOpen(false);
-      setSelectedUser(null);
-      fetchUsers();
+      return;
     }
+
+    const counts = impact ?? (await computeImpact(selectedUser.id));
+    await logAudit(wasActive ? 'DEACTIVATE' : 'REACTIVATE', selectedUser, counts);
+    setIsDeactivating(false);
+    toast.success(wasActive ? 'Usuário desativado' : 'Usuário ativado');
+    setIsDeactivateOpen(false);
+    setSelectedUser(null);
+    fetchUsers();
   };
 
   const handleToggleActiveDirect = async (user: UserWithRole) => {
     setIsReactivating(true);
     try {
+      const wasActive = user.active;
       const { error } = await supabase
         .from('profiles')
         .update({ active: !user.active })
@@ -313,6 +357,8 @@ const Users = () => {
       if (error) {
         toast.error('Erro ao atualizar status');
       } else {
+        const counts = await computeImpact(user.id);
+        await logAudit(wasActive ? 'DEACTIVATE' : 'REACTIVATE', user, counts);
         toast.success('Usuário ativado');
         fetchUsers();
       }
@@ -320,6 +366,9 @@ const Users = () => {
       setIsReactivating(false);
     }
   };
+
+
+
 
   const handleResetPassword = async () => {
     if (!selectedUser || !newPassword) {

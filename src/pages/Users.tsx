@@ -8,6 +8,7 @@ import { Plus, Search, UserCheck, UserX, Shield, UserPlus, Users2, KeyRound, Eye
 import { CreateUserDialog } from '@/components/users/CreateUserDialog';
 import { CoordinatorTeamsDialog } from '@/components/users/CoordinatorTeamsDialog';
 import { BackofficeTeamsDialog } from '@/components/users/BackofficeTeamsDialog';
+import { UserAuditLogDialog } from '@/components/users/UserAuditLogDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -103,6 +104,7 @@ const Users = () => {
   const [selectedUser, setSelectedUser] = useState<UserWithRole | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isAuditOpen, setIsAuditOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [isCoordinatorTeamsOpen, setIsCoordinatorTeamsOpen] = useState(false);
   const [isBackofficeTeamsOpen, setIsBackofficeTeamsOpen] = useState(false);
@@ -480,10 +482,16 @@ const Users = () => {
               Gerencie os usuários e suas permissões
             </p>
           </div>
-          <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
-            <UserPlus className="h-4 w-4" />
-            Novo Usuário
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsAuditOpen(true)} className="gap-2">
+              <Shield className="h-4 w-4" />
+              Log de Auditoria
+            </Button>
+            <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Novo Usuário
+            </Button>
+          </div>
         </div>
 
         {/* Search */}
@@ -804,6 +812,8 @@ const Users = () => {
           onOpenChange={setIsCreateOpen}
           onUserCreated={fetchUsers}
         />
+
+        <UserAuditLogDialog open={isAuditOpen} onOpenChange={setIsAuditOpen} />
 
         {/* Reset Password Dialog */}
         <Dialog open={isResetPasswordOpen} onOpenChange={setIsResetPasswordOpen}>

@@ -416,29 +416,36 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
         });
       }
 
-      // Upload new documents if any
+      // Documents: handle removals + new uploads
+      const originalDocs = sale.documentos || [];
       let allDocumentUrls = [...existingDocuments];
       if (newDocuments.length > 0) {
         setUploadingDocs(true);
         const newUrls = await uploadNewDocuments(sale.id);
         allDocumentUrls = [...allDocumentUrls, ...newUrls];
-        
-        if (newUrls.length > 0) {
-          updates.documentos = allDocumentUrls;
-          changedFields.push({
-            field: 'Documentos',
-            oldValue: `${existingDocuments.length} arquivo(s)`,
-            newValue: `${allDocumentUrls.length} arquivo(s)`,
-          });
-        }
         setUploadingDocs(false);
       }
 
-      if (Object.keys(updates).length === 0 && newDocuments.length === 0) {
+      const docsChanged =
+        removedDocuments.length > 0 ||
+        allDocumentUrls.length !== originalDocs.length ||
+        allDocumentUrls.some((u, i) => u !== originalDocs[i]);
+
+      if (docsChanged) {
+        updates.documentos = allDocumentUrls;
+        changedFields.push({
+          field: 'Documentos',
+          oldValue: `${originalDocs.length} arquivo(s)`,
+          newValue: `${allDocumentUrls.length} arquivo(s)`,
+        });
+      }
+
+      if (Object.keys(updates).length === 0 && newDocuments.length === 0 && removedDocuments.length === 0) {
         toast.info('Nenhuma alteração detectada');
         setLoading(false);
         return;
       }
+
 
       const { data: fnData, error: fnError } = await supabase.functions.invoke('update-sale', {
         body: { sale_id: sale.id, updates },

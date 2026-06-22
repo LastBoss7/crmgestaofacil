@@ -813,6 +813,8 @@ const Users = () => {
           onUserCreated={fetchUsers}
         />
 
+        <UserAuditLogDialog open={isAuditOpen} onOpenChange={setIsAuditOpen} />
+
         {/* Reset Password Dialog */}
         <Dialog open={isResetPasswordOpen} onOpenChange={setIsResetPasswordOpen}>
           <DialogContent className="sm:max-w-md">

@@ -246,17 +246,57 @@ const Users = () => {
     fetchUsers();
   };
 
-  const handleToggleActive = async (user: UserWithRole) => {
+  const loadImpact = async (userId: string) => {
+    setImpactLoading(true);
+    setImpact(null);
+    try {
+      const { data, error } = await supabase
+        .from('sales')
+        .select('documentos')
+        .eq('seller_id', userId);
+      if (error) throw error;
+      const salesCount = data?.length ?? 0;
+      const documentsCount = (data ?? []).reduce(
+        (sum, s: any) => sum + (Array.isArray(s.documentos) ? s.documentos.length : 0),
+        0
+      );
+      setImpact({ salesCount, documentsCount });
+    } catch (err) {
+      console.error('Error loading impact:', err);
+      setImpact({ salesCount: 0, documentsCount: 0 });
+    } finally {
+      setImpactLoading(false);
+    }
+  };
+
+  const openDeactivateDialog = (user: UserWithRole) => {
+    setSelectedUser(user);
+    setIsDeactivateOpen(true);
+    if (user.active) loadImpact(user.id);
+  };
+
+  const openDeleteDialog = (user: UserWithRole) => {
+    setSelectedUser(user);
+    setIsDeleteOpen(true);
+    loadImpact(user.id);
+  };
+
+  const handleToggleActive = async () => {
+    if (!selectedUser) return;
+    setIsDeactivating(true);
     const { error } = await supabase
       .from('profiles')
-      .update({ active: !user.active })
-      .eq('id', user.id);
+      .update({ active: !selectedUser.active })
+      .eq('id', selectedUser.id);
+    setIsDeactivating(false);
 
     if (error) {
       toast.error('Erro ao atualizar status');
       console.error(error);
     } else {
-      toast.success(user.active ? 'Usuário desativado' : 'Usuário ativado');
+      toast.success(selectedUser.active ? 'Usuário desativado' : 'Usuário ativado');
+      setIsDeactivateOpen(false);
+      setSelectedUser(null);
       fetchUsers();
     }
   };

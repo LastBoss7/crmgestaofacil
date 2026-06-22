@@ -57,7 +57,45 @@ interface UserWithRole extends Profile {
 
 const Users = () => {
   const navigate = useNavigate();
-  const { canManageUsers, loading: authLoading, isCEO, isSupervisor, role } = useAuth();
+  const { canManageUsers, loading: authLoading, isCEO, isSupervisor, role, user: authUser, profile: authProfile } = useAuth();
+
+  const logAudit = async (
+    action: 'DEACTIVATE' | 'REACTIVATE',
+    target: UserWithRole,
+    counts: { salesCount: number; documentsCount: number }
+  ) => {
+    if (!authUser || !authProfile?.company_id) return;
+    try {
+      await supabase.from('user_admin_audit_log').insert({
+        company_id: authProfile.company_id,
+        actor_id: authUser.id,
+        actor_name: authProfile.nome ?? null,
+        actor_role: role ?? null,
+        action,
+        target_user_id: target.id,
+        target_user_name: target.nome,
+        target_user_email: target.email,
+        target_user_role: target.role ?? null,
+        sales_count: counts.salesCount,
+        documents_count: counts.documentsCount,
+      });
+    } catch (err) {
+      console.error('Audit log error:', err);
+    }
+  };
+
+  const computeImpact = async (userId: string) => {
+    const { data } = await supabase
+      .from('sales')
+      .select('documentos')
+      .eq('seller_id', userId);
+    const salesCount = data?.length ?? 0;
+    const documentsCount = (data ?? []).reduce(
+      (sum, s: any) => sum + (Array.isArray(s.documentos) ? s.documentos.length : 0),
+      0
+    );
+    return { salesCount, documentsCount };
+  };
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);

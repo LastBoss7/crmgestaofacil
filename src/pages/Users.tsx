@@ -915,7 +915,7 @@ const Users = () => {
                 <Button variant="outline" onClick={() => setIsEditOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={handleUserUpdate} disabled={!newRole || !newName.trim()}>
+                <Button onClick={handleUserUpdate} disabled={!newRole || !newName.trim() || !newEmail.trim()}>
                   Salvar
                 </Button>
               </div>

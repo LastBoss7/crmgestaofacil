@@ -307,6 +307,7 @@ const Users = () => {
       }
 
       toast.success('Usuário atualizado com sucesso!');
+      setSearchTerm('');
       setIsEditOpen(false);
       fetchUsers();
     } catch (err) {

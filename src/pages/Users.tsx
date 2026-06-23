@@ -629,6 +629,7 @@ const Users = () => {
                               setNewTeamId(user.team_id || null);
                               setNewName(user.nome || '');
                               setNameError('');
+                              setSaveError('');
                               setIsEditOpen(true);
                             }}
                           >

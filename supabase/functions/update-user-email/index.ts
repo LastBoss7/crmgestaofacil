@@ -106,6 +106,34 @@ serve(async (req) => {
       );
     }
 
+    // Extra server-side check: e-mail must be unique within the same company.
+    // Case-insensitive match on profiles.email, excluding the target user.
+    const { data: conflict, error: conflictErr } = await supabaseAdmin
+      .from("profiles")
+      .select("id, nome")
+      .eq("company_id", callerProfile.company_id)
+      .neq("id", userId)
+      .ilike("email", newEmail)
+      .maybeSingle();
+
+    if (conflictErr) {
+      console.error("Conflict check error:", conflictErr);
+      return new Response(
+        JSON.stringify({ error: "Não foi possível validar o e-mail. Tente novamente." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    if (conflict) {
+      return new Response(
+        JSON.stringify({
+          error: `Este e-mail já está em uso por outro usuário da empresa${conflict.nome ? ` (${conflict.nome})` : ""}. Escolha um e-mail diferente.`,
+        }),
+        { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+
     // Update auth user (auto-confirm so the new e-mail is immediately usable)
     const { error: authErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
       email: newEmail,

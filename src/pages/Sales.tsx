@@ -692,9 +692,18 @@ const Sales = () => {
                         </TableCell>
                         {!isSeller && (
                           <TableCell>
-                            {sale.seller_id && sellers[sale.seller_id]
-                              ? sellers[sale.seller_id].nome
-                              : '-'}
+                            {(() => {
+                              const name = (sale.seller_id && sellers[sale.seller_id]?.nome) || (sale as any).seller_name_snapshot;
+                              if (!name) return '-';
+                              return (
+                                <span>
+                                  {name}
+                                  {(sale as any).seller_removed && (
+                                    <span className="ml-1 text-xs text-muted-foreground">(removido)</span>
+                                  )}
+                                </span>
+                              );
+                            })()}
                           </TableCell>
                         )}
                         {!isSeller && (
@@ -809,7 +818,7 @@ const Sales = () => {
                       <ChangeSellerDialog
                         saleId={selectedSale.id}
                         currentSellerId={selectedSale.seller_id}
-                        currentSellerName={selectedSale.seller_id ? sellers[selectedSale.seller_id]?.nome : undefined}
+                        currentSellerName={(selectedSale.seller_id && sellers[selectedSale.seller_id]?.nome) || (selectedSale as any).seller_name_snapshot || undefined}
                         onSuccess={() => {
                           fetchSales();
                           setIsDetailOpen(false);
@@ -821,6 +830,8 @@ const Sales = () => {
                     <SaleDetails 
                       sale={selectedSale} 
                       seller={selectedSale.seller_id ? sellers[selectedSale.seller_id] : undefined}
+                      fallbackSellerName={(selectedSale as any).seller_name_snapshot}
+                      sellerRemoved={(selectedSale as any).seller_removed}
                     />
 
                 {/* Documents Section */}
@@ -972,7 +983,7 @@ const Sales = () => {
                     size="sm"
                     className="gap-2"
                     onClick={() => {
-                      const sellerName = selectedSale.seller_id ? sellers[selectedSale.seller_id]?.nome : undefined;
+                      const sellerName = (selectedSale.seller_id && sellers[selectedSale.seller_id]?.nome) || (selectedSale as any).seller_name_snapshot || undefined;
                       // Resolve team name from UUID or use existing name
                       const teamName = selectedSale.equipe 
                         ? (teams[selectedSale.equipe] || selectedSale.equipe) 

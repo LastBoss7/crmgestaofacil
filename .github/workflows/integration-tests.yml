@@ -1,0 +1,67 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  frontend-tests:
+    name: Frontend (Vitest)
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npx tsc --noEmit
+        continue-on-error: true
+
+      - name: Run frontend tests
+        run: npm test
+
+  edge-function-tests:
+    name: Edge Functions (Deno)
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      TEST_CEO_EMAIL: ${{ secrets.TEST_CEO_EMAIL }}
+      TEST_CEO_PASSWORD: ${{ secrets.TEST_CEO_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+
+      - name: Validate required test secrets
+        run: |
+          missing=()
+          for var in VITE_SUPABASE_URL VITE_SUPABASE_PUBLISHABLE_KEY SUPABASE_SERVICE_ROLE_KEY TEST_CEO_EMAIL TEST_CEO_PASSWORD; do
+            if [ -z "${!var}" ]; then missing+=("$var"); fi
+          done
+          if [ ${#missing[@]} -ne 0 ]; then
+            echo "::error::Missing required GitHub Actions secrets: ${missing[*]}"
+            echo "Configure them under Repo Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+      - name: Run edge function integration tests
+        run: deno test --allow-env --allow-net --allow-read supabase/functions

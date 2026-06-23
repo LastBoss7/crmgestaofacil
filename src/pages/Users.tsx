@@ -724,7 +724,7 @@ const Users = () => {
             <DialogHeader>
               <DialogTitle>Editar Usuário</DialogTitle>
               <DialogDescription>
-                Alterar nome, função e equipe de {selectedUser?.nome}
+                Alterar nome, e-mail, função e equipe de {selectedUser?.nome}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -749,6 +749,35 @@ const Users = () => {
                 {nameError && (
                   <p className="text-xs text-destructive">{nameError}</p>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editUserEmail">E-mail</Label>
+                <Input
+                  id="editUserEmail"
+                  type="email"
+                  autoComplete="off"
+                  value={newEmail}
+                  onChange={(e) => {
+                    setNewEmail(e.target.value);
+                    if (emailError) setEmailError('');
+                  }}
+                  onBlur={() => {
+                    const v = newEmail.trim();
+                    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!v) setEmailError('O e-mail é obrigatório');
+                    else if (!re.test(v)) setEmailError('E-mail inválido');
+                  }}
+                  placeholder="email@empresa.com"
+                  aria-invalid={!!emailError}
+                  className={emailError ? 'border-destructive focus-visible:ring-destructive' : ''}
+                />
+                {emailError && (
+                  <p className="text-xs text-destructive">{emailError}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  O novo e-mail passa a ser usado para login imediatamente.
+                </p>
               </div>
 
               <div className="space-y-2">

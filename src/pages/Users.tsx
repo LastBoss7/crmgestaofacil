@@ -847,6 +847,10 @@ const Users = () => {
                 </ul>
               </div>
 
+              {saveError && (
+                <p className="text-sm text-destructive font-medium">{saveError}</p>
+              )}
+
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setIsEditOpen(false)}>
                   Cancelar

@@ -693,9 +693,22 @@ const Users = () => {
                 <Input
                   id="editUserName"
                   value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
+                  onChange={(e) => {
+                    setNewName(e.target.value);
+                    if (nameError) setNameError('');
+                  }}
+                  onBlur={() => {
+                    if (!newName.trim()) {
+                      setNameError('O nome é obrigatório');
+                    }
+                  }}
                   placeholder="Nome do usuário"
+                  aria-invalid={!!nameError}
+                  className={nameError ? 'border-destructive focus-visible:ring-destructive' : ''}
                 />
+                {nameError && (
+                  <p className="text-xs text-destructive">{nameError}</p>
+                )}
               </div>
 
               <div className="space-y-2">

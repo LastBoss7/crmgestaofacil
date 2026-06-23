@@ -238,73 +238,82 @@ const Users = () => {
     }
   }, [canManageUsers]);
 
+  const [saveError, setSaveError] = useState('');
+
   const handleUserUpdate = async () => {
     if (!selectedUser || !newRole) return;
 
     const trimmedName = newName.trim();
     if (!trimmedName) {
-      toast.error('Nome é obrigatório');
+      setSaveError('O nome do usuário é obrigatório.');
       return;
     }
 
-    // Check if role already exists
-    const { data: existingRole } = await supabase
-      .from('user_roles')
-      .select('*')
-      .eq('user_id', selectedUser.id)
-      .maybeSingle();
+    setSaveError('');
 
-    let roleError;
-    
-    if (existingRole) {
-      // Update existing role
-      const { error: updateError } = await supabase
+    try {
+      // Check if role already exists
+      const { data: existingRole } = await supabase
         .from('user_roles')
-        .update({ role: newRole })
-        .eq('user_id', selectedUser.id);
-      roleError = updateError;
-    } else {
-      // Insert new role
-      const { error: insertError } = await supabase
-        .from('user_roles')
-        .insert({ user_id: selectedUser.id, role: newRole });
-      roleError = insertError;
-    }
+        .select('*')
+        .eq('user_id', selectedUser.id)
+        .maybeSingle();
 
-    if (roleError) {
-      toast.error('Erro ao atualizar função');
-      console.error(roleError);
-      return;
-    }
+      let roleError;
 
-    // Build profile updates (name change + team change when applicable)
-    const profileUpdates: { nome?: string; team_id?: string | null } = {};
-    if (trimmedName !== selectedUser.nome) {
-      profileUpdates.nome = trimmedName;
-    }
-    if (
-      (newRole === 'SUPERVISOR' || newRole === 'BACKOFFICE' || newRole === 'SELLER') &&
-      newTeamId !== selectedUser.team_id
-    ) {
-      profileUpdates.team_id = newTeamId;
-    }
+      if (existingRole) {
+        // Update existing role
+        const { error: updateError } = await supabase
+          .from('user_roles')
+          .update({ role: newRole })
+          .eq('user_id', selectedUser.id);
+        roleError = updateError;
+      } else {
+        // Insert new role
+        const { error: insertError } = await supabase
+          .from('user_roles')
+          .insert({ user_id: selectedUser.id, role: newRole });
+        roleError = insertError;
+      }
 
-    if (Object.keys(profileUpdates).length > 0) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update(profileUpdates)
-        .eq('id', selectedUser.id);
-
-      if (profileError) {
-        toast.error('Erro ao atualizar dados do usuário');
-        console.error(profileError);
+      if (roleError) {
+        setSaveError('Não foi possível atualizar a função do usuário. Tente novamente.');
+        console.error(roleError);
         return;
       }
-    }
 
-    toast.success('Usuário atualizado com sucesso!');
-    setIsEditOpen(false);
-    fetchUsers();
+      // Build profile updates (name change + team change when applicable)
+      const profileUpdates: { nome?: string; team_id?: string | null } = {};
+      if (trimmedName !== selectedUser.nome) {
+        profileUpdates.nome = trimmedName;
+      }
+      if (
+        (newRole === 'SUPERVISOR' || newRole === 'BACKOFFICE' || newRole === 'SELLER') &&
+        newTeamId !== selectedUser.team_id
+      ) {
+        profileUpdates.team_id = newTeamId;
+      }
+
+      if (Object.keys(profileUpdates).length > 0) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update(profileUpdates)
+          .eq('id', selectedUser.id);
+
+        if (profileError) {
+          setSaveError('Não foi possível atualizar os dados do usuário. Tente novamente.');
+          console.error(profileError);
+          return;
+        }
+      }
+
+      toast.success('Usuário atualizado com sucesso!');
+      setIsEditOpen(false);
+      fetchUsers();
+    } catch (err) {
+      setSaveError('Ocorreu um erro inesperado ao salvar. Por favor, tente novamente.');
+      console.error(err);
+    }
   };
 
   const loadImpact = async (userId: string) => {

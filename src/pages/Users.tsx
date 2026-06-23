@@ -240,6 +240,12 @@ const Users = () => {
   const handleUserUpdate = async () => {
     if (!selectedUser || !newRole) return;
 
+    const trimmedName = newName.trim();
+    if (!trimmedName) {
+      toast.error('Nome é obrigatório');
+      return;
+    }
+
     // Check if role already exists
     const { data: existingRole } = await supabase
       .from('user_roles')
@@ -270,15 +276,26 @@ const Users = () => {
       return;
     }
 
-    // Update team_id for SUPERVISOR, BACKOFFICE or SELLER users
-    if ((newRole === 'SUPERVISOR' || newRole === 'BACKOFFICE' || newRole === 'SELLER') && newTeamId !== selectedUser.team_id) {
+    // Build profile updates (name change + team change when applicable)
+    const profileUpdates: { nome?: string; team_id?: string | null } = {};
+    if (trimmedName !== selectedUser.nome) {
+      profileUpdates.nome = trimmedName;
+    }
+    if (
+      (newRole === 'SUPERVISOR' || newRole === 'BACKOFFICE' || newRole === 'SELLER') &&
+      newTeamId !== selectedUser.team_id
+    ) {
+      profileUpdates.team_id = newTeamId;
+    }
+
+    if (Object.keys(profileUpdates).length > 0) {
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ team_id: newTeamId })
+        .update(profileUpdates)
         .eq('id', selectedUser.id);
 
       if (profileError) {
-        toast.error('Erro ao atualizar equipe');
+        toast.error('Erro ao atualizar dados do usuário');
         console.error(profileError);
         return;
       }

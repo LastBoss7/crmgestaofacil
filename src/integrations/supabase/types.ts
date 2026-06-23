@@ -747,6 +747,7 @@ export type Database = {
           proprietario_nome: string | null
           proprietario_rg: string | null
           razao_social: string
+          seller_email_snapshot: string | null
           seller_id: string | null
           seller_name_snapshot: string | null
           seller_removed: boolean
@@ -801,6 +802,7 @@ export type Database = {
           proprietario_nome?: string | null
           proprietario_rg?: string | null
           razao_social: string
+          seller_email_snapshot?: string | null
           seller_id?: string | null
           seller_name_snapshot?: string | null
           seller_removed?: boolean
@@ -855,6 +857,7 @@ export type Database = {
           proprietario_nome?: string | null
           proprietario_rg?: string | null
           razao_social?: string
+          seller_email_snapshot?: string | null
           seller_id?: string | null
           seller_name_snapshot?: string | null
           seller_removed?: boolean

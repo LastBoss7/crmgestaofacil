@@ -239,8 +239,6 @@ const Users = () => {
     }
   }, [canManageUsers]);
 
-  const [saveError, setSaveError] = useState('');
-
   const handleUserUpdate = async () => {
     if (!selectedUser || !newRole) return;
 

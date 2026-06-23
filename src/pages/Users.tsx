@@ -122,6 +122,7 @@ const Users = () => {
   const [isReactivating, setIsReactivating] = useState(false);
   const [impactLoading, setImpactLoading] = useState(false);
   const [impact, setImpact] = useState<{ salesCount: number; documentsCount: number } | null>(null);
+  const [saveError, setSaveError] = useState('');
   const isProcessing = isDeleting || isDeactivating || isReactivating;
 
   useEffect(() => {

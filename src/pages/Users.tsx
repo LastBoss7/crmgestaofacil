@@ -111,6 +111,7 @@ const Users = () => {
   const [newRole, setNewRole] = useState<AppRole | ''>('');
   const [newTeamId, setNewTeamId] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
+  const [nameError, setNameError] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
@@ -619,6 +620,7 @@ const Users = () => {
                               setNewRole(user.role || '');
                               setNewTeamId(user.team_id || null);
                               setNewName(user.nome || '');
+                              setNameError('');
                               setIsEditOpen(true);
                             }}
                           >
@@ -691,9 +693,22 @@ const Users = () => {
                 <Input
                   id="editUserName"
                   value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
+                  onChange={(e) => {
+                    setNewName(e.target.value);
+                    if (nameError) setNameError('');
+                  }}
+                  onBlur={() => {
+                    if (!newName.trim()) {
+                      setNameError('O nome é obrigatório');
+                    }
+                  }}
                   placeholder="Nome do usuário"
+                  aria-invalid={!!nameError}
+                  className={nameError ? 'border-destructive focus-visible:ring-destructive' : ''}
                 />
+                {nameError && (
+                  <p className="text-xs text-destructive">{nameError}</p>
+                )}
               </div>
 
               <div className="space-y-2">

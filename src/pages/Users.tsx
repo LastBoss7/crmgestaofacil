@@ -111,6 +111,8 @@ const Users = () => {
   const [newRole, setNewRole] = useState<AppRole | ''>('');
   const [newTeamId, setNewTeamId] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [nameError, setNameError] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -243,15 +245,44 @@ const Users = () => {
     if (!selectedUser || !newRole) return;
 
     const trimmedName = newName.trim();
+    const trimmedEmail = newEmail.trim().toLowerCase();
+    const originalEmail = (selectedUser.email || '').trim().toLowerCase();
+    const emailChanged = trimmedEmail !== originalEmail;
+
     if (!trimmedName) {
       setSaveError('O nome do usuário é obrigatório.');
+      return;
+    }
+    if (!trimmedEmail) {
+      setEmailError('O e-mail é obrigatório');
+      setSaveError('O e-mail do usuário é obrigatório.');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail) || trimmedEmail.length > 255) {
+      setEmailError('E-mail inválido');
+      setSaveError('Informe um e-mail válido.');
       return;
     }
 
     setSaveError('');
 
     try {
-      // Check if role already exists
+      // 1) E-mail change goes through the admin edge function (auth.users + profiles)
+      if (emailChanged) {
+        const { data: emailData, error: emailFnError } = await supabase.functions.invoke(
+          'update-user-email',
+          { body: { userId: selectedUser.id, newEmail: trimmedEmail } }
+        );
+        if (emailFnError || (emailData && (emailData as any).error)) {
+          const msg = (emailData as any)?.error || emailFnError?.message || 'Não foi possível atualizar o e-mail.';
+          setEmailError(msg);
+          setSaveError(msg);
+          return;
+        }
+      }
+
+      // 2) Role
       const { data: existingRole } = await supabase
         .from('user_roles')
         .select('*')
@@ -259,16 +290,13 @@ const Users = () => {
         .maybeSingle();
 
       let roleError;
-
       if (existingRole) {
-        // Update existing role
         const { error: updateError } = await supabase
           .from('user_roles')
           .update({ role: newRole })
           .eq('user_id', selectedUser.id);
         roleError = updateError;
       } else {
-        // Insert new role
         const { error: insertError } = await supabase
           .from('user_roles')
           .insert({ user_id: selectedUser.id, role: newRole });
@@ -281,7 +309,7 @@ const Users = () => {
         return;
       }
 
-      // Build profile updates (name change + team change when applicable)
+      // 3) Profile (name/team)
       const profileUpdates: { nome?: string; team_id?: string | null } = {};
       if (trimmedName !== selectedUser.nome) {
         profileUpdates.nome = trimmedName;
@@ -629,7 +657,9 @@ const Users = () => {
                               setNewRole(user.role || '');
                               setNewTeamId(user.team_id || null);
                               setNewName(user.nome || '');
+                              setNewEmail(user.email || '');
                               setNameError('');
+                              setEmailError('');
                               setSaveError('');
                               setIsEditOpen(true);
                             }}
@@ -694,7 +724,7 @@ const Users = () => {
             <DialogHeader>
               <DialogTitle>Editar Usuário</DialogTitle>
               <DialogDescription>
-                Alterar nome, função e equipe de {selectedUser?.nome}
+                Alterar nome, e-mail, função e equipe de {selectedUser?.nome}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -719,6 +749,35 @@ const Users = () => {
                 {nameError && (
                   <p className="text-xs text-destructive">{nameError}</p>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editUserEmail">E-mail</Label>
+                <Input
+                  id="editUserEmail"
+                  type="email"
+                  autoComplete="off"
+                  value={newEmail}
+                  onChange={(e) => {
+                    setNewEmail(e.target.value);
+                    if (emailError) setEmailError('');
+                  }}
+                  onBlur={() => {
+                    const v = newEmail.trim();
+                    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!v) setEmailError('O e-mail é obrigatório');
+                    else if (!re.test(v)) setEmailError('E-mail inválido');
+                  }}
+                  placeholder="email@empresa.com"
+                  aria-invalid={!!emailError}
+                  className={emailError ? 'border-destructive focus-visible:ring-destructive' : ''}
+                />
+                {emailError && (
+                  <p className="text-xs text-destructive">{emailError}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  O novo e-mail passa a ser usado para login imediatamente.
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -856,7 +915,7 @@ const Users = () => {
                 <Button variant="outline" onClick={() => setIsEditOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={handleUserUpdate} disabled={!newRole || !newName.trim()}>
+                <Button onClick={handleUserUpdate} disabled={!newRole || !newName.trim() || !newEmail.trim()}>
                   Salvar
                 </Button>
               </div>

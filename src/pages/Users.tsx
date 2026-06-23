@@ -601,6 +601,7 @@ const Users = () => {
                               setSelectedUser(user);
                               setNewRole(user.role || '');
                               setNewTeamId(user.team_id || null);
+                              setNewName(user.nome || '');
                               setIsEditOpen(true);
                             }}
                           >

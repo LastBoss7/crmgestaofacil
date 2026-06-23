@@ -528,6 +528,8 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
 
       const { data: saleData, error } = await supabase.from('sales').insert({
         seller_id: userId,
+        seller_name_snapshot: profile?.nome || null,
+        seller_email_snapshot: profile?.email || null,
         company_id: profile?.company_id || null,
         data_venda: form.data_venda || null,
         equipe: finalTeamName, // Use the validated team name

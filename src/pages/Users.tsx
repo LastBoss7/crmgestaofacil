@@ -110,6 +110,7 @@ const Users = () => {
   const [isBackofficeTeamsOpen, setIsBackofficeTeamsOpen] = useState(false);
   const [newRole, setNewRole] = useState<AppRole | ''>('');
   const [newTeamId, setNewTeamId] = useState<string | null>(null);
+  const [newName, setNewName] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);

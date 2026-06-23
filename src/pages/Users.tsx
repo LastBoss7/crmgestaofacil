@@ -270,12 +270,24 @@ const Users = () => {
     try {
       // 1) E-mail change goes through the admin edge function (auth.users + profiles)
       if (emailChanged) {
-        const { data: emailData, error: emailFnError } = await supabase.functions.invoke(
+        const { data: emailData, error: emailFnError, response: emailResponse } = await supabase.functions.invoke(
           'update-user-email',
           { body: { userId: selectedUser.id, newEmail: trimmedEmail } }
         );
         if (emailFnError || (emailData && (emailData as any).error)) {
-          const msg = (emailData as any)?.error || emailFnError?.message || 'Não foi possível atualizar o e-mail.';
+          let serverMsg: string | undefined;
+          if (emailResponse) {
+            try {
+              const ct = emailResponse.headers.get('content-type') || '';
+              if (ct.includes('application/json')) {
+                const body = await emailResponse.json();
+                serverMsg = body?.error;
+              } else {
+                serverMsg = await emailResponse.text();
+              }
+            } catch {}
+          }
+          const msg = serverMsg || (emailData as any)?.error || emailFnError?.message || 'Não foi possível atualizar o e-mail.';
           setEmailError(msg);
           setSaveError(msg);
           return;

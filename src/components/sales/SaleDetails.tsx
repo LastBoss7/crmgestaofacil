@@ -28,6 +28,8 @@ import { SaleTimeline } from './SaleTimeline';
 interface SaleDetailsProps {
   sale: Sale;
   seller?: Profile;
+  fallbackSellerName?: string | null;
+  sellerRemoved?: boolean;
 }
 
 const formatCurrency = (value: number) => {
@@ -56,7 +58,11 @@ const SectionHeader = ({ icon: Icon, title }: { icon: React.ElementType; title: 
   </div>
 );
 
-export function SaleDetails({ sale, seller }: SaleDetailsProps) {
+export function SaleDetails({ sale, seller, fallbackSellerName, sellerRemoved }: SaleDetailsProps) {
+  const displaySellerName = seller?.nome || fallbackSellerName || undefined;
+  const sellerLabel = displaySellerName
+    ? (sellerRemoved ? `${displaySellerName} (removido)` : displaySellerName)
+    : undefined;
   const NEGOTIATION_TYPE_LABELS: Record<string, string> = {
     novo: 'Novo Cliente',
     portabilidade: 'Portabilidade',
@@ -85,7 +91,7 @@ export function SaleDetails({ sale, seller }: SaleDetailsProps) {
           <InfoField label="Data da Venda" value={formatDate(sale.data_venda)} />
           <InfoField label="Equipe" value={sale.equipe} />
           <InfoField label="Tipo de Negociação" value={NEGOTIATION_TYPE_LABELS[sale.tipo_negociacao || ''] || sale.tipo_negociacao} />
-          <InfoField label="Vendedor" value={seller?.nome} />
+          <InfoField label="Vendedor" value={sellerLabel} />
         </div>
       </div>
 

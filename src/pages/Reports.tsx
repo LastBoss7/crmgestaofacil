@@ -308,8 +308,11 @@ const Reports = () => {
       
       if (!sellerStats[sale.seller_id]) {
         const seller = sellers.find(s => s.id === sale.seller_id);
+        const snapshot = (sale as any).seller_name_snapshot as string | undefined;
+        const removed = (sale as any).seller_removed as boolean | undefined;
+        const baseName = seller?.nome || snapshot || 'Desconhecido';
         sellerStats[sale.seller_id] = {
-          nome: seller?.nome || 'Desconhecido',
+          nome: removed && !seller ? `${baseName} (removido)` : baseName,
           vendas: 0,
           valor: 0,
         };

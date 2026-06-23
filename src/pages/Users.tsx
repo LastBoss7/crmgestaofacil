@@ -665,10 +665,20 @@ const Users = () => {
             <DialogHeader>
               <DialogTitle>Editar Usuário</DialogTitle>
               <DialogDescription>
-                Alterar função e equipe de {selectedUser?.nome}
+                Alterar nome, função e equipe de {selectedUser?.nome}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="editUserName">Nome</Label>
+                <Input
+                  id="editUserName"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Nome do usuário"
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label>Função</Label>
                 <Select value={newRole} onValueChange={(v) => setNewRole(v as AppRole)}>

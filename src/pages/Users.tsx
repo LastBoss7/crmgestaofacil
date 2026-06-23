@@ -620,6 +620,7 @@ const Users = () => {
                               setNewRole(user.role || '');
                               setNewTeamId(user.team_id || null);
                               setNewName(user.nome || '');
+                              setNameError('');
                               setIsEditOpen(true);
                             }}
                           >

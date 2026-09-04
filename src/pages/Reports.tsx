@@ -462,6 +462,10 @@ const Reports = () => {
             <p className="text-muted-foreground">
               Análise de desempenho de vendas
             </p>
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+              <Info className="h-3 w-3" />
+              O filtro de datas usa a data da venda informada no cadastro. Se ela não estiver preenchida, usa a data de criação do registro.
+            </p>
           </div>
 
           {/* Filters */}

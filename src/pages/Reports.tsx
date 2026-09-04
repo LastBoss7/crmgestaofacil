@@ -86,8 +86,8 @@ const Reports = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
-    from: startOfMonth(new Date()),
-    to: endOfMonth(new Date()),
+    from: subDays(new Date(), 90),
+    to: new Date(),
   });
   const [selectedSeller, setSelectedSeller] = useState<string>('ALL');
   const [selectedTeam, setSelectedTeam] = useState<string>('ALL');

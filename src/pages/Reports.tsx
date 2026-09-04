@@ -98,13 +98,19 @@ const Reports = () => {
       if (!user) return;
 
       // Fetch sales within date range (for active sales metrics)
+      // Use data_venda (data real da venda) and fall back to created_at when it's null
+      const fromDateStr = format(dateRange.from, 'yyyy-MM-dd');
+      const toDateStr = format(dateRange.to, 'yyyy-MM-dd');
       const { data: salesData, error: salesError } = await supabase
         .from('sales_secure')
         .select('*')
         .neq('status', 'CANCELADA')
-        .gte('created_at', dateRange.from.toISOString())
-        .lte('created_at', dateRange.to.toISOString())
+        .or(
+          `and(data_venda.gte.${fromDateStr},data_venda.lte.${toDateStr}),` +
+          `and(data_venda.is.null,created_at.gte.${dateRange.from.toISOString()},created_at.lte.${dateRange.to.toISOString()})`
+        )
         .order('created_at', { ascending: true });
+
 
       if (salesError) {
         console.error('Error fetching sales:', salesError);

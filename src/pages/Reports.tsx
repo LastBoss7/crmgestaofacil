@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon, TrendingUp, Users, DollarSign, Target, FileSpreadsheet, FileText, Download, XCircle, AlertTriangle } from 'lucide-react';
+import { Calendar as CalendarIcon, TrendingUp, Users, DollarSign, Target, FileSpreadsheet, FileText, Download, XCircle, AlertTriangle, Info } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -461,6 +461,10 @@ const Reports = () => {
             <h1 className="text-3xl font-bold tracking-tight">Relatórios</h1>
             <p className="text-muted-foreground">
               Análise de desempenho de vendas
+            </p>
+            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+              <Info className="h-3 w-3" />
+              O filtro de datas usa a data da venda informada no cadastro. Se ela não estiver preenchida, usa a data de criação do registro.
             </p>
           </div>
 

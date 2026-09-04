@@ -5,7 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Sale, SaleStatus, SALE_STATUS_LABELS, Profile } from '@/types/database';
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon, TrendingUp, Users, DollarSign, Target, FileSpreadsheet, FileText, Download, XCircle, AlertTriangle } from 'lucide-react';
+import { Calendar as CalendarIcon, TrendingUp, Users, DollarSign, Target, FileSpreadsheet, FileText, Download, XCircle, AlertTriangle, Info } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';

@@ -515,6 +515,16 @@ const Reports = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setDateRange({
+                  from: subDays(new Date(), 90),
+                  to: new Date(),
+                })}
+              >
+                90 dias
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDateRange({
                   from: startOfMonth(new Date()),
                   to: endOfMonth(new Date()),
                 })}

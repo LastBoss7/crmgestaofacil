@@ -482,7 +482,7 @@ export default function Teams() {
                               Comissão estimada
                             </div>
                             <p className="text-base font-semibold break-words">{formatCurrency(metrics.estimatedCommission)}</p>
-                            <p className="text-xs text-muted-foreground">Taxa de {commissionRate.toLocaleString('pt-BR')}%</p>
+                            <p className="text-xs text-muted-foreground">Soma das taxas definidas em cada venda</p>
                           </div>
                           <div className="space-y-1">
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

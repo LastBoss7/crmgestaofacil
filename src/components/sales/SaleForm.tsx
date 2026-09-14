@@ -73,6 +73,7 @@ interface FormData {
   vivo_total_valor: string;
   movel_valor: string;
   valor_mensal: string;
+  commission_rate: string;
   // Outros
   produtos: string;
   observacoes_vendedor: string;
@@ -117,6 +118,7 @@ const initialFormData: FormData = {
   vivo_total_valor: '',
   movel_valor: '',
   valor_mensal: '',
+  commission_rate: '0',
   produtos: '',
   observacoes_vendedor: '',
   campaign_id: '',
@@ -125,7 +127,7 @@ const initialFormData: FormData = {
 type FieldErrors = Partial<Record<keyof FormData, string>>;
 
 export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
-  const { profile, loading: authLoading } = useAuth();
+  const { profile, loading: authLoading, isCEO } = useAuth();
   const [form, setForm] = useState<FormData>(initialFormData);
   const [clientType, setClientType] = useState<'PJ' | 'PF'>('PJ');
   const [loading, setLoading] = useState(false);
@@ -531,6 +533,13 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
       return;
     }
 
+    const commissionRate = Number(form.commission_rate.replace(',', '.'));
+    if (isCEO && (!Number.isFinite(commissionRate) || commissionRate < 0 || commissionRate > 100)) {
+      setErrors(prev => ({ ...prev, commission_rate: 'Informe uma taxa entre 0% e 100%' }));
+      toast.error('A taxa de comissão deve estar entre 0% e 100%');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -580,6 +589,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         vivo_total_valor: parseFloat(form.vivo_total_valor) || 0,
         movel_valor: parseFloat(form.movel_valor) || 0,
         valor_mensal: parseFloat(form.valor_mensal) || parseFloat(totalPlano) || 0,
+        commission_rate: isCEO ? commissionRate : 0,
         produtos: produtosFinal,
         observacoes_vendedor: form.observacoes_vendedor || null,
         status: 'PRE_ANALISE',
@@ -1181,6 +1191,22 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
               className="font-semibold"
             />
           </div>
+          {isCEO && (
+            <div className="space-y-2">
+              <Label htmlFor="commission_rate">Comissão desta venda (%)</Label>
+              <Input
+                id="commission_rate"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={form.commission_rate}
+                onChange={(e) => updateForm('commission_rate', e.target.value)}
+                className={errors.commission_rate ? 'border-destructive' : ''}
+              />
+              <p className="text-xs text-muted-foreground">Usada para calcular a comissão estimada desta venda.</p>
+            </div>
+          )}
         </div>
       </div>
 

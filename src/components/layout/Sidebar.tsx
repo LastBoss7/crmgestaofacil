@@ -77,6 +77,7 @@ const Sidebar = () => {
     isCEO,
     isBackoffice,
     isSupervisor,
+    isCoordinator,
   } = useAuth();
   
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
@@ -132,6 +133,7 @@ const Sidebar = () => {
 
   const managementNavigation = [
     ...(canManageUsers ? [{ name: 'Usuários', href: '/usuarios', icon: Users }] : []),
+    ...(isCEO || isCoordinator || isSupervisor ? [{ name: 'Vendedores', href: '/vendedores', icon: User }] : []),
     ...(isCEO || isSupervisor ? [{ name: 'Equipes', href: '/equipes', icon: UsersRound }] : []),
     ...(isCEO || isSupervisor ? [{ name: 'Relatório Equipes', href: '/relatorio-equipes', icon: TrendingUp }] : []),
     ...(isSupervisor ? [{ name: 'Minha Equipe', href: '/minha-equipe', icon: TrendingUp }] : []),

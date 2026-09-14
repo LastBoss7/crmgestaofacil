@@ -84,6 +84,7 @@ const Reports = () => {
   const [searchParams] = useSearchParams();
   const linkedTeam = searchParams.get('team');
   const linkedPeriod = searchParams.get('period');
+  const linkedSeller = searchParams.get('seller');
   const [sales, setSales] = useState<Sale[]>([]);
   const [allCancelledSales, setAllCancelledSales] = useState<Sale[]>([]);
   const [sellers, setSellers] = useState<Profile[]>([]);
@@ -92,7 +93,7 @@ const Reports = () => {
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>(() => linkedPeriod === 'month'
     ? { from: startOfMonth(new Date()), to: endOfMonth(new Date()) }
     : { from: subDays(new Date(), 90), to: new Date() });
-  const [selectedSeller, setSelectedSeller] = useState<string>('ALL');
+  const [selectedSeller, setSelectedSeller] = useState<string>(linkedSeller || 'ALL');
   const [selectedTeam, setSelectedTeam] = useState<string>(linkedTeam || 'ALL');
   const [selectedCancelReason, setSelectedCancelReason] = useState<string>('ALL');
 
@@ -121,11 +122,15 @@ const Reports = () => {
         setSales((salesData || []) as Sale[]);
       }
 
-      // Fetch ALL cancelled sales (regardless of date) for cancelled tab
+      // Fetch cancelled sales for the same selected period
       const { data: cancelledData, error: cancelledError } = await supabase
         .from('sales_secure')
         .select('*')
         .eq('status', 'CANCELADA')
+        .or(
+          `and(data_venda.gte.${fromDateStr},data_venda.lte.${toDateStr}),` +
+          `and(data_venda.is.null,created_at.gte.${dateRange.from.toISOString()},created_at.lte.${dateRange.to.toISOString()})`
+        )
         .order('created_at', { ascending: false });
 
       if (cancelledError) {
@@ -186,9 +191,9 @@ const Reports = () => {
     // Apply cancel reason filter
     if (selectedCancelReason !== 'ALL') {
       if (selectedCancelReason === 'SEM_MOTIVO') {
-        cancelled = cancelled.filter(s => !s.motivo_pendencia || s.motivo_pendencia.trim() === '');
+        cancelled = cancelled.filter(s => !s.motivo_cancelamento || s.motivo_cancelamento.trim() === '');
       } else {
-        cancelled = cancelled.filter(s => s.motivo_pendencia === selectedCancelReason);
+        cancelled = cancelled.filter(s => s.motivo_cancelamento === selectedCancelReason);
       }
     }
     
@@ -213,8 +218,8 @@ const Reports = () => {
     const reasons = new Set<string>();
     
     allFilteredCancelled.forEach(sale => {
-      if (sale.motivo_pendencia && sale.motivo_pendencia.trim()) {
-        reasons.add(sale.motivo_pendencia);
+      if (sale.motivo_cancelamento && sale.motivo_cancelamento.trim()) {
+        reasons.add(sale.motivo_cancelamento);
       }
     });
     
@@ -226,7 +231,7 @@ const Reports = () => {
     const reasonCounts: Record<string, { count: number; value: number }> = {};
     
     allFilteredCancelled.forEach(sale => {
-      const reason = sale.motivo_pendencia?.trim() || 'Sem motivo informado';
+      const reason = sale.motivo_cancelamento?.trim() || 'Sem motivo informado';
       if (!reasonCounts[reason]) {
         reasonCounts[reason] = { count: 0, value: 0 };
       }
@@ -394,7 +399,7 @@ const Reports = () => {
         cnpj: sale.cnpj_cliente,
         vendedor: seller?.nome || 'N/A',
         dataVenda: sale.data_venda ? format(parseISO(sale.data_venda), 'dd/MM/yyyy', { locale: ptBR }) : '-',
-        motivo: sale.motivo_pendencia || '',
+        motivo: sale.motivo_cancelamento || '',
         valorMensal: Number(sale.valor_mensal),
       };
     });
@@ -432,7 +437,7 @@ const Reports = () => {
         cnpj: sale.cnpj_cliente,
         vendedor: seller?.nome || 'N/A',
         dataVenda: sale.data_venda ? format(parseISO(sale.data_venda), 'dd/MM/yyyy', { locale: ptBR }) : '-',
-        motivo: sale.motivo_pendencia || '',
+        motivo: sale.motivo_cancelamento || '',
         valorMensal: Number(sale.valor_mensal),
       };
     });
@@ -1070,8 +1075,8 @@ const Reports = () => {
                                 <TableCell className="text-xs text-muted-foreground">
                                   {sale.data_venda ? format(parseISO(sale.data_venda), 'dd/MM/yyyy', { locale: ptBR }) : '-'}
                                 </TableCell>
-                                <TableCell className="text-xs max-w-[200px] truncate" title={sale.motivo_pendencia || ''}>
-                                  {sale.motivo_pendencia || (
+                                <TableCell className="text-xs max-w-[200px] truncate" title={sale.motivo_cancelamento || ''}>
+                                  {sale.motivo_cancelamento || (
                                     <span className="text-muted-foreground italic">Não informado</span>
                                   )}
                                 </TableCell>

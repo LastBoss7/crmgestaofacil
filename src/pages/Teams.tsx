@@ -48,7 +48,6 @@ export default function Teams() {
   const [supervisorUsers, setSupervisorUsers] = useState<(Profile & { role?: AppRole })[]>([]);
   const [sellerUsers, setSellerUsers] = useState<(Profile & { role?: AppRole })[]>([]);
   const [monthlySales, setMonthlySales] = useState<Sale[]>([]);
-  const [commissionRate, setCommissionRate] = useState(0);
 
   const canAccessPage = isCEO || isSupervisor;
 
@@ -70,23 +69,14 @@ export default function Teams() {
     const monthEnd = format(new Date(now.getFullYear(), now.getMonth() + 1, 0), 'yyyy-MM-dd');
 
     try {
-      const [salesResult, companyResult] = await Promise.all([
-        supabase
+      const salesResult = await supabase
           .from('sales_secure')
           .select('*')
-          .or(`and(data_venda.gte.${monthStart},data_venda.lte.${monthEnd}),and(data_venda.is.null,created_at.gte.${monthStart}T00:00:00,created_at.lte.${monthEnd}T23:59:59)`),
-        supabase
-          .from('companies')
-          .select('commission_rate')
-          .eq('id', profile.company_id)
-          .single(),
-      ]);
+          .or(`and(data_venda.gte.${monthStart},data_venda.lte.${monthEnd}),and(data_venda.is.null,created_at.gte.${monthStart}T00:00:00,created_at.lte.${monthEnd}T23:59:59)`);
 
       if (salesResult.error) throw salesResult.error;
-      if (companyResult.error) throw companyResult.error;
 
       setMonthlySales((salesResult.data || []) as Sale[]);
-      setCommissionRate(Number(companyResult.data?.commission_rate || 0));
     } catch (error) {
       console.error('Error fetching team performance:', error);
       toast.error('Erro ao carregar os resultados das equipes');
@@ -332,7 +322,10 @@ export default function Teams() {
     return {
       activeSales: activeSales.length,
       totalValue,
-      estimatedCommission: totalValue * (commissionRate / 100),
+      estimatedCommission: activeSales.reduce(
+        (total, sale) => total + Number(sale.valor_mensal || 0) * (Number(sale.commission_rate || 0) / 100),
+        0,
+      ),
       cancelledSales: teamSales.length - activeSales.length,
     };
   };
@@ -489,7 +482,7 @@ export default function Teams() {
                               Comissão estimada
                             </div>
                             <p className="text-base font-semibold break-words">{formatCurrency(metrics.estimatedCommission)}</p>
-                            <p className="text-xs text-muted-foreground">Taxa de {commissionRate.toLocaleString('pt-BR')}%</p>
+                            <p className="text-xs text-muted-foreground">Soma das taxas definidas em cada venda</p>
                           </div>
                           <div className="space-y-1">
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">

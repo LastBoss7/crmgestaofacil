@@ -15,6 +15,7 @@ import Reports from "./pages/Reports";
 import Users from "./pages/Users";
 import SaleHistory from "./pages/SaleHistory";
 import SellerDetails from "./pages/SellerDetails";
+import Sellers from "./pages/Sellers";
 import Teams from "./pages/Teams";
 import ChatMonitor from "./pages/ChatMonitor";
 import TeamDashboard from "./pages/TeamDashboard";
@@ -137,6 +138,14 @@ const AnimatedRoutes = () => {
           element={
             <ProtectedRoute>
               <AnimatedPage><SaleHistory /></AnimatedPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vendedores"
+          element={
+            <ProtectedRoute>
+              <AnimatedPage><Sellers /></AnimatedPage>
             </ProtectedRoute>
           }
         />

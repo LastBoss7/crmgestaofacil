@@ -46,6 +46,7 @@ export interface Sale {
   telefone_responsavel: string | null;
   produtos: string | null;
   valor_mensal: number;
+  commission_rate: number;
   status: SaleStatus;
   observacoes_vendedor: string | null;
   motivo_pendencia: string | null;

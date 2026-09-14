@@ -61,6 +61,7 @@ interface FormData {
   vivo_total_valor: string;
   movel_valor: string;
   valor_mensal: string;
+  commission_rate: string;
   produtos: string;
   observacoes_vendedor: string;
 }
@@ -73,7 +74,7 @@ const SectionHeader = ({ icon: Icon, title }: { icon: React.ElementType; title: 
 );
 
 export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) => {
-  const { profile, user } = useAuth();
+  const { profile, user, isCEO } = useAuth();
   const { recordChange } = useSaleHistory();
   
   const [form, setForm] = useState<FormData>({
@@ -111,6 +112,7 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
     vivo_total_valor: String(sale.vivo_total_valor || ''),
     movel_valor: String(sale.movel_valor || ''),
     valor_mensal: String(sale.valor_mensal || ''),
+    commission_rate: String(sale.commission_rate || 0),
     produtos: sale.produtos || '',
     observacoes_vendedor: sale.observacoes_vendedor || '',
   });
@@ -319,6 +321,11 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
       toast.error('CNPJ deve ter 14 dígitos');
       return;
     }
+    const commissionRate = Number(form.commission_rate.replace(',', '.'));
+    if (isCEO && (!Number.isFinite(commissionRate) || commissionRate < 0 || commissionRate > 100)) {
+      toast.error('A taxa de comissão deve estar entre 0% e 100%');
+      return;
+    }
 
     setLoading(true);
 
@@ -360,6 +367,7 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
         produtos: 'Produtos',
         observacoes_vendedor: 'Observações',
         valor_mensal: 'Valor Mensal',
+        commission_rate: 'Taxa de Comissão',
         bl_valor: 'Valor BL',
         vivo_total_valor: 'Valor VIVO Total',
         movel_valor: 'Valor Móvel',
@@ -386,7 +394,7 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
         
         if (formStr !== saleStr) {
           // Handle numeric fields
-          if (['bl_valor', 'vivo_total_valor', 'movel_valor', 'valor_mensal'].includes(key)) {
+          if (['bl_valor', 'vivo_total_valor', 'movel_valor', 'valor_mensal', 'commission_rate'].includes(key)) {
             updates[key] = parseFloat(form[formKey]) || 0;
           } else if (key === 'produtos') {
             // Use the combined value for produtos
@@ -402,6 +410,8 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
           });
         }
       });
+
+      if (!isCEO) delete updates.commission_rate;
 
       // Track client_type change (not in FormData)
       const previousClientType = (sale.client_type === 'PF' || sale.client_type === 'PJ')
@@ -947,6 +957,21 @@ export const SaleEditForm = ({ sale, onSuccess, onCancel }: SaleEditFormProps) =
                   placeholder="0.00"
                 />
               </div>
+              {isCEO && (
+                <div className="space-y-2">
+                  <Label htmlFor="commission_rate">Comissão desta venda (%)</Label>
+                  <Input
+                    id="commission_rate"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    value={form.commission_rate}
+                    onChange={(e) => updateForm('commission_rate', e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">Comissão estimada calculada sobre o valor mensal.</p>
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label htmlFor="bl_valor">Valor BL (R$)</Label>

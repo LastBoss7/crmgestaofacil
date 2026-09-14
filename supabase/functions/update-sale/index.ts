@@ -41,12 +41,30 @@ Deno.serve(async (req) => {
   }
 
   const { sale_id, updates } = body ?? {};
+  const actorId = String(claimsData.claims.sub ?? '');
 
   if (!sale_id || typeof sale_id !== 'string') {
     return json({ error: 'sale_id é obrigatório e deve ser string (uuid)' }, 400);
   }
   if (!updates || typeof updates !== 'object' || Array.isArray(updates)) {
     return json({ error: 'updates é obrigatório e deve ser um objeto' }, 400);
+  }
+
+  if ('commission_rate' in updates) {
+    const rate = Number(updates.commission_rate);
+    if (!Number.isFinite(rate) || rate < 0 || rate > 100) {
+      return json({ error: 'A taxa de comissão deve estar entre 0 e 100', field: 'commission_rate' }, 400);
+    }
+
+    const [{ data: actorProfile }, { data: actorRole }, { data: sale }] = await Promise.all([
+      supabase.from('profiles').select('company_id').eq('id', actorId).maybeSingle(),
+      supabase.from('user_roles').select('role').eq('user_id', actorId).maybeSingle(),
+      supabase.from('sales').select('company_id').eq('id', sale_id).maybeSingle(),
+    ]);
+    if (actorRole?.role !== 'CEO' || !actorProfile?.company_id || actorProfile.company_id !== sale?.company_id) {
+      return json({ error: 'Somente o CEO da empresa pode alterar a taxa de comissão da venda' }, 403);
+    }
+    updates.commission_rate = rate;
   }
 
   // --- Validação client_type ---
@@ -110,7 +128,7 @@ Deno.serve(async (req) => {
 
   if (error) {
     // Erros do trigger do banco (errcode 22023) também viram 400
-    const status = (error as any).code === '22023' ? 400 : 500;
+    const status = (error as any).code === '22023' ? 400 : (error as any).code === '42501' ? 403 : 500;
     return json({ error: error.message, code: (error as any).code ?? null }, status);
   }
   if (!data) {

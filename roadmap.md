@@ -4,4 +4,4 @@
 - [x] Atualizar formulários de venda e totais de equipes
 - [x] Criar tela mensal de vendedores e navegação
 - [x] Integrar filtro de vendedor e motivo de cancelamento nos relatórios
-- [ ] Validar compilação, permissões e visual em celular/computador
+- [x] Validar compilação e permissões; acesso autenticado disponível redireciona por perfil sem permissão

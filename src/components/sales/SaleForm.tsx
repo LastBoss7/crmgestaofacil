@@ -14,6 +14,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import { maskCPF, maskCNPJ, maskCEP, maskPhone } from '@/lib/masks';
+import { normalizeDateOnly } from '@/lib/date-utils';
 
 const saleSchema = z.object({
   cnpj_cliente: z.string().trim().min(14, 'CNPJ inválido'),
@@ -180,6 +181,10 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
 
   const validateField = (field: keyof FormData, value: string): string | undefined => {
     switch (field) {
+      case 'data_venda':
+        if (!value.trim()) return 'Data da venda é obrigatória';
+        if (!normalizeDateOnly(value)) return 'Informe uma data da venda válida';
+        return undefined;
       case 'cnpj_cliente':
         const cleanDoc = value.replace(/\D/g, '');
         if (clientType === 'PF') {
@@ -478,7 +483,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
     }
     
     // Validate all required fields
-    const requiredFields: (keyof FormData)[] = ['cnpj_cliente', 'razao_social', 'telefone_1', 'telefone_2'];
+    const requiredFields: (keyof FormData)[] = ['data_venda', 'cnpj_cliente', 'razao_social', 'telefone_1', 'telefone_2'];
     const newErrors: FieldErrors = {};
     let hasErrors = false;
 
@@ -518,6 +523,14 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
       return;
     }
 
+    const normalizedSaleDate = normalizeDateOnly(form.data_venda);
+    if (!normalizedSaleDate) {
+      setErrors(prev => ({ ...prev, data_venda: 'Informe uma data da venda válida' }));
+      setTouched(prev => ({ ...prev, data_venda: true }));
+      toast.error('Informe uma data da venda válida');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -531,7 +544,7 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         seller_name_snapshot: profile?.nome || null,
         seller_email_snapshot: profile?.email || null,
         company_id: profile?.company_id || null,
-        data_venda: form.data_venda || null,
+        data_venda: normalizedSaleDate,
         equipe: finalTeamName, // Use the validated team name
         tipo_negociacao: form.tipo_negociacao || null,
         cnpj_cliente: form.cnpj_cliente,
@@ -638,14 +651,18 @@ export const SaleForm = ({ userId, onSuccess, onCancel }: SaleFormProps) => {
         
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="data_venda">Data da Venda *</Label>
+            <Label htmlFor="data_venda" className={errors.data_venda ? 'text-destructive' : ''}>Data da Venda *</Label>
             <Input
               id="data_venda"
               type="date"
               value={form.data_venda}
               onChange={(e) => updateForm('data_venda', e.target.value)}
+              onBlur={() => handleBlur('data_venda')}
+              className={errors.data_venda ? 'border-destructive focus-visible:ring-destructive' : ''}
+              aria-invalid={Boolean(errors.data_venda)}
               required
             />
+            {errors.data_venda && <p className="text-sm text-destructive">{errors.data_venda}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="tipo_negociacao">Tipo de Negociação</Label>

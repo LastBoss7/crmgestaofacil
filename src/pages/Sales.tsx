@@ -53,6 +53,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { formatDateOnly } from '@/lib/date-utils';
 import { toast } from 'sonner';
 
 interface SaleWithSeller extends Sale {
@@ -406,6 +407,8 @@ const Sales = () => {
   };
 
   const formatDate = (date: string) => {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return formatDateOnly(date);
+
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -735,7 +738,7 @@ const Sales = () => {
                         <TableCell>
                           <StatusBadge status={sale.status} />
                         </TableCell>
-                        <TableCell>{formatDate(sale.created_at)}</TableCell>
+                        <TableCell>{formatDate(sale.data_venda || sale.created_at)}</TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"

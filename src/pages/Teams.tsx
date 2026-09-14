@@ -12,13 +12,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Plus, Users, UserCog, Pencil, Trash2, UserPlus, UserMinus } from 'lucide-react';
-import { Profile, Team, AppRole, ROLE_LABELS } from '@/types/database';
+import { Plus, Users, UserCog, Pencil, Trash2, UserPlus, UserMinus, TrendingUp, DollarSign, ReceiptText, ArrowRight, XCircle } from 'lucide-react';
+import { Profile, Team, AppRole, ROLE_LABELS, Sale } from '@/types/database';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 
 interface TeamWithDetails extends Team {
   supervisor?: Profile;
   members?: (Profile & { role?: AppRole })[];
+}
+
+interface TeamMetrics {
+  activeSales: number;
+  totalValue: number;
+  estimatedCommission: number;
+  cancelledSales: number;
 }
 
 export default function Teams() {
@@ -39,6 +47,8 @@ export default function Teams() {
   // Available users for supervisor/members
   const [supervisorUsers, setSupervisorUsers] = useState<(Profile & { role?: AppRole })[]>([]);
   const [sellerUsers, setSellerUsers] = useState<(Profile & { role?: AppRole })[]>([]);
+  const [monthlySales, setMonthlySales] = useState<Sale[]>([]);
+  const [commissionRate, setCommissionRate] = useState(0);
 
   const canAccessPage = isCEO || isSupervisor;
 
@@ -49,7 +59,39 @@ export default function Teams() {
     }
     fetchTeams();
     fetchUsers();
+    fetchMonthlyPerformance();
   }, [canAccessPage, navigate]);
+
+  const fetchMonthlyPerformance = async () => {
+    if (!profile?.company_id) return;
+
+    const now = new Date();
+    const monthStart = format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd');
+    const monthEnd = format(new Date(now.getFullYear(), now.getMonth() + 1, 0), 'yyyy-MM-dd');
+
+    try {
+      const [salesResult, companyResult] = await Promise.all([
+        supabase
+          .from('sales_secure')
+          .select('*')
+          .or(`and(data_venda.gte.${monthStart},data_venda.lte.${monthEnd}),and(data_venda.is.null,created_at.gte.${monthStart}T00:00:00,created_at.lte.${monthEnd}T23:59:59)`),
+        supabase
+          .from('companies')
+          .select('commission_rate')
+          .eq('id', profile.company_id)
+          .single(),
+      ]);
+
+      if (salesResult.error) throw salesResult.error;
+      if (companyResult.error) throw companyResult.error;
+
+      setMonthlySales((salesResult.data || []) as Sale[]);
+      setCommissionRate(Number(companyResult.data?.commission_rate || 0));
+    } catch (error) {
+      console.error('Error fetching team performance:', error);
+      toast.error('Erro ao carregar os resultados das equipes');
+    }
+  };
 
   const fetchTeams = async () => {
     try {
@@ -277,6 +319,24 @@ export default function Teams() {
     return isCEO || team.supervisor_id === user?.id;
   };
 
+  const formatCurrency = (value: number) => new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(value);
+
+  const getTeamMetrics = (team: TeamWithDetails): TeamMetrics => {
+    const teamSales = monthlySales.filter(sale => sale.equipe === team.id || sale.equipe === team.name);
+    const activeSales = teamSales.filter(sale => sale.status !== 'CANCELADA');
+    const totalValue = activeSales.reduce((total, sale) => total + Number(sale.valor_mensal || 0), 0);
+
+    return {
+      activeSales: activeSales.length,
+      totalValue,
+      estimatedCommission: totalValue * (commissionRate / 100),
+      cancelledSales: teamSales.length - activeSales.length,
+    };
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -290,7 +350,7 @@ export default function Teams() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold">Equipes</h1>
             <p className="text-muted-foreground">
@@ -404,6 +464,53 @@ export default function Teams() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {(() => {
+                    const metrics = getTeamMetrics(team);
+                    return (
+                      <div className="space-y-3 border-y py-4">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <TrendingUp className="h-3.5 w-3.5" />
+                              Vendas do mês
+                            </div>
+                            <p className="text-xl font-semibold">{metrics.activeSales}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <DollarSign className="h-3.5 w-3.5" />
+                              Valor mensal
+                            </div>
+                            <p className="text-base font-semibold break-words">{formatCurrency(metrics.totalValue)}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <ReceiptText className="h-3.5 w-3.5" />
+                              Comissão estimada
+                            </div>
+                            <p className="text-base font-semibold break-words">{formatCurrency(metrics.estimatedCommission)}</p>
+                            <p className="text-xs text-muted-foreground">Taxa de {commissionRate.toLocaleString('pt-BR')}%</p>
+                          </div>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <XCircle className="h-3.5 w-3.5" />
+                              Canceladas
+                            </div>
+                            <p className="text-xl font-semibold">{metrics.cancelledSales}</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-between"
+                          onClick={() => navigate(`/relatorios?team=${team.id}&period=month`)}
+                        >
+                          Ver relatório
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })()}
+
                   {/* Supervisor */}
                   <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
                     <Avatar className="h-10 w-10">

@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/layout/Layout';
 import { supabase } from '@/integrations/supabase/client';
@@ -80,17 +81,19 @@ interface Team {
 
 const Reports = () => {
   const { user, isSeller } = useAuth();
+  const [searchParams] = useSearchParams();
+  const linkedTeam = searchParams.get('team');
+  const linkedPeriod = searchParams.get('period');
   const [sales, setSales] = useState<Sale[]>([]);
   const [allCancelledSales, setAllCancelledSales] = useState<Sale[]>([]);
   const [sellers, setSellers] = useState<Profile[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
-    from: subDays(new Date(), 90),
-    to: new Date(),
-  });
+  const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>(() => linkedPeriod === 'month'
+    ? { from: startOfMonth(new Date()), to: endOfMonth(new Date()) }
+    : { from: subDays(new Date(), 90), to: new Date() });
   const [selectedSeller, setSelectedSeller] = useState<string>('ALL');
-  const [selectedTeam, setSelectedTeam] = useState<string>('ALL');
+  const [selectedTeam, setSelectedTeam] = useState<string>(linkedTeam || 'ALL');
   const [selectedCancelReason, setSelectedCancelReason] = useState<string>('ALL');
 
   useEffect(() => {

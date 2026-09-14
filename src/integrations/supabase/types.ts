@@ -224,6 +224,7 @@ export type Database = {
         Row: {
           active: boolean
           cnpj: string
+          commission_rate: number
           created_at: string
           id: string
           nome_fantasia: string | null
@@ -234,6 +235,7 @@ export type Database = {
         Insert: {
           active?: boolean
           cnpj: string
+          commission_rate?: number
           created_at?: string
           id?: string
           nome_fantasia?: string | null
@@ -244,6 +246,7 @@ export type Database = {
         Update: {
           active?: boolean
           cnpj?: string
+          commission_rate?: number
           created_at?: string
           id?: string
           nome_fantasia?: string | null

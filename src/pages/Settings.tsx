@@ -31,6 +31,7 @@ interface CompanyData {
   cnpj: string;
   razao_social: string;
   nome_fantasia: string | null;
+  commission_rate: number;
 }
 
 const Settings = () => {
@@ -43,6 +44,7 @@ const Settings = () => {
   // Company form
   const [companyName, setCompanyName] = useState('');
   const [tradeName, setTradeName] = useState('');
+  const [commissionRate, setCommissionRate] = useState('0');
   
   // Preferences
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -72,6 +74,7 @@ const Settings = () => {
         setCompany(data);
         setCompanyName(data.razao_social);
         setTradeName(data.nome_fantasia || '');
+        setCommissionRate(String(data.commission_rate ?? 0));
       }
     } catch (error) {
       console.error('Error fetching company:', error);
@@ -82,6 +85,16 @@ const Settings = () => {
 
   const handleSaveCompany = async () => {
     if (!company) return;
+
+    const parsedCommissionRate = Number(commissionRate.replace(',', '.'));
+    if (!Number.isFinite(parsedCommissionRate) || parsedCommissionRate < 0 || parsedCommissionRate > 100) {
+      toast({
+        title: 'Taxa de comissão inválida',
+        description: 'Informe um percentual entre 0% e 100%.',
+        variant: 'destructive',
+      });
+      return;
+    }
     
     setSaving(true);
     try {
@@ -90,6 +103,7 @@ const Settings = () => {
         .update({
           razao_social: companyName,
           nome_fantasia: tradeName || null,
+          commission_rate: parsedCommissionRate,
           updated_at: new Date().toISOString()
         })
         .eq('id', company.id);
@@ -199,6 +213,23 @@ const Settings = () => {
                   />
                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 </div>
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="commission-rate" className="text-muted-foreground">Taxa de comissão das equipes (%)</Label>
+                <Input
+                  id="commission-rate"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={commissionRate}
+                  onChange={(event) => setCommissionRate(event.target.value)}
+                  className="bg-muted/30 border-border text-foreground"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Aplicada ao valor mensal das vendas não canceladas. Use 0% enquanto a regra não estiver definida.
+                </p>
               </div>
             </div>
 

@@ -719,6 +719,7 @@ export type Database = {
           cedente_rg: string | null
           client_type: string
           cnpj_cliente: string
+          commission_rate: number
           company_id: string | null
           contato_responsavel: string | null
           created_at: string | null
@@ -774,6 +775,7 @@ export type Database = {
           cedente_rg?: string | null
           client_type?: string
           cnpj_cliente: string
+          commission_rate?: number
           company_id?: string | null
           contato_responsavel?: string | null
           created_at?: string | null
@@ -829,6 +831,7 @@ export type Database = {
           cedente_rg?: string | null
           client_type?: string
           cnpj_cliente?: string
+          commission_rate?: number
           company_id?: string | null
           contato_responsavel?: string | null
           created_at?: string | null
@@ -1169,6 +1172,7 @@ export type Database = {
           cedente_rg: string | null
           client_type: string | null
           cnpj_cliente: string | null
+          commission_rate: number | null
           company_id: string | null
           contato_responsavel: string | null
           created_at: string | null
@@ -1221,6 +1225,7 @@ export type Database = {
           cedente_rg?: never
           client_type?: string | null
           cnpj_cliente?: never
+          commission_rate?: number | null
           company_id?: string | null
           contato_responsavel?: string | null
           created_at?: string | null
@@ -1273,6 +1278,7 @@ export type Database = {
           cedente_rg?: never
           client_type?: string | null
           cnpj_cliente?: never
+          commission_rate?: number | null
           company_id?: string | null
           contato_responsavel?: string | null
           created_at?: string | null

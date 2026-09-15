@@ -30,7 +30,7 @@ interface TeamMetrics {
 }
 
 export default function Teams() {
-  const { user, isCEO, isSupervisor, profile } = useAuth();
+  const { user, isCEO, isSupervisor, profile, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [teams, setTeams] = useState<TeamWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,14 +52,19 @@ export default function Teams() {
   const canAccessPage = isCEO || isSupervisor;
 
   useEffect(() => {
+    if (authLoading || role === null) return;
+
     if (!canAccessPage) {
       navigate('/dashboard');
       return;
     }
+
+    if (!profile?.company_id) return;
+
     fetchTeams();
     fetchUsers();
     fetchMonthlyPerformance();
-  }, [canAccessPage, navigate]);
+  }, [authLoading, canAccessPage, navigate, profile?.company_id, role]);
 
   const fetchMonthlyPerformance = async () => {
     if (!profile?.company_id) return;
@@ -329,6 +334,10 @@ export default function Teams() {
       cancelledSales: teamSales.length - activeSales.length,
     };
   };
+
+  if (authLoading || role === null || (!isCEO && !isSupervisor)) {
+    return null;
+  }
 
   if (loading) {
     return (

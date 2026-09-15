@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Sale, SALE_STATUS_LABELS, SaleStatus } from '@/types/database';
+import { toast } from 'sonner';
 
 interface SaleChangePayload {
   new: Sale;
@@ -12,11 +13,12 @@ interface SaleChangePayload {
 const processedChanges = new Set<string>();
 
 export function useSalesNotifications() {
-  const { user, isCEO, isBackoffice, isSeller } = useAuth();
+  const { user, profile, isCEO, isBackoffice, isSeller } = useAuth();
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   
   // Store current values in refs for stable callback reference
   const userRef = useRef(user);
+  const profileRef = useRef(profile);
   const isCEORef = useRef(isCEO);
   const isBackofficeRef = useRef(isBackoffice);
   const isSellerRef = useRef(isSeller);
@@ -24,10 +26,11 @@ export function useSalesNotifications() {
   // Update refs when values change
   useEffect(() => {
     userRef.current = user;
+    profileRef.current = profile;
     isCEORef.current = isCEO;
     isBackofficeRef.current = isBackoffice;
     isSellerRef.current = isSeller;
-  }, [user, isCEO, isBackoffice, isSeller]);
+  }, [user, profile, isCEO, isBackoffice, isSeller]);
 
   useEffect(() => {
     if (!user) return;
@@ -40,7 +43,8 @@ export function useSalesNotifications() {
 
     const handleSaleChange = async (payload: unknown) => {
       const currentUser = userRef.current;
-      if (!currentUser) return;
+      const currentProfile = profileRef.current;
+      if (!currentUser || !currentProfile?.company_id) return;
       
       const { new: newSale, old: oldSale } = payload as SaleChangePayload;
       
@@ -110,8 +114,9 @@ export function useSalesNotifications() {
       }
 
       try {
-        await supabase.from('notifications').insert({
+        const { error } = await supabase.from('notifications').insert({
           user_id: currentUser.id,
+          company_id: currentProfile.company_id,
           type: notificationType,
           title,
           message,
@@ -119,8 +124,14 @@ export function useSalesNotifications() {
           reference_type: 'sale',
           read: false,
         });
+
+        if (error) {
+          console.error('Error creating sale notification:', error);
+          toast.error('Não foi possível criar a notificação da venda');
+        }
       } catch (error) {
         console.error('Error creating notification:', error);
+        toast.error('Não foi possível criar a notificação da venda');
       }
     };
 

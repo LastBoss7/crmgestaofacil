@@ -20,7 +20,7 @@ const money = (value: number) => new Intl.NumberFormat('pt-BR', {
 }).format(value);
 
 export default function Sellers() {
-  const { isCEO, isCoordinator, isSupervisor, profile } = useAuth();
+  const { isCEO, isCoordinator, isSupervisor, profile, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [sellers, setSellers] = useState<SellerRow[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -29,6 +29,8 @@ export default function Sellers() {
   const canAccess = isCEO || isCoordinator || isSupervisor;
 
   useEffect(() => {
+    if (authLoading || role === null) return;
+
     if (!canAccess) {
       navigate('/dashboard');
       return;
@@ -62,7 +64,7 @@ export default function Sellers() {
       setLoading(false);
     };
     load();
-  }, [canAccess, isCEO, isCoordinator, isSupervisor, navigate, profile?.company_id]);
+  }, [authLoading, canAccess, navigate, profile?.company_id, role]);
 
   const visibleSellers = useMemo(() => {
     const term = search.trim().toLocaleLowerCase('pt-BR');
@@ -82,6 +84,10 @@ export default function Sellers() {
       cancelled: sellerSales.length - valid.length,
     };
   };
+
+  if (authLoading || role === null || !canAccess) {
+    return null;
+  }
 
   return (
     <Layout>

@@ -142,6 +142,7 @@ export function usePauseAlerts(config: Partial<PauseConfig> = {}) {
       // Create notifications for each manager
       const notifications = managerIds.map(managerId => ({
         user_id: managerId,
+        company_id: companyId,
         type: 'alert',
         title: `Pausa Excedida`,
         message: `${operatorName} está em ${statusLabel} há ${elapsedMinutes} minutos`,
@@ -150,12 +151,18 @@ export function usePauseAlerts(config: Partial<PauseConfig> = {}) {
         read: false,
       }));
 
-      await supabase
+      const { error } = await supabase
         .from('notifications')
         .insert(notifications);
 
+      if (error) {
+        console.error('Error creating pause alert notification:', error);
+        toast.error('Não foi possível enviar o alerta de pausa');
+      }
+
     } catch (error) {
       console.error('Error creating pause alert notification:', error);
+      toast.error('Não foi possível enviar o alerta de pausa');
     }
   };
 

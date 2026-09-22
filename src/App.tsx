@@ -16,6 +16,7 @@ import Users from "./pages/Users";
 import SaleHistory from "./pages/SaleHistory";
 import SellerDetails from "./pages/SellerDetails";
 import Sellers from "./pages/Sellers";
+import Commissions from "./pages/Commissions";
 import Teams from "./pages/Teams";
 import ChatMonitor from "./pages/ChatMonitor";
 import TeamDashboard from "./pages/TeamDashboard";
@@ -154,6 +155,14 @@ const AnimatedRoutes = () => {
           element={
             <ProtectedRoute>
               <AnimatedPage><SellerDetails /></AnimatedPage>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/comissoes"
+          element={
+            <ProtectedRoute>
+              <AnimatedPage><Commissions /></AnimatedPage>
             </ProtectedRoute>
           }
         />

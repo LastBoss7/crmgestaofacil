@@ -25,6 +25,7 @@ import {
   ChevronLeft,
   ChevronRight,
   UsersRound
+  , WalletCards
 } from 'lucide-react';
 import { ROLE_LABELS } from '@/types/database';
 import { useState, useEffect } from 'react';
@@ -134,6 +135,7 @@ const Sidebar = () => {
   const managementNavigation = [
     ...(canManageUsers ? [{ name: 'Usuários', href: '/usuarios', icon: Users }] : []),
     ...(isCEO || isCoordinator || isSupervisor ? [{ name: 'Vendedores', href: '/vendedores', icon: User }] : []),
+    ...(isCEO || isCoordinator || isSupervisor ? [{ name: 'Comissões', href: '/comissoes', icon: WalletCards }] : []),
     ...(isCEO || isSupervisor ? [{ name: 'Equipes', href: '/equipes', icon: UsersRound }] : []),
     ...(isCEO || isSupervisor ? [{ name: 'Relatório Equipes', href: '/relatorio-equipes', icon: TrendingUp }] : []),
     ...(isSupervisor ? [{ name: 'Minha Equipe', href: '/minha-equipe', icon: TrendingUp }] : []),

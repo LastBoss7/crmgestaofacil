@@ -101,6 +101,18 @@ export interface SaleComment {
   created_at: string;
 }
 
+export interface CommissionPayment {
+  id: string;
+  sale_id: string;
+  seller_id: string;
+  company_id: string;
+  amount: number;
+  paid_at: string;
+  paid_by: string;
+  note: string | null;
+  created_at: string;
+}
+
 export interface OperatorStatusLog {
   id: string;
   user_id: string;

@@ -270,7 +270,7 @@ export default function Commissions() {
                         <TableCell>{format(new Date(`${saleDate(sale)}T12:00:00`), 'dd/MM/yyyy')}</TableCell>
                         <TableCell>{Number(sale.commission_rate || 0).toLocaleString('pt-BR')}%</TableCell>
                         <TableCell className="font-semibold">{money(commission)}</TableCell>
-                        <TableCell>{cancelled ? <Badge variant="destructive">Cancelada</Badge> : payment ? <Badge className="gap-1"><CheckCircle2 className="h-3 w-3" />Paga</Badge> : <Badge variant="secondary">Pendente</Badge>}</TableCell>
+                        <TableCell>{cancelled ? <Badge variant="destructive">Cancelada</Badge> : payment ? <Badge className="gap-1"><CheckCircle2 className="h-3 w-3" />Paga</Badge> : commission > 0 ? <Badge variant="secondary">Pendente</Badge> : <Badge variant="outline">Sem comissão</Badge>}</TableCell>
                         <TableCell className="text-right">
                           {isCEO && !cancelled && commission > 0 && (payment ? (
                             <Button size="sm" variant="ghost" disabled={saving} onClick={() => undoPayment(payment)}><Undo2 className="mr-2 h-4 w-4" />Desfazer</Button>

@@ -220,6 +220,64 @@ export type Database = {
           },
         ]
       }
+      commission_payments: {
+        Row: {
+          amount: number
+          company_id: string
+          created_at: string
+          id: string
+          note: string | null
+          paid_at: string
+          paid_by: string
+          sale_id: string
+          seller_id: string | null
+        }
+        Insert: {
+          amount: number
+          company_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          paid_at?: string
+          paid_by: string
+          sale_id: string
+          seller_id?: string | null
+        }
+        Update: {
+          amount?: number
+          company_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          paid_at?: string
+          paid_by?: string
+          sale_id?: string
+          seller_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_payments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_payments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: true
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commission_payments_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: true
+            referencedRelation: "sales_secure"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           active: boolean
